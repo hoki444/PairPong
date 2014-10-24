@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sample_app_name">QPair API Demo</string>
+    <string name="sender_side">com.example.qpairapidemo.sender</string>
+    <string name="receiver_side">com.example.qpairapidemo.receiver</string>
+    <string-array name="sample_category_array" >
+        <item></item>
+        <item>android.intent.category.DEFAULT</item>
+        <item>android.intent.category.APP_BROWSER</item>
+        <item>android.intent.category.APP_CALCULATOR</item>
+        <item>android.intent.category.APP_CALENDAR</item>
+        <item>android.intent.category.APP_CONTACTS</item>
+        <item>android.intent.category.APP_EMAIL</item>
+        <item>android.intent.category.APP_GALLERY</item>
+        <item>android.intent.category.APP_MAPS</item>
+        <item>android.intent.category.APP_MARKET</item>
+        <item>android.intent.category.APP_MESSAGING</item>
+        <item>android.intent.category.APP_MUSIC</item>
+    </string-array>
+    <string-array name="sample_component_array" >
+        <item></item>
+        <item>com.example.qpairapidemo/com.example.qpairapidemo.ReceiverActivity</item>
+        <item>com.example.qpairapidemo/com.example.qpairapidemo.ReceiverBroadcastReceiver</item>
+        <item>com.example.qpairapidemo/com.example.qpairapidemo.ReceiverService</item>
+    </string-array>
+</resources>

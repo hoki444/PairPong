@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:ignore="HardcodedText" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/propertyValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/lastRequest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/sample_start_activity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="startActivityOnPeer" />
+
+        <Button
+            android:id="@+id/sample_send_broadcast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="sendBroadcastOnPeer" />
+
+        <Button
+            android:id="@+id/sample_start_service"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="startServiceOnPeer" />
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:columnCount="2"
+            tools:targetApi="14" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="action" />
+
+            <EditText
+                android:id="@+id/sample_action"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="android.intent.action.MAIN" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="category" />
+
+            <Spinner
+                android:id="@+id/sample_category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/sample_category_array" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="data" />
+
+            <EditText
+                android:id="@+id/sample_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="package" />
+
+            <EditText
+                android:id="@+id/sample_packageName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="type" />
+
+            <EditText
+                android:id="@+id/sample_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="component" />
+
+            <Spinner
+                android:id="@+id/sample_component"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/sample_component_array" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="booleanArrayExtra" />
+
+            <EditText
+                android:id="@+id/sample_boolean_array_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="false,true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="booleanExtra" />
+
+            <EditText
+                android:id="@+id/sample_boolean_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="byteArrayExtra" />
+
+            <EditText
+                android:id="@+id/sample_byte_array_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="1,5,34" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="byteExtra" />
+
+            <EditText
+                android:id="@+id/sample_byte_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="77" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="charArrayExtra" />
+
+            <EditText
+                android:id="@+id/sample_char_array_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="j,4,i,d" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="charExtra" />
+
+            <EditText
+                android:id="@+id/sample_char_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="a" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="charSequenceExtra" />
+
+            <EditText
+                android:id="@+id/sample_char_sequence_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="character sequence" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="doubleArrayExtra" />
+
+            <EditText
+                android:id="@+id/sample_double_array_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="3.44,828884.058" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="doubleExtra" />
+
+            <EditText
+                android:id="@+id/sample_double_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="0.00000058584" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="floatArrayExtra" />
+
+            <EditText
+                android:id="@+id/sample_float_array_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="435.244,0.2235,44444554" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="floatExtra" />
+
+            <EditText
+                android:id="@+id/sample_float_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="45442362.11212121" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="intArrayExtra" />
+
+            <EditText
+                android:id="@+id/sample_int_array_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="3235,33,968,14,77,-373" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="intExtra" />
+
+            <EditText
+                android:id="@+id/sample_int_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="9" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="longArrayExtra" />
+
+            <EditText
+                android:id="@+id/sample_long_array_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="44444444444444,22626262" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="longExtra" />
+
+            <EditText
+                android:id="@+id/sample_long_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="34343434343" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="stringArrayExtra" />
+
+            <EditText
+                android:id="@+id/sample_string_array_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="string array,qpair strings,string string" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="stringArrayListExtra" />
+
+            <EditText
+                android:id="@+id/sample_string_array_list_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="QPair rocks,GPad is awesome" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="stringExtra" />
+
+            <EditText
+                android:id="@+id/sample_string_extra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:text="sample string extra" />
+        </GridLayout>
+    </LinearLayout>
+
+</ScrollView>

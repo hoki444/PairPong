@@ -1,0 +1,4 @@
+broadcast하는 방법
+broadcastReciver인가? 클래스를 만들어야 함.
+거기서 받아서 처리해야 하는듯
+시간은 150ms정도?
