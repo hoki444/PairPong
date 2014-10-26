@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 
 public class ReceiverBroadcastReceiver extends BroadcastReceiver {
+	static int testint=0;
     public void onReceive(Context context, Intent intent) {
+    	testint = intent.getIntExtra("int", 1);
     	long pass = System.currentTimeMillis()-intent.getLongExtra("long", 1);
         context.startActivity(new Intent(context, ReceiverActivity.class)
         		.putExtra("passed_time", pass)

@@ -32,6 +32,7 @@ public class ReceiverActivity extends Activity {
             tv.append("==================\n");
             tv.append("SENT FOR BROADCAST\n");
             tv.append(String.valueOf(i.getLongExtra("passed_time", -1))+"\n");
+            tv.append(String.valueOf(ReceiverBroadcastReceiver.testint)+"\n");
             tv.append("==================\n\n\n");
             i = i.getParcelableExtra("original_intent");
         } else if ("service".equals(i.getStringExtra("delivered_through"))) {
