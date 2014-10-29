@@ -74,14 +74,18 @@ public class BtPhysicsWorld extends BaseSchedServer {
 
                         @Override
                         public void thisLocalPosition(Vector3 posOut) {
-                            // TODO Auto-generated method stub
-                            
+                            if (isFirst)
+                                mfp.getLocalPointA(posOut);
+                            else
+                                mfp.getLocalPointB(posOut);
                         }
 
                         @Override
                         public void otherLocalPosition(Vector3 posOut) {
-                            // TODO Auto-generated method stub
-                            
+                            if (isFirst)
+                                mfp.getLocalPointB(posOut);
+                            else
+                                mfp.getLocalPointA(posOut);
                         }
                     };
                     idx++;
@@ -143,6 +147,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
 
         @Override
         public void onContactEnded(btPersistentManifold manifold) {
+            // XXX
             int userVal0 = manifold.getBody0().getUserValue();
             int userVal1 = manifold.getBody1().getUserValue();
             

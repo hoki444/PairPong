@@ -33,6 +33,14 @@ public abstract class CameraServer extends BaseCompServer {
         getInternalCamera().position.set(vec);
     }
     
+    public Vector3 getPosition () {
+        return getInternalCamera().position;
+    }
+    
+    public Vector3 getUpVector () {
+        return getInternalCamera().up;
+    }
+    
     public void setRange (float near, float far) {
         setDirty();
         getInternalCamera().near = near;

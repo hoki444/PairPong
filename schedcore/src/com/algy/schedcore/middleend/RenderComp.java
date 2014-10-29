@@ -20,7 +20,7 @@ public abstract class RenderComp extends BaseComp implements RenderableProvider 
         Transform transform = other(Transform.class);
         for (int idx = origLen; idx < newLen; idx++) {
             Renderable r = arr.get(idx);
-            r.worldTransform.set(transform.get());
+            r.worldTransform.mul(transform.get());
         }
     }
     public abstract RenderableProvider renderableProvider ();

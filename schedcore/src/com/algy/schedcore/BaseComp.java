@@ -14,6 +14,10 @@ public abstract class BaseComp implements IComp {
     public final <T extends BaseComp> T other (Class<T> clazz) {
         return owner().as(clazz);
     }
+    
+    public <T extends BaseCompServer> T server(Class<T> cls) {
+        return this.owner().owner().server(cls);
+    }
 
     public final void adhereTo(Item<BaseComp, ICore> c) {
         this.owner = c;

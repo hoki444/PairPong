@@ -1,6 +1,7 @@
 package com.algy.schedcore.middleend;
 
 import com.algy.schedcore.BaseComp;
+import com.algy.schedcore.BaseCompServer;
 import com.algy.schedcore.ICore;
 import com.algy.schedcore.Item;
 import com.badlogic.gdx.math.Quaternion;
@@ -29,7 +30,9 @@ public class GameItem extends Item<BaseComp, ICore> {
 
         for (BaseComp comp : this) {
             if (!(comp instanceof Transform)) {
-                newItem.add((BaseComp)comp.duplicate());
+                BaseComp copiedComp = (BaseComp)comp.duplicate();
+                if (copiedComp != null)
+                    newItem.add(copiedComp);
             }
         }
         return newItem;
@@ -51,4 +54,5 @@ public class GameItem extends Item<BaseComp, ICore> {
     public Transform getTransform() {
         return this.as(Transform.class);
     }
+    
 }

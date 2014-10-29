@@ -1,5 +1,7 @@
 package com.algy.schedcore.middleend;
 
+import java.util.Random;
+
 import com.algy.schedcore.Core;
 import com.algy.schedcore.IComp;
 import com.algy.schedcore.ISchedTask;
@@ -16,6 +18,7 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
@@ -23,7 +26,6 @@ import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 
 public class MyGame extends ApplicationAdapter {
     private ModelBatch modelBatch;
-    private Model model;
     private Core core;
     
     // Component Servers
@@ -52,9 +54,9 @@ public class MyGame extends ApplicationAdapter {
         
         renderServer = new RenderServer();
         cameraServer = new PerspCamServer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), 67.f);
-        cameraServer.setPosition(new Vector3(1, 1, 1));
+        cameraServer.setPosition(new Vector3(0, 3, 4));
         cameraServer.lookAt(new Vector3(0, 0, 0));
-        worldServer = new BtPhysicsWorld(new Vector3(0, -12.8f, 0));
+        worldServer = new BtPhysicsWorld(new Vector3(0, -9.8f, 0), 20);
         envServer = new EnvServer();
         envServer.ambientLightColor.set(.2f, .2f, .2f, 1); 
         inputServer = new InputPushServer();
@@ -65,7 +67,7 @@ public class MyGame extends ApplicationAdapter {
         core.addServer(envServer);
         core.addServer(inputServer);
         
-        boxModel = new ModelBuilder().createBox(1, .1f, 1, 
+        boxModel = new ModelBuilder().createBox(4, .2f, 4, 
                 new Material(ColorAttribute.createDiffuse(1f, 0.5f, 0.3f, 1f),
                              ColorAttribute.createSpecular(.3f, .3f, .3f, 1f)), 
                 Usage.Position | Usage.Normal);
@@ -73,20 +75,23 @@ public class MyGame extends ApplicationAdapter {
         boardItem = new GameItem();
         boardItem.as(Transform.class).modify().setTranslation(0, 0, 0);
         boardItem.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(.5f, .05f, 0.5f)))
-                      .setRestitution(0.9f));
-        boardItem.add(new ModelComp(new ModelInstance(boxModel)));
+                      .staticBody(new btBoxShape(new Vector3(2.f, .1f, 2.f)))
+                      .setRestitution(0.4f));
+        boardItem.add(new ModelComp(boxModel));
+
         
-        
-        ballModel = new ModelBuilder().createSphere(.4f, .4f, .4f, 10, 10, 
-                new Material(ColorAttribute.createDiffuse(0f, 0.4f, 0.6f, 1f)),
+        ballModel = new ModelBuilder().createSphere(.8f, .8f, .8f, 10, 10, 
+                new Material(ColorAttribute.createDiffuse(0.5f, 0.5f, 0.5f, 1f),
+                             ColorAttribute.createSpecular(.95f, .95f, .95f, 1f),
+                             ColorAttribute.createAmbient(.1f, .2f, .1f, 1f)),
                 Usage.Position | Usage.Normal); 
         
         ballItem = new GameItem();
         ballItem.as(Transform.class).modify().setTranslation(0, 0.8f, 0);
-        ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.2f), 1)
-                     .setRestitution(0.95f));
-        ballItem.add(new ModelComp(new ModelInstance(ballModel)));
+        ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.4f), 1)
+                     .setAngularVelocity(new Vector3(2, 20, 2))
+                     .setRestitution(0.6f));
+        ballItem.add(new ModelComp(ballModel));
         ballItem.add(new CollisionComp() {
             @Override
             public IComp duplicate() {
@@ -109,7 +114,11 @@ public class MyGame extends ApplicationAdapter {
             @Override
             public void endCollision(GameItem other,
                     Iterable<CollisionInfo> info) {
-                System.out.println("END " + info.iterator().next().getImpulse());
+                int count = 0;
+                System.out.println(info.iterator().hasNext());
+                for (CollisionInfo _ : info)
+                    count++;
+                System.out.println("END (" + count + ") " + info.iterator().next().getImpulse());
             }
         });
         ballItem.add(new InputComp() {
@@ -126,14 +135,15 @@ public class MyGame extends ApplicationAdapter {
             
             @Override
             public boolean touchDragged(int screenX, int screenY, int pointer) {
-                owner().as(BtRigidBodyComp.class).getRigidBody().activate();
-                owner().as(BtRigidBodyComp.class).getRigidBody().applyCentralImpulse(new Vector3(0, 0.5f, 0 ));
+                CameraServer camserver = server(CameraServer.class);
+                Vector3 vec = new Vector3(camserver.getPosition());
+                vec.add(.1f, 0, 0);
+                camserver.setPosition(vec);
                 return false;
             }
             
             @Override
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-                // TODO Auto-generated method stub
                 return false;
             }
             
@@ -170,6 +180,7 @@ public class MyGame extends ApplicationAdapter {
             protected void onAdhered() {
             }
         });
+        
 
         lightItem = new GameItem();
         lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
@@ -178,7 +189,12 @@ public class MyGame extends ApplicationAdapter {
         core.addItem(boardItem);
         core.addItem(ballItem);
         core.addItem(lightItem);
-        
+        for (float idx = 30; idx < 150; idx+=3) 
+            core.addItem(ballItem.duplicate(new Vector3(new Random().nextFloat() * 
+                                                        (new Random().nextBoolean()?-1:1) * 1.4f, 
+                                                        idx * 0.2f, 
+                                                        new Random().nextFloat() * 
+                                                        (new Random().nextBoolean()?-1:1) * 1.4f)));
         core.sched().addPeriodic(System.currentTimeMillis(),
                 new RenderWork(), 20, 0, DRAW_SIG);
 
@@ -227,6 +243,5 @@ public class MyGame extends ApplicationAdapter {
     @Override
     public void dispose() {
         modelBatch.dispose();
-        model.dispose();
     }
 }
