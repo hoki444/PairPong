@@ -1,24 +1,26 @@
 package com.algy.schedcore.middleend;
 
-import java.util.Random;
-
 import com.algy.schedcore.Core;
 import com.algy.schedcore.IComp;
 import com.algy.schedcore.ISchedTask;
 import com.algy.schedcore.ITickGetter;
 import com.algy.schedcore.SchedTime;
+import com.algy.schedcore.middleend.asset.AssetManagerServer;
+import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
+import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
+import com.algy.schedcore.middleend.bullet.CollisionComp;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
@@ -36,9 +38,9 @@ public class MyGame extends ApplicationAdapter {
     private InputPushServer inputServer;
     
     // Game Items
-    public GameItem boardItem;
-    public GameItem ballItem;
-    public GameItem lightItem;
+    private GameItem boardItem;
+    private GameItem ballItem;
+    private GameItem lightItem;
     
     
     // Models
@@ -76,7 +78,8 @@ public class MyGame extends ApplicationAdapter {
         boardItem.as(Transform.class).modify().setTranslation(0, 0, 0);
         boardItem.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(2.f, .1f, 2.f)))
-                      .setRestitution(0.4f));
+                      .setFriction(0.7f)
+                      .setRestitution(0.8f));
         boardItem.add(new ModelComp(boxModel));
 
         
@@ -89,8 +92,9 @@ public class MyGame extends ApplicationAdapter {
         ballItem = new GameItem();
         ballItem.as(Transform.class).modify().setTranslation(0, 0.8f, 0);
         ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.4f), 1)
-                     .setAngularVelocity(new Vector3(2, 20, 2))
-                     .setRestitution(0.6f));
+                     .setAngularVelocity(new Vector3(-1, 0, 0))
+                     .setLinearVelocity(new Vector3(0, 0, 0))
+                     .setRestitution(1f));
         ballItem.add(new ModelComp(ballModel));
         ballItem.add(new CollisionComp() {
             @Override
@@ -184,17 +188,16 @@ public class MyGame extends ApplicationAdapter {
 
         lightItem = new GameItem();
         lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
-        lightItem.add(new DirectionalLightComp(new Vector3(0, -1f, 0.2f)).setColor(.6f, .6f, .6f, 1));
+        lightItem.add(new DirectionalLightComp(new Vector3(0, -1f, 0.2f)).setColor(1.f, 1.f, 1.f, .2f));
         
         core.addItem(boardItem);
         core.addItem(ballItem);
         core.addItem(lightItem);
-        for (float idx = 30; idx < 150; idx+=3) 
-            core.addItem(ballItem.duplicate(new Vector3(new Random().nextFloat() * 
-                                                        (new Random().nextBoolean()?-1:1) * 1.4f, 
-                                                        idx * 0.2f, 
-                                                        new Random().nextFloat() * 
-                                                        (new Random().nextBoolean()?-1:1) * 1.4f)));
+        for (float idx = 30; idx < 150; idx+=10) 
+            core.addItem(ballItem.duplicate(new Vector3(0, 
+                                                        0, 
+                                                        0)));
+
         core.sched().addPeriodic(System.currentTimeMillis(),
                 new RenderWork(), 20, 0, DRAW_SIG);
 
@@ -224,12 +227,10 @@ public class MyGame extends ApplicationAdapter {
     private static String DRAW_SIG = "Drawit";
 
     class RenderWork implements ISchedTask {
+        Texture tex;
+        public RenderWork () {
+        }
         public void schedule(SchedTime time) {
-            Environment env;
-            modelBatch.begin(core.server(CameraServer.class).getCamera());
-            env = core.server(EnvServer.class).makeEnvironment();
-            core.server(RenderServer.class).render(modelBatch, env);
-            modelBatch.end();
         }
 
         public void beginSchedule() {
@@ -237,7 +238,6 @@ public class MyGame extends ApplicationAdapter {
 
         public void endSchedule() {
         }
-        
     }
     
     @Override

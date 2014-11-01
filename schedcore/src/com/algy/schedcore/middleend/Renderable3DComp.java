@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 
-public abstract class RenderComp extends BaseComp implements RenderableProvider {
+public abstract class Renderable3DComp extends BaseComp implements RenderableProvider {
     /*
      * Dependent on Transform
      */

@@ -3,14 +3,9 @@ package com.algy.schedcore;
 import java.util.ArrayList;
 import java.util.List;
 
-class DogServer extends BaseCompServer {
-    @Override
-    public List<Class<? extends BaseComp>> hookFilters() {
-        ArrayList<Class<? extends BaseComp>> res = new ArrayList<Class<? extends BaseComp>>();
-        res.add(Dog.class);
-        return res;
-    }
+import com.algy.schedcore.util.MutableLister;
 
+class DogServer extends BaseCompServer {
     @Override
     public void hookAddComp(BaseComp comp) {
         System.out.println("HOOK " + comp);
@@ -31,6 +26,11 @@ class DogServer extends BaseCompServer {
     protected void onDetached() {
         System.out.println("DogServer detached");
         
+    }
+
+    @Override
+    public void hookFilters(MutableLister<Class<? extends BaseComp>> compSigList) {
+        compSigList.add(Dog.class);
     }
 }
 

@@ -1,19 +1,20 @@
-package com.algy.schedcore.middleend;
-
-import java.util.List;
+package com.algy.schedcore.middleend.asset;
 
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.util.MutableLister;
 import com.badlogic.gdx.assets.AssetManager;
 
 public class AssetManagerServer extends BaseCompServer {
+    /*
+     * 
+     */
     public AssetManager asset = null;
     
-    @Override
-    public List<Class<? extends BaseComp>> hookFilters() {
-        return null;
+    public AssetManagerServer (AssetManager assetManager) {
+        this.asset = assetManager;
     }
-
+    
     @Override
     public void hookAddComp(BaseComp comp) {
     }
@@ -24,11 +25,13 @@ public class AssetManagerServer extends BaseCompServer {
 
     @Override
     protected void onAdhered() {
-        this.asset = new AssetManager();
     }
 
     @Override
     protected void onDetached() {
-        this.asset.dispose();
+    }
+
+    @Override
+    public void hookFilters(MutableLister<Class<? extends BaseComp>> compSigList) {
     }
 }

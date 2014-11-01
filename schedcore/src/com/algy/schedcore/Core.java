@@ -2,13 +2,14 @@ package com.algy.schedcore;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+
+import com.algy.schedcore.util.MutableLister;
 
 
 public class Core implements ICore {
-    private Item<BaseCompServer, ICore> serverItem;
-    private Scheduler scheduler;
-    private ITickGetter tickGetter;
+    protected Item<BaseCompServer, ICore> serverItem;
+    protected Scheduler scheduler;
+    protected ITickGetter tickGetter;
     
     private HashSet<Class<? extends BaseCompServer>> addedServerSig;
     private HashMap<Class<? extends BaseComp>, HashSet<Class<? extends BaseCompServer>>> hookMap;
@@ -24,8 +25,8 @@ public class Core implements ICore {
         this.hookMap = new HashMap<Class<? extends BaseComp>, 
                                    HashSet<Class<? extends BaseCompServer>>>();
     }
-
-    public void addItem(Item<BaseComp, ICore> item) {
+    
+    public void addItem (Item<BaseComp, ICore> item) {
         item.adhereTo(this);
         for (BaseComp comp : item) {
             hookComp(comp);
@@ -87,16 +88,15 @@ public class Core implements ICore {
             Class<? extends BaseCompServer> cls = (Class<? extends BaseCompServer>)server.getClass();
             if (!addedServerSig.contains(cls)) {
                 addedServerSig.add(cls);
-                List<Class<? extends BaseComp>> hookFilters = server.hookFilters();
-                if (hookFilters != null) {
-                    for (Class<? extends BaseComp> hookCompClass : hookFilters) {
-                        HashSet<Class<? extends BaseCompServer>> hookSet;
-                        if ((hookSet = hookMap.get(hookCompClass)) == null)  {
-                            hookSet = new HashSet<Class<? extends BaseCompServer>>();
-                            hookMap.put(hookCompClass, hookSet);
-                        }
-                        hookSet.add(cls);
+                MutableLister<Class<? extends BaseComp>> hookedCompClasses = new MutableLister<Class<? extends BaseComp>>();
+                server.hookFilters(hookedCompClasses);
+                for (Class<? extends BaseComp> hookCompClass : hookedCompClasses) {
+                    HashSet<Class<? extends BaseCompServer>> hookSet;
+                    if ((hookSet = hookMap.get(hookCompClass)) == null)  {
+                        hookSet = new HashSet<Class<? extends BaseCompServer>>();
+                        hookMap.put(hookCompClass, hookSet);
                     }
+                    hookSet.add(cls);
                 }
             } 
             if (server instanceof BaseSchedServer) {

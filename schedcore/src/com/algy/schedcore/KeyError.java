@@ -1,6 +1,6 @@
 package com.algy.schedcore;
 
-public class KeyError extends RuntimeException {
+public class KeyError extends SchedcoreRuntimeError {
     /**
      * This class represents an exception object that is thrown 
      * when intended key is not found in some kind of container acting like Map

@@ -1,14 +1,15 @@
-package com.algy.schedcore.middleend;
+package com.algy.schedcore.middleend.bullet;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseSchedServer;
-import com.algy.schedcore.IntegerBitmap;
 import com.algy.schedcore.SchedTime;
-import com.algy.schedcore.middleend.CollisionComp.CollisionInfo;
+import com.algy.schedcore.middleend.GameItem;
+import com.algy.schedcore.middleend.Transform;
+import com.algy.schedcore.middleend.bullet.CollisionComp.CollisionInfo;
+import com.algy.schedcore.util.IntegerBitmap;
+import com.algy.schedcore.util.MutableLister;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.ContactListener;
@@ -33,6 +34,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
         public CollisionIterable (btPersistentManifold manifold, boolean isFirst) {
             this.manifold = manifold;
             this.isFirst = isFirst;
+            
         }
 
         @Override
@@ -97,7 +99,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
     private IntegerBitmap<BtColliderComp> collBitmap = new IntegerBitmap<BtColliderComp>();
     
     private btCollisionConfiguration collConfig;
-    private btDynamicsWorld world;
+    public btDynamicsWorld world;
     private btConstraintSolver ctrtSolver;
     private btCollisionDispatcher dispatcher;
     private btBroadphaseInterface broadphase;
@@ -201,10 +203,8 @@ public class BtPhysicsWorld extends BaseSchedServer {
     }
 
     @Override
-    public List<Class<? extends BaseComp>> hookFilters() {
-        ArrayList<Class<? extends BaseComp>> res = new ArrayList<Class<? extends BaseComp>>();
-        res.add(BtColliderComp.class);
-        return res;
+    public void hookFilters(MutableLister<Class<? extends BaseComp>> sigs) {
+        sigs.add(BtColliderComp.class);
     }
 
     @Override
@@ -255,6 +255,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
         this.broadphase.obtain();
         this.world.obtain();
         this.contactListener.obtain();
+        
     }
 
     @Override

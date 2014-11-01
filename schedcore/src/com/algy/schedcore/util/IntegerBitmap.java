@@ -1,4 +1,4 @@
-package com.algy.schedcore;
+package com.algy.schedcore.util;
 
 import java.util.ArrayList;
 import java.util.Iterator;

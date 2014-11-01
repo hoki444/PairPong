@@ -1,6 +1,7 @@
-package com.algy.schedcore.middleend;
+package com.algy.schedcore.middleend.bullet;
 
 import com.algy.schedcore.IComp;
+import com.algy.schedcore.middleend.Transform;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;

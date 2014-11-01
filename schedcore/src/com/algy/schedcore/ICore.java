@@ -1,6 +1,11 @@
 package com.algy.schedcore;
 
-public interface ICore extends ICompController {
+import com.algy.schedcore.BaseComp;
+import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.Item;
+import com.algy.schedcore.Scheduler;
+
+public interface ICore {
 	public void addItem (Item<BaseComp, ICore> item);
 	public void removeItem (Item<BaseComp, ICore> item);
 

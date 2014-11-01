@@ -23,14 +23,17 @@ public abstract class CameraServer extends BaseCompServer {
         this.isDirty = true;
     }
 
-    public void setUpVector (Vector3 vec) {
+    public CameraServer setUpVector (Vector3 vec) {
         setDirty();
         getInternalCamera().up.set(vec);
+        return this;
     }
 
-    public void setPosition (Vector3 vec) {
+    public CameraServer setPosition (Vector3 vec) {
         setDirty();
         getInternalCamera().position.set(vec);
+        
+        return this;
     }
     
     public Vector3 getPosition () {
@@ -41,15 +44,17 @@ public abstract class CameraServer extends BaseCompServer {
         return getInternalCamera().up;
     }
     
-    public void setRange (float near, float far) {
+    public CameraServer setRange (float near, float far) {
         setDirty();
         getInternalCamera().near = near;
         getInternalCamera().far = far;
+        return this;
     }
     
-    public void lookAt (Vector3 vec) {
+    public CameraServer lookAt (Vector3 vec) {
         setDirty();
         this.getInternalCamera().lookAt(vec);
+        return this;
     }
 
 }

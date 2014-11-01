@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.badlogic.gdx.math.Matrix4;
 
-public class ModelComp extends RenderComp {
+public class ModelComp extends Renderable3DComp {
     // This component borrow ownership of the model.
     // Thus, outter environment is responsible for disposing the model
     public Model model;

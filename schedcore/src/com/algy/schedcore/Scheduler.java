@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import com.algy.schedcore.Scheduler.JobStatus;
+import com.algy.schedcore.util.IntegerBitmap;
+
 class TaskInfo {
     public TaskInfo(int taskId, ISchedTask task, long period, long firstReltime, Object returned) {
         super();
@@ -20,9 +23,6 @@ class TaskInfo {
     public Object returned = null;
 }
 
-enum JobStatus {
-    Running, Pending, Waiting
-}
 
 class JobInfo {
     public JobStatus status;
@@ -47,6 +47,7 @@ class JobInfo {
     public long curDeadline;
     public long futureReltime; // used in Waiting status
     public long lastExecutedTime; 
+    public long lastSuspendedTime;
     public boolean first;
     public JobInfo prev, next;
     
@@ -61,13 +62,15 @@ class JobInfo {
 
 @SuppressWarnings("unused")
 public final class Scheduler {
-    static final long WINDOW_THRESHOLD = 4096;
+    public static enum JobStatus {
+        Running, Pending, Waiting, Suspended
+    }
 
-    TreeMap<Long, JobInfo> pendings; 
-    TreeMap<Long, JobInfo> waitings; // futureReltime -> JobInfo
-    ArrayList<JobInfo> tblTask;
+    private TreeMap<Long, JobInfo> pendings; 
+    private TreeMap<Long, JobInfo> waitings; // futureReltime -> JobInfo
+    private ArrayList<JobInfo> tblTask;
     
-    IntegerBitmap <JobInfo> infoBitmap;
+    private IntegerBitmap <JobInfo> infoBitmap;
     private JobInfo currentJob;
     private long currentJobPeriod;
     private long currentJobDeadline;
@@ -99,41 +102,33 @@ public final class Scheduler {
         ti.taskId = id;
         return id;
     }
+    
+    public JobStatus status(int taskid) {
+        if (!has(taskid))
+            return null;
+        return infoBitmap.get(taskid).status;
+    }
+    
+    public boolean suspend (int taskid) {
+        if (!has(taskid))
+            return false;
+        suspendJob(infoBitmap.get(taskid));
+        return true;
+    }
+    
+    public boolean resume (int taskid) {
+        if (!has(taskid))
+            return false;
+        resumeJob(infoBitmap.get(taskid));
+        return true;
+    }
 
     public boolean kill(int taskId) {
         if (!infoBitmap.has(taskId)) 
             return false;
 
         JobInfo oldJob = infoBitmap.remove(taskId); 
-        
-        if (oldJob.prev != null) {
-            if (oldJob.next != null)
-                oldJob.next.prev = oldJob.prev;
-            oldJob.prev.next = oldJob.next;
-        } else {
-            switch (oldJob.status) {
-            case Pending:
-                if (oldJob.next != null) {
-                    oldJob.next.prev = null;
-                    this.pendings.put(oldJob.curDeadline, oldJob.next);
-                } else {
-                    this.pendings.remove(oldJob.curDeadline);
-                }
-
-                break;
-            case Running:
-                this.currentJob = null;
-                break;
-            case Waiting:
-                if (oldJob.next != null) {
-                    oldJob.next.prev = null;
-                    this.waitings.put(oldJob.futureReltime, oldJob.next);
-                } else {
-                    this.waitings.remove(oldJob.futureReltime);
-                }
-                break;
-            }
-        }
+        removeFromQueue(oldJob);
         oldJob.ti.task.endSchedule();
         
         return true;
@@ -184,7 +179,7 @@ public final class Scheduler {
                 evictCurrentJob(execJob.curReltime + period);
             } else {
                 // In this case, the "current" job we knew is assumed to be already queued to "pendings", 
-                // evicted to "waitings", or even be killed. So we don't care about it.
+                // evicted to "waitings", be suspended, or even be killed. So we don't care about it.
             }
 
             return execJob.ti.returned;
@@ -329,5 +324,60 @@ public final class Scheduler {
         }
         ji.prev = null;
         this.waitings.put(futureReltime, ji);
+    }
+    
+    private void suspendJob(JobInfo ji) {
+        /*
+         * Pending -
+         *    ff
+         *    
+         *    
+         * 
+         * 
+         * 
+         * 
+         */
+        if (ji.status == JobStatus.Suspended)
+            return;
+        removeFromQueue (ji);
+        ji.status = JobStatus.Suspended;
+    }
+
+    private void resumeJob(JobInfo ji) {
+        if (ji.status != JobStatus.Suspended)
+            return;
+    }
+    
+    private void removeFromQueue(JobInfo oldJob) {
+        if (oldJob.prev != null) {
+            if (oldJob.next != null)
+                oldJob.next.prev = oldJob.prev;
+            oldJob.prev.next = oldJob.next;
+        } else {
+            switch (oldJob.status) {
+            case Pending:
+                if (oldJob.next != null) {
+                    oldJob.next.prev = null;
+                    this.pendings.put(oldJob.curDeadline, oldJob.next);
+                } else {
+                    this.pendings.remove(oldJob.curDeadline);
+                }
+
+                break;
+            case Running:
+                this.currentJob = null;
+                break;
+            case Waiting:
+                if (oldJob.next != null) {
+                    oldJob.next.prev = null;
+                    this.waitings.put(oldJob.futureReltime, oldJob.next);
+                } else {
+                    this.waitings.remove(oldJob.futureReltime);
+                }
+                break;
+            case Suspended:
+                break;
+            }
+        }
     }
 }

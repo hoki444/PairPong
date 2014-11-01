@@ -1,6 +1,7 @@
-package com.algy.schedcore.middleend;
+package com.algy.schedcore.middleend.bullet;
 
 import com.algy.schedcore.BaseComp;
+import com.algy.schedcore.middleend.GameItem;
 import com.badlogic.gdx.math.Vector3;
 
 public abstract class CollisionComp extends BaseComp {

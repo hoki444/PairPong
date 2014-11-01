@@ -1,10 +1,8 @@
 package com.algy.schedcore.middleend;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.util.MutableLister;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
@@ -21,11 +19,10 @@ public class InputPushServer extends BaseCompServer {
     protected void onDetached() {
     }
 
+
     @Override
-    public List<Class<? extends BaseComp>> hookFilters() {
-        ArrayList<Class<? extends BaseComp>> res = new ArrayList<Class<? extends BaseComp>>();
-        res.add(InputComp.class);
-        return res;
+    public void hookFilters(MutableLister<Class<? extends BaseComp>> sigs) {
+        sigs.add(InputComp.class);
     }
 
     @Override

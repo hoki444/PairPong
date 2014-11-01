@@ -1,8 +1,7 @@
 package com.algy.schedcore.middleend;
 
-import java.util.List;
-
 import com.algy.schedcore.BaseComp;
+import com.algy.schedcore.util.MutableLister;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 
@@ -14,8 +13,7 @@ public class PerspCamServer extends CameraServer {
     
     
     @Override
-    public List<Class<? extends BaseComp>> hookFilters() {
-        return null;
+    public void hookFilters(MutableLister<Class<? extends BaseComp>> sigs) {
     }
     
     @Override

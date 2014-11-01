@@ -410,14 +410,17 @@ class ItemInfoContainer <K> implements Iterable<K> {
 public class Item <K extends IAdherable<?>, OWNER> implements Iterable<K>, IAdherable<OWNER> {
     private ItemInfoContainer<K> container;
     private OWNER owner;
+    private Class<K> kClass;
     
     public Item (Class<K> kClass, OWNER owner) {
+        this.kClass = kClass;
         this.container = new ItemInfoContainer<K>(kClass);
         adhereTo(owner);
     }
     
     public Item (Class<K> kClass) {
         this.container = new ItemInfoContainer<K>(kClass);
+        this.kClass = kClass;
         this.owner = null;
     }
 
@@ -464,6 +467,10 @@ public class Item <K extends IAdherable<?>, OWNER> implements Iterable<K>, IAdhe
             comp.adhereTo(null);
         }
         return rem;
+    }
+    
+    public void removeAll () {
+        remove (kClass);
     }
 
     public Iterator<K> iterator() {

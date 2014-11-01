@@ -1,6 +1,6 @@
 package com.algy.schedcore;
 
-public class TypeConflictError extends RuntimeException {
+public class TypeConflictError extends SchedcoreRuntimeError {
     /**
      * 
      */

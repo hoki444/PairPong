@@ -1,11 +1,9 @@
 package com.algy.schedcore.middleend;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.IntegerBitmap;
+import com.algy.schedcore.util.IntegerBitmap;
+import com.algy.schedcore.util.MutableLister;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
@@ -15,11 +13,10 @@ public class EnvServer extends BaseCompServer {
     public Color ambientLightColor = new Color(0, 0, 0, 0);
     
     @Override
-    public List<Class<? extends BaseComp>> hookFilters() {
-        ArrayList<Class<? extends BaseComp>> result = new ArrayList<Class<? extends BaseComp>>();
-        result.add(LightComp.class);
-        return result;
+    public void hookFilters(MutableLister<Class<? extends BaseComp>> sigs) {
+        sigs.add(LightComp.class);
     }
+
     
     public Environment makeEnvironment() {
         Environment env = new Environment();

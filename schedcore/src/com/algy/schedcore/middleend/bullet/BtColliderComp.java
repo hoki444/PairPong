@@ -1,4 +1,4 @@
-package com.algy.schedcore.middleend;
+package com.algy.schedcore.middleend.bullet;
 
 import com.algy.schedcore.BaseComp;
 import com.badlogic.gdx.math.Matrix4;
