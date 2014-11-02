@@ -3,6 +3,7 @@ package com.algy.schedcore.middleend.asset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Stack;
 
 import com.algy.schedcore.util.IterableUtil;
@@ -13,6 +14,15 @@ public class AssetDirectory <T> implements Iterable<T> {
         public String getName();
         public Iterable<DirItem<T>> subdirs();
         public Iterable<T> subobjs();
+        public Iterable<Entry<String, T>> subobjEntries();
+    }
+    
+    private static String concat(String a, String b) {
+        if (a.isEmpty())
+            return b;
+        else {
+            return a + "/" + b;
+        }
     }
 
     private static class DirItemImpl<T> implements DirItem<T> {
@@ -42,6 +52,11 @@ public class AssetDirectory <T> implements Iterable<T> {
         
         public boolean hasObj(String name) {
             return subobjs.containsKey(name);
+        }
+        
+        @Override
+        public String toString() {
+            return "DirItemImpl (" + reprName + ") " + subdirs + " and " + subobjs;
         }
         
         public T getObj (String name) {
@@ -83,13 +98,80 @@ public class AssetDirectory <T> implements Iterable<T> {
 
                 @Override
                 public T next() {
+                    T result = objs.next();
                     prepareStack();
-                    return objs.next();
+                    return result;
                 }
 
                 @Override
                 public void remove() {
                     throw new UnsupportedOperationException();
+                }
+            };
+        }
+        
+        public Iterable <Entry<String, T>> entries () {
+            return new Iterable<Entry<String,T>>() {
+                @Override
+                public Iterator<Entry<String, T>> iterator() {
+                    return new Iterator<Entry<String,T>>() {
+                        private Stack<DirItem<T>> stack = new Stack<DirItem<T>>();
+                        private Iterator<Entry<String, T>> objs = null;
+                        private String curDirName;
+                        {
+                            stack.push(DirItemImpl.this);
+                            prepareStack();
+                        }
+                        
+                        private void prepareStack () {
+                            while (!stack.isEmpty() && (objs == null || !objs.hasNext())) {
+                                DirItem<T> item = stack.pop();
+                                curDirName = item.getName();
+                                objs = item.subobjEntries().iterator();
+                                for (DirItem<T> subdir : item.subdirs()) {
+                                    stack.push(subdir);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public boolean hasNext() {
+                            return objs != null && objs.hasNext();
+                        }
+
+                        @Override
+                        public Entry<String, T> next() {
+                            Entry<String, T> entry = objs.next();
+                            final String resultKey = concat(curDirName, entry.getKey());
+                            final T resultValue = entry.getValue();
+                            Entry<String, T> result = new Entry<String, T>() {
+                                private T value = resultValue;
+                                @Override
+                                public String getKey() {
+                                    return resultKey;
+                                }
+
+                                @Override
+                                public T getValue() {
+                                    return value;
+                                }
+
+                                @Override
+                                public T setValue(T value) {
+                                    T old = this.value;
+                                    this.value = value;
+                                    return old;
+                                }
+                            };
+                            prepareStack();
+                            return result;
+                        }
+
+                        @Override
+                        public void remove() {
+                            throw new UnsupportedOperationException();
+                        }
+                    };
                 }
             };
         }
@@ -128,6 +210,11 @@ public class AssetDirectory <T> implements Iterable<T> {
         @Override
         public String getName() {
             return reprName;
+        }
+
+        @Override
+        public Iterable<Entry<String, T>> subobjEntries() {
+            return subobjs.entrySet();
         }
     }
     
@@ -229,17 +316,15 @@ public class AssetDirectory <T> implements Iterable<T> {
         return root.iterator();
     }
     
+    public Iterable<Entry<String, T>> entries () {
+        return root.entries();
+    }
+    
     private DirItemImpl <T> searchDir (Iterable<String> dirnames, boolean makedir) {
         DirItemImpl <T> iterDir = root;
         String itername = "";
         for (String curDirName : dirnames) {
-            if (itername.isEmpty())
-                itername += curDirName;
-            else {
-                itername += "/";
-                itername += curDirName;
-            }
-
+            itername = concat(itername, curDirName);
             if (!iterDir.hasSubDir(curDirName)) {
                 if (makedir)
                     iterDir.setSubDir(curDirName, new DirItemImpl<T>(itername));
@@ -250,4 +335,6 @@ public class AssetDirectory <T> implements Iterable<T> {
         }
         return iterDir;
     }
+    
+
 }

@@ -11,7 +11,9 @@ public class Token {
         tDirectory, // directory
         tUsing, // using
         tUse, // use
+        tUseserver, // useserver
         tCreate, // create
+        tModify, // modify
         tDef, // def
         tEnd, // end
         tNull, // null

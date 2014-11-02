@@ -5,10 +5,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.algy.schedcore.frontend.idl.Token.TokType;
-import com.algy.schedcore.middleend.asset.AssetName;
 
 /*
- * Author: Alchan "Algy" Kim
+ * Author: Alchan Kim
  * Decent-recursive parser for item/scene definition language
  */
 
@@ -33,42 +32,53 @@ public class IDLParser {
     public IDLParser (String source) {
         this.scanner = new IDLScanner(source);
     }
+    
 
-    public final IDLParsingError parseSceneLang () {
+    public final void parseSceneLang () {
         try {
             sceneModule();
         } catch (ParseJumpException e) {
-            return new IDLParsingError(e.errMsg, e.errToken.locinfo);
+            throw new IDLParsingError(e.errMsg + " " + e.errToken.locinfo, e.errToken.locinfo);
         }
-        return null;
     }
     
-    public final IDLParsingError parseItemLang () {
+    public final void parseItemLang () {
         try {
             itemDefModule();
         } catch (ParseJumpException e) {
-            return new IDLParsingError(e.errMsg, e.errToken.locinfo);
+            throw new IDLParsingError(e.errMsg, e.errToken.locinfo);
         }
-        return null;
     }
 
-    protected void actionUsingPackage(String packageName) {
+    public final TokenLocInfo getCurrentScannerLoc() {
+        return scanner.getCurrentLocInfo();
+    }
+    
+    protected String usedPackageName = "";
+    protected String usedDirName = "";
+    private void actionUsingPackage(String packageName) {
+        this.usedPackageName = packageName;
     }
 
-    protected void actionUsingDir(ArrayList<String> dirname) {
+
+    private void actionUsingDir(String dirname) {
+        this.usedDirName = dirname;
+            
     }
 
     protected void actionDefItem(String assetName,
             ArrayList<CompDescriptor> creationList) {
     }
     
-    protected void actionUseItem(String assetName,
-            ArrayList<CompDescriptor> modificationList) {
+    protected void actionUseItem(String assetName, ArrayList<CompDescriptor> modificationList) { }
+    protected void actionUseServer(String assetName,
+            Map<String, IDLValue> creationDict,
+            Map<String, IDLValue> modificationDict) {
     }
+            
+
     protected void actionCreateItem(ArrayList<CompDescriptor> creationList) {
     }
-
-    
 
     private Token expect (Token.TokType ... toks) {
         Token result = consume ();
@@ -116,7 +126,7 @@ public class IDLParser {
                 consume();
                 String assetName = assetName();
                 expect (TokType.tEndline);
-                ArrayList<CompDescriptor> modificationList = compDeclList ();
+                ArrayList<CompDescriptor> modificationList = compDeclList (TokType.tModify);
                 expect (TokType.tEnd);
                 
                 if (peekType() != TokType.tEOF) {
@@ -124,10 +134,42 @@ public class IDLParser {
                 }
                 actionUseItem (assetName, modificationList);
                 break;
+            case tUseserver:
+                consume ();
+                String serverName = assetName();
+                Map<String, IDLValue> modificationDict = null, creationDict = null;
+                expect (TokType.tEndline);
+
+                boolean bothNotSpecified = true;
+                if (peekType() == TokType.tCreate) {
+                    consume ();
+                    creationDict = dictExpr();
+                    expect (TokType.tEndline);
+                    bothNotSpecified = false;
+                }
+                if (peekType() == TokType.tModify) {
+                    consume ();
+                    modificationDict = dictExpr();
+                    expect (TokType.tEndline);
+                    bothNotSpecified  = false;
+                }
+
+                if (bothNotSpecified) {
+                    Token errTok = consume ();
+                    throw new ParseJumpException("At least one declaration among 'create' or 'modify' " + 
+                                                 "should be specified.",
+                                                 errTok);
+                }
+                expect (TokType.tEnd);
+                if (peekType() != TokType.tEOF) {
+                    expect (TokType.tEndline);
+                }
+                actionUseServer(serverName, creationDict, modificationDict);
+                break;
             case tCreate:
                 consume();
                 expect (TokType.tEndline);
-                ArrayList<CompDescriptor> creationList = compDeclList () ;
+                ArrayList<CompDescriptor> creationList = compDeclList (null) ;
                 expect (TokType.tEnd);
                 if (peekType() != TokType.tEOF) {
                     expect (TokType.tEndline);
@@ -143,7 +185,9 @@ public class IDLParser {
             case tEOF:
                 break MODULE_LOOP;
             default:
-                expect (TokType.tUse, TokType.tCreate, TokType.tUsing, TokType.tEndline, TokType.tEOF);
+                expect (TokType.tUse, TokType.tUseserver,
+                        TokType.tCreate, TokType.tUsing,
+                        TokType.tEndline, TokType.tEOF);
                 break;
             }
         }
@@ -157,7 +201,7 @@ public class IDLParser {
                     consume();
                     String assetName = assetName ();
                     expect (TokType.tEndline);
-                    ArrayList<CompDescriptor> creationList = compDeclList () ;
+                    ArrayList<CompDescriptor> creationList = compDeclList (null) ;
                     expect(TokType.tEnd);
 
                     if (peekType() != TokType.tEOF) {
@@ -184,24 +228,26 @@ public class IDLParser {
         expect (TokType.tUsing);
         switch (expect(TokType.tDirectory, TokType.tPackage).type) {
         case tDirectory:
-            ArrayList<String> dirnames;
+            String dirname;
             if (peekType() != TokType.tEndline &&
                 peekType() != TokType.tEOF) {
-                dirnames = AssetName.parseDirname(assetName());
+                dirname = assetName();
             } else
-                dirnames = new ArrayList<String>();
+                dirname = "";
             if (peekType() != TokType.tEOF) {
                 expect (TokType.tEndline);
             }
-            actionUsingDir (dirnames);
+            actionUsingDir (dirname);
             break;
 
         case tPackage:
-            String packageName = null;
+            String packageName;
             if (peekType() != TokType.tEndline &&
                 peekType() != TokType.tEOF) {
                 packageName = dottedName ();
-            }
+            } else 
+                packageName = "";
+            
             if (peekType() != TokType.tEOF) {
                 expect (TokType.tEndline);
             }
@@ -213,8 +259,7 @@ public class IDLParser {
         }
     }
 
-
-    public String assetName () {
+    private String slashName () {
         StringBuilder builder = new StringBuilder();
         Token tok = expect (TokType.tName);
         builder.append(tok.value);
@@ -225,6 +270,14 @@ public class IDLParser {
         }
         
         return builder.toString();
+    }
+
+    private String assetName () {
+        String result = slashName ();
+        if ("".equals(usedDirName)) {
+            return result;
+        } else
+            return usedDirName + "/" + result;
     }
 
     private String dottedName () {
@@ -239,28 +292,38 @@ public class IDLParser {
         return builder.toString();
     }
     
-    public String className () {
-        return dottedName ();
+    private String className () {
+        String className;
+        String postfix = dottedName ();
+        if ("".equals(usedPackageName)) {
+            className = postfix;
+        } else {
+            className = usedPackageName + "." + postfix;
+        }
+        return className;
     }
 
     protected static class CompDescriptor {
-        public CompDescriptor(AssetName compName, Map<String, IDLValue> dict) {
+        public CompDescriptor(String compName, Map<String, IDLValue> dict) {
             this.compName = compName;
             this.dict = dict;
         }
-        public AssetName compName;
+        public String compName;
         public Map<String, IDLValue> dict;
     }
     
 
-    private ArrayList<CompDescriptor> compDeclList () {
+    private ArrayList<CompDescriptor> compDeclList (TokType headLabel) {
         /*
          * represent both compCreationList and compModificationList
          */
         ArrayList<CompDescriptor> result = new ArrayList<CompDescriptor>();
         
         while (peekType() != TokType.tEnd) {
-            AssetName compName = AssetName.parse(assetName ());
+            if (headLabel != null)
+                expect (headLabel);
+
+            String compName = assetName ();
             Map<String, IDLValue> dict = dictExpr ();
             expect (TokType.tEndline);
             result.add(new CompDescriptor(compName, dict));
@@ -303,7 +366,7 @@ public class IDLParser {
             result = IDLValue.createString(val);
             break;
         case tName:
-            result = IDLValue.createClassName(consume().value);
+            result = IDLValue.createClassName(className ());
             break;
         case tEndline:
             result = IDLValue.createDict(dictExpr ());

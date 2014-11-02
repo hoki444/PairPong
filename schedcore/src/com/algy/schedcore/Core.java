@@ -64,6 +64,10 @@ public class Core implements ICore {
         }
     }
 
+    public Item<BaseCompServer, ICore> getServerItem() {
+        return this.serverItem;
+    }
+
     public <T extends BaseCompServer> T server(Class<T> cls) {
         return serverItem.as(cls);
     }

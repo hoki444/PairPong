@@ -1,5 +1,7 @@
 package com.algy.schedcore.middleend.asset;
 
+import java.util.Map.Entry;
+
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
 import com.algy.schedcore.KeyError;
@@ -30,6 +32,9 @@ public class Eden extends BaseCompServer {
         return directory.remove(assetRawName);
     }
     
+    public Iterable<Entry<String, GameItem>> entries () {
+        return directory.entries();
+    }
     /*
      * make methods
      */
@@ -51,6 +56,8 @@ public class Eden extends BaseCompServer {
     
     public GameItem make (String assetRawName, Matrix4 mat) {
         GameItem proto = getPrototype(assetRawName);
+        if (proto == null)
+            return null;
         return proto.duplicate(mat);
     }
     

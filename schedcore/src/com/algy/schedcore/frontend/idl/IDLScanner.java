@@ -20,11 +20,14 @@ public class IDLScanner {
         keywords.put("using", TokType.tUsing);
         keywords.put("use", TokType.tUse);
         keywords.put("create", TokType.tCreate);
+        keywords.put("modify", TokType.tModify);
         keywords.put("end", TokType.tEnd);
         keywords.put("null", TokType.tNull);
         keywords.put("true", TokType.tTrueFalse);
         keywords.put("false", TokType.tTrueFalse);
+        keywords.put("useserver", TokType.tUseserver);
     }
+
     public IDLScanner (final String source) {
         input = new IDLInput() {
             int idx = 0;
@@ -205,6 +208,15 @@ public class IDLScanner {
         return new Token(type, builder.toString(),
                          stLine, stCol,
                          edLine, edCol);
+    }
+    
+    public TokenLocInfo getCurrentLocInfo () {
+        int line = input.currentLine();
+        int col = input.currentCol();
+        TokenLocInfo locInfo = new TokenLocInfo();
+        locInfo.stLine = locInfo.edLine = line;
+        locInfo.stCol = locInfo.edCol = col;
+        return locInfo;
     }
     private Token errorToken (String val) {
         int line = input.currentLine();

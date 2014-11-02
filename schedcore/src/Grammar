@@ -1,0 +1,27 @@
+Grammar definition
+--
+itemDefModule = {itemDefinition | packageDecl | directoryDecl | "\n"}.
+sceneModule = {sceneItem | packageDecl | directoryDecl | "\n"}.
+
+itemDefinition = "def" assetName "\n" {compCreation} "end" "\n".
+
+packageDecl = "using" "package" [dottedName] "\n".
+directoryDecl = "using" "directory" assetName "\n".
+sceneItem =  "use" assetName "\n" {compModification} "end" "\n"
+           | "create" "\n" {compCreation} "end" "\n"
+           | "useserver" assetName "\n" ["create" dictExpr "\n"] ["modify" dictExpr "\n"] "end" "\n".
+
+
+compCreation = {assetName dictExpr "\n"}.
+compModification = {"modify" assetName dictExpr "\n"}.
+
+value = integer | float | strings | className | dictExpr | truefalse | null
+dictExpr = "\n" {name ":" value "\n"} "end"
+strings = string {string}
+
+integer = $regex ("-"?{number}+)
+float = $regex ("-"?({number}+"."{number}* | "."{number}+)
+string = $regex ("[^"\n]" | '[^'\n]')
+className = dottedName
+truefalse = "true" | "false"
+nullValue = "null"
