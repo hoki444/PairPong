@@ -1,4 +1,5 @@
-broadcast하는 방법
-broadcastReciver인가? 클래스를 만들어야 함.
-거기서 받아서 처리해야 하는듯
-시간은 150ms정도?
+함수설명(sender)
+public void startreceiver(String activityname) : receiveractivity를 실행한다. activityname에는 시작할 activity이름을 넣어주면 된다.
+public void sendint(int sint) : int를 보낸다. 보낸 int는 broadcast에서 저장한다.
+함수설명(receiver)
+public int getint() : boradcast에 저장되어있는 int를 가져온다.
