@@ -1,5 +1,7 @@
 함수설명(sender)
 public void startreceiver(String activityname) : receiveractivity를 실행한다. activityname에는 시작할 activity이름을 넣어주면 된다.
 public void sendint(int sint) : int를 보낸다. 보낸 int는 broadcast에서 저장한다.
+타입별로 다 만들어 놓았음
 함수설명(receiver)
 public int getint() : boradcast에 저장되어있는 int를 가져온다.
+타입별로 다 만들어 놓았음

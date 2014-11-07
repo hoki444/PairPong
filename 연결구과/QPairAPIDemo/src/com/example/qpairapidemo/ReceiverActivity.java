@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -50,8 +51,59 @@ public class ReceiverActivity extends Activity {
     		handler.post(updater);
     }
     private class receiverfunction{
+    	public boolean[] getboolarray(){
+    		return ReceiverBroadcastReceiver.boolarrayvalue;
+    	}
+    	public boolean getbool(){
+    		return ReceiverBroadcastReceiver.boolvalue;
+    	}
+    	public byte[] getbytearray(){
+    		return ReceiverBroadcastReceiver.bytearrayvalue;
+    	}
+    	public byte getbyte(){
+    		return ReceiverBroadcastReceiver.bytevalue;
+    	}
+    	public char[] getchararray(){
+    		return ReceiverBroadcastReceiver.chararrayvalue;
+    	}
+    	public CharSequence getcharsequence(){
+    		return ReceiverBroadcastReceiver.charsequencevalue;
+    	}
+    	public char getchar(){
+    		return ReceiverBroadcastReceiver.charvalue;
+    	}
+    	public double[] getdoublearray(){
+    		return ReceiverBroadcastReceiver.doublearrayvalue;
+    	}
+    	public double getdouble(){
+    		return ReceiverBroadcastReceiver.doublevalue;
+    	}
+    	public float[] getfloatarray(){
+    		return ReceiverBroadcastReceiver.floatarrayvalue;
+    	}
+    	public float getfloat(){
+    		return ReceiverBroadcastReceiver.floatvalue;
+    	}
+    	public int[] getintarray(){
+    		return ReceiverBroadcastReceiver.intarrayvalue;
+    	}
     	public int getint(){
-    		return ReceiverBroadcastReceiver.testint;
+    		return ReceiverBroadcastReceiver.intvalue;
+    	}
+    	public long[] getlongarray(){
+    		return ReceiverBroadcastReceiver.longarrayvalue;
+    	}
+    	public long getlong(){
+    		return ReceiverBroadcastReceiver.longvalue;
+    	}
+    	public String[] getstringarray(){
+    		return ReceiverBroadcastReceiver.stringarrayvalue;
+    	}
+    	public ArrayList<String> getstringarraylist(){
+    		return ReceiverBroadcastReceiver.stringarraylistvalue;
+    	}
+    	public String getstring(){
+    		return ReceiverBroadcastReceiver.stringvalue;
     	}
     }
 }
