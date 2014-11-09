@@ -6,5 +6,5 @@ import com.algy.schedcore.BaseComp;
 
 public interface IDLCompModifier {
     public Class<? extends BaseComp> getType();
-    public void modify (BaseComp freshComp, Map<String, IDLValue> dict);
+    public void modify (IDLGameContext context, BaseComp freshComp, Map<String, IDLValue> dict);
 }

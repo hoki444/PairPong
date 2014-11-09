@@ -5,7 +5,7 @@ import com.algy.schedcore.IComp;
 import com.algy.schedcore.ISchedTask;
 import com.algy.schedcore.ITickGetter;
 import com.algy.schedcore.SchedTime;
-import com.algy.schedcore.middleend.asset.AssetManagerServer;
+import com.algy.schedcore.middleend.asset.AssetServer;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
@@ -31,7 +31,7 @@ public class MyGame extends ApplicationAdapter {
     private Core core;
     
     // Component Servers
-    private RenderServer renderServer;
+    private Render3DServer renderServer;
     private CameraServer cameraServer;
     private BtPhysicsWorld worldServer;
     private EnvServer envServer;
@@ -54,8 +54,8 @@ public class MyGame extends ApplicationAdapter {
 
         core = new Core(ITickGetter.systemTickGetter);
         
-        renderServer = new RenderServer();
-        cameraServer = new PerspCamServer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), 67.f);
+        renderServer = new Render3DServer();
+        cameraServer = new CameraServer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), 67.f);
         cameraServer.setPosition(new Vector3(0, 3, 4));
         cameraServer.lookAt(new Vector3(0, 0, 0));
         worldServer = new BtPhysicsWorld(new Vector3(0, -9.8f, 0), 20);

@@ -20,6 +20,6 @@ public abstract class BaseCompServer implements ICompServer {
             onDetached();
     }
 
-    protected abstract void onAdhered();
-    protected abstract void onDetached();
+    protected void onAdhered() {}
+    protected void onDetached() {}
 }

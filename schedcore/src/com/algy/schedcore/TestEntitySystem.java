@@ -1,9 +1,6 @@
 package com.algy.schedcore;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.algy.schedcore.util.MutableLister;
+import com.algy.schedcore.util.Lister;
 
 class DogServer extends BaseCompServer {
     @Override
@@ -29,7 +26,7 @@ class DogServer extends BaseCompServer {
     }
 
     @Override
-    public void hookFilters(MutableLister<Class<? extends BaseComp>> compSigList) {
+    public void listCompSignatures(Lister<Class<? extends BaseComp>> compSigList) {
         compSigList.add(Dog.class);
     }
 }
@@ -59,7 +56,7 @@ class GoldenRetriever extends Dog {
     public void bark() {
         System.out.println("Golden!Golden!");
     }
-    
+
 }
 class Harrier extends Biggle {
     @Override

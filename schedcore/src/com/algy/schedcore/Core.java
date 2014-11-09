@@ -3,7 +3,7 @@ package com.algy.schedcore;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import com.algy.schedcore.util.MutableLister;
+import com.algy.schedcore.util.ArrayLister;
 
 
 public class Core implements ICore {
@@ -13,6 +13,7 @@ public class Core implements ICore {
     
     private HashSet<Class<? extends BaseCompServer>> addedServerSig;
     private HashMap<Class<? extends BaseComp>, HashSet<Class<? extends BaseCompServer>>> hookMap;
+
 
     public Core (ITickGetter tickGetter) {
         this.serverItem = Item.MakeServerItem();
@@ -25,17 +26,40 @@ public class Core implements ICore {
         this.hookMap = new HashMap<Class<? extends BaseComp>, 
                                    HashSet<Class<? extends BaseCompServer>>>();
     }
+
+    public void addItemAll(Iterable<Item<BaseComp, ICore>> itemIterable) {
+        for (Item<BaseComp, ICore> item : itemIterable) {
+            _addItem(item, false);
+        }
+        for (Item<BaseComp, ICore> item : itemIterable) {
+            for (BaseComp comp : item)
+                comp.onItemAdded();
+        }
+    }
+
+    public void addItem (Item<BaseComp, ICore> item, boolean suspend) {
+        _addItem(item, suspend);
+        for (BaseComp comp : item)
+            comp.onItemAdded();
+    }
     
     public void addItem (Item<BaseComp, ICore> item) {
+        _addItem(item, false);
+        for (BaseComp comp : item)
+            comp.onItemAdded();
+    }
+    
+    private void _addItem (Item<BaseComp, ICore> item, boolean suspend ) {
         item.adhereTo(this);
         for (BaseComp comp : item) {
             hookComp(comp);
             if (comp instanceof ISchedComp) {
-                regSchedComp((ISchedComp)comp);
+                regSchedComp((ISchedComp)comp, suspend);
             }
         }
     }
 
+    @Override
     public void removeItem(Item<BaseComp, ICore> item) {
         item.adhereTo(null);
         for (BaseComp comp : item) {
@@ -43,15 +67,49 @@ public class Core implements ICore {
             if (comp instanceof ISchedComp) {
                 unregSchedComp((ISchedComp)comp);
             }
+        }        
+        for (BaseComp comp : item) {
+            comp.onItemRemoved();
+        }
+
+    }
+    
+    
+    public boolean isSuspendedComp (BaseSchedComp comp) {
+        return scheduler.suspended(comp.taskId());
+    }
+    
+    public boolean suspendComp (BaseSchedComp comp) {
+        return scheduler.suspend(comp.taskId(), tickGetter);
+    }
+    
+    public boolean resumeComp (BaseSchedComp comp) {
+        return scheduler.resume (comp.taskId(), tickGetter);
+    }
+    
+    public boolean isSuspendedServer (BaseSchedServer server) {
+        return scheduler.suspended(server.taskId());
+    }
+    
+    public boolean suspendServer (BaseSchedServer server) {
+        return scheduler.suspend(server.taskId(), tickGetter);
+    }
+    
+    public boolean resumeServer (BaseSchedServer server) {
+        return scheduler.resume (server.taskId(), tickGetter);
+    }
+    
+    
+    public void addComp(Item<BaseComp, ICore> owner, BaseComp comp, boolean suspend) {
+        owner.add(comp);
+        hookComp(comp);
+        if (comp instanceof ISchedComp) {
+            regSchedComp((ISchedComp)comp, suspend);
         }
     }
 
     public void addComp(Item<BaseComp, ICore> owner, BaseComp comp) {
-        owner.add(comp);
-        hookComp(comp);
-        if (comp instanceof ISchedComp) {
-            regSchedComp((ISchedComp)comp);
-        }
+        addComp (owner, comp, false);
     }
 
     public void removeComp(BaseComp comp) {
@@ -87,13 +145,13 @@ public class Core implements ICore {
         return scheduler;
     }
 
-    public <T extends BaseCompServer> boolean addServer(T server) {
+    public <T extends BaseCompServer> boolean addServer(T server, boolean suspend) {
         if(serverItem.add(server)) {
             Class<? extends BaseCompServer> cls = (Class<? extends BaseCompServer>)server.getClass();
             if (!addedServerSig.contains(cls)) {
                 addedServerSig.add(cls);
-                MutableLister<Class<? extends BaseComp>> hookedCompClasses = new MutableLister<Class<? extends BaseComp>>();
-                server.hookFilters(hookedCompClasses);
+                ArrayLister<Class<? extends BaseComp>> hookedCompClasses = new ArrayLister<Class<? extends BaseComp>>();
+                server.listCompSignatures(hookedCompClasses);
                 for (Class<? extends BaseComp> hookCompClass : hookedCompClasses) {
                     HashSet<Class<? extends BaseCompServer>> hookSet;
                     if ((hookSet = hookMap.get(hookCompClass)) == null)  {
@@ -105,19 +163,25 @@ public class Core implements ICore {
             } 
             if (server instanceof BaseSchedServer) {
                 BaseSchedServer schedServer = (BaseSchedServer)server;
-                regSchedComp(schedServer);
+                regSchedComp(schedServer, suspend);
             }
             return true;
         } else
             return false;
     }
+
+    public <T extends BaseCompServer> boolean addServer(T server) {
+        return addServer (server, false);
+    }
     
     // Internal Aspect
-    private void regSchedComp(ISchedComp schedComp) {
+    private void regSchedComp(ISchedComp schedComp, boolean suspend) {
         long current = tickGetter.getTickCount();
         long period = schedComp.schedPeriod();
         long offset = schedComp.schedOffset();
         int taskId = this.scheduler.addPeriodic(current, schedComp, period, offset, null);
+        if (suspend)
+            this.scheduler.suspend(taskId, tickGetter);
         
         schedComp.setTaskId(taskId);
     }

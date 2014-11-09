@@ -2,21 +2,26 @@ Grammar definition
 --
 itemDefModule = {itemDefinition | packageDecl | directoryDecl | "\n"}.
 sceneModule = {sceneItem | packageDecl | directoryDecl | "\n"}.
+runtimeModModule = {modItem | packageDecl | directoryDecl | "\n"}.
 
-itemDefinition = "def" assetName "\n" {compCreation} "end" "\n".
+itemDefinition = "def" slashName "\n" {compCreation} "end" "\n".
 
 packageDecl = "using" "package" [dottedName] "\n".
-directoryDecl = "using" "directory" assetName "\n".
-sceneItem =  "use" assetName "\n" {compModification} "end" "\n"
-           | "create" "\n" {compCreation} "end" "\n"
-           | "useserver" assetName "\n" ["create" dictExpr "\n"] ["modify" dictExpr "\n"] "end" "\n".
+directoryDecl = "using" "directory" slashName "\n".
+sceneItem =  "use" slashName ["as" strings] "\n" {compModification} "end" "\n"
+           | "create" ["as" strings] "\n" {compCreation} "end" "\n"
+           | "useserver" slashName "\n" ["create" dictExpr "\n"] ["modify" dictExpr "\n"] "end" "\n".
 
+modItem = "modify" strings "\n" {compModification} "end" "\n"
+modServer = "modifyserver" slashName dictExpr "\n" "end" "\n"
 
-compCreation = {assetName dictExpr "\n"}.
-compModification = {"modify" assetName dictExpr "\n"}.
+compCreation = {"create" slashName dictExpr "\n"}.
+compModification = {"modify" slashName dictExpr "\n"}.
 
-value = integer | float | strings | className | dictExpr | truefalse | null
-dictExpr = "\n" {name ":" value "\n"} "end"
+value = integer | float | strings | className | dictExpr | arrayExpr | truefalse | null
+dictExpr = [">"] "\n" {name ":" value "\n"} "end"
+arrayExpr = ">>" "\n" {value "\n"} "end"
+
 strings = string {string}
 
 integer = $regex ("-"?{number}+)

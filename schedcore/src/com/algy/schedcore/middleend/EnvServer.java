@@ -3,7 +3,7 @@ package com.algy.schedcore.middleend;
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
 import com.algy.schedcore.util.IntegerBitmap;
-import com.algy.schedcore.util.MutableLister;
+import com.algy.schedcore.util.Lister;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
@@ -13,7 +13,7 @@ public class EnvServer extends BaseCompServer {
     public Color ambientLightColor = new Color(0, 0, 0, 0);
     
     @Override
-    public void hookFilters(MutableLister<Class<? extends BaseComp>> sigs) {
+    public void listCompSignatures(Lister<Class<? extends BaseComp>> sigs) {
         sigs.add(LightComp.class);
     }
 
@@ -48,4 +48,12 @@ public class EnvServer extends BaseCompServer {
     protected void onDetached() {
     }
 
+
+    public Color getAmbientLightColor() {
+        return this.ambientLightColor;
+    }
+
+    public void setAmbientLightColor(Color ambientLightColor) {
+        this.ambientLightColor = ambientLightColor;
+    }
 }

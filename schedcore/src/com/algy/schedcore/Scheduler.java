@@ -27,36 +27,64 @@ class TaskInfo {
 class JobInfo {
     public JobStatus status;
     public JobInfo(JobStatus status, TaskInfo ti, long pushedTime,
-            long curReltime, long curDeadline, long lastExecutedTime,
+            long curReltime, long curDeadline,
             long futureReltime, boolean first, JobInfo prev, JobInfo next) {
         super();
         this.status = status;
         this.ti = ti;
-        this.pushedTime = pushedTime;
+        
         this.curReltime = curReltime;
         this.curDeadline = curDeadline;
-        this.lastExecutedTime = lastExecutedTime;
-        this.futureReltime = futureReltime;
         this.first = first;
+        
+        this.futureReltime = futureReltime;
         this.prev = prev;
         this.next = next;
+
+        // informative fields for statistics
+        this.pushedTime = pushedTime;
     }
     public TaskInfo ti;
-    public long pushedTime;
+    /*
+     * fields that are valid when status is Pending or Running
+     */
     public long curReltime; 
     public long curDeadline;
-    public long futureReltime; // used in Waiting status
-    public long lastExecutedTime; 
+    /*
+     * fields that are valid when status is Waiting
+     */
+    public long futureReltime; 
     public long lastSuspendedTime;
+    /* first execution? */
     public boolean first;
+
+    /*
+     * fields that are valid when status is Suspended or Sleeping
+     */
+    public long suspendedTime; 
+    public JobStatus prevStatus;
+
+    /*
+     * fields for forming double linked list with jobinfos having the same status
+     */
     public JobInfo prev, next;
+
+
+    /*
+     * informative fields for statistics
+     */
+    public long lastStartTime; 
+    public long lastExecutionTime; 
+    public long ewmaExecutionTime; // alpha = 0.2
+    public long pushedTime;
+    
     
     public static JobInfo firstWaitingJob(TaskInfo ti, long futureReltime) {
-        return new JobInfo(JobStatus.Waiting, ti, -1, -1, -1, -1, futureReltime, true, null, null);
+        return new JobInfo(JobStatus.Waiting, ti, -1, -1, -1, futureReltime, true, null, null);
     }
     
     public static JobInfo firstPendingJob(TaskInfo ti, long current) {
-        return new JobInfo(JobStatus.Pending, ti, current, current, current + ti.period, -1, -1, true, null, null);
+        return new JobInfo(JobStatus.Pending, ti, current, current, current + ti.period, -1, true, null, null);
     }
 }
 
@@ -87,7 +115,6 @@ public final class Scheduler {
         JobInfo ji;
         
         ti = new TaskInfo(-1, task, period, current + offset, returned);
-        // if (offset <= 0 && currentJobPeriod > period) { // RM
         if (offset <= 0 && currentJobDeadline > current + period) { // EDF
             // pend it
             ji = JobInfo.firstPendingJob(ti, current);
@@ -109,18 +136,24 @@ public final class Scheduler {
         return infoBitmap.get(taskid).status;
     }
     
-    public boolean suspend (int taskid) {
+    public boolean suspend (int taskid, ITickGetter tickGetter) {
         if (!has(taskid))
             return false;
-        suspendJob(infoBitmap.get(taskid));
+        suspendJob(infoBitmap.get(taskid), tickGetter.getTickCount());
         return true;
     }
     
-    public boolean resume (int taskid) {
+    public boolean resume (int taskid, ITickGetter tickGetter) {
         if (!has(taskid))
             return false;
-        resumeJob(infoBitmap.get(taskid));
+        recoverFromSuspension(infoBitmap.get(taskid), tickGetter.getTickCount());
         return true;
+    }
+    
+    public boolean suspended (int taskid) {
+        if (!has(taskid))
+            return false;
+        return infoBitmap.get(taskid).status == JobStatus.Suspended;
     }
 
     public boolean kill(int taskId) {
@@ -141,11 +174,10 @@ public final class Scheduler {
     static int vv = 0;
     // Aspect from backend
     public Object runOnce(ITickGetter tickGetter) {
-        //// RM(Rate Monotonic) scheduling
         // EDF(Earlist Deadline First) scheduling
 
-        long current = tickGetter.getTickCount();
-        releaseJobs(current);
+        long startTime = tickGetter.getTickCount();
+        releaseJobs(startTime);
         if (this.currentJob == null) {
             JobInfo ji = scheduleFromPendings();
             if (ji != null)
@@ -160,20 +192,38 @@ public final class Scheduler {
                 execJob.first = false;
                 realdelta = -1;
             } else {
-                realdelta = current - execJob.lastExecutedTime;
+                realdelta = startTime - execJob.lastStartTime;
             }
 
-            execJob.lastExecutedTime = current;
-            
+            execJob.lastStartTime = startTime;
             // NOTE: this.currentJob can become null or other job 
             //       after schedule it (it means the current job is now rescheduled)
             execJob.ti.task.schedule(new SchedTime(period,
                                                    execJob.curDeadline,
                                                    realdelta, 
                                                    execJob.first));
-            current = tickGetter.getTickCount();
-            if (current > execJob.curDeadline) {
-                System.out.println("Task " + execJob.ti.taskId + " missed deadline. " + (current - execJob.curDeadline));
+            long finishTime = tickGetter.getTickCount();
+            long executionTime = finishTime - startTime;
+            execJob.lastExecutionTime = executionTime;
+            if (execJob.first) {
+                execJob.ewmaExecutionTime = executionTime;
+                execJob.first = false;
+            } else {
+                /*
+                 * exponential weighted moving average for execution time.
+                 * alpha = 0.2
+                 * alpha * newExec + (1 - alpha) * oldExec
+                 *        1 * newExec + 4 * oldExec
+                 * =  ------------------------------------
+                 *                     5
+                 */
+                long oldExecutionTime = execJob.ewmaExecutionTime;
+                execJob.ewmaExecutionTime = (4 * oldExecutionTime + executionTime) / 5;
+            }
+            if (finishTime > execJob.curDeadline) {
+                System.out.println("Task " + execJob.ti.taskId + " missed deadline. " + 
+                                   (finishTime - execJob.curDeadline) +
+                                   " avgExecTime. " + execJob.ewmaExecutionTime);
             }
             if (this.currentJob != null && this.currentJob == execJob) {
                 evictCurrentJob(execJob.curReltime + period);
@@ -326,26 +376,34 @@ public final class Scheduler {
         this.waitings.put(futureReltime, ji);
     }
     
-    private void suspendJob(JobInfo ji) {
-        /*
-         * Pending -
-         *    ff
-         *    
-         *    
-         * 
-         * 
-         * 
-         * 
-         */
-        if (ji.status == JobStatus.Suspended)
+    private void suspendJob(JobInfo ji, long current) {
+        if (ji.status == JobStatus.Suspended) 
             return;
         removeFromQueue (ji);
+        ji.prevStatus = ji.status;
+        ji.suspendedTime = current;
         ji.status = JobStatus.Suspended;
     }
 
-    private void resumeJob(JobInfo ji) {
-        if (ji.status != JobStatus.Suspended)
+    private void recoverFromSuspension(JobInfo ji, long current) {
+        if (ji.status != JobStatus.Suspended) 
             return;
+        long delta = current - ji.suspendedTime;
+        switch (ji.prevStatus) {
+        case Pending:
+            queueToPendings(ji, current, ji.curReltime + delta, ji.curDeadline + delta);
+            break;
+        case Running: // This scheduler don't preempt job for suspending it. 
+                      // In other words, when try to suspend job which is running now, 
+                      // scheduler don't suspend it in the middle of job and waits for end of job.
+            evictToWaitings(ji, ji.curReltime + ji.ti.period + delta);
+            break;
+        case Waiting:
+            evictToWaitings(ji, ji.futureReltime + delta);
+            break;
+        case Suspended:
+            throw new RuntimeException("NON REACHABLE");
+        }
     }
     
     private void removeFromQueue(JobInfo oldJob) {

@@ -8,7 +8,6 @@ import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject.CollisionFlags;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
-import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody.btRigidBodyConstructionInfo;
 import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
 
 public class BtRigidBodyComp extends BtColliderComp {
@@ -81,6 +80,8 @@ public class BtRigidBodyComp extends BtColliderComp {
                                    body.getCollisionFlags());
         result.setAngularVelocity(getAngularVelocity())
               .setLinearVelocity(getLinearVelocity())
+              .setLinearDamping(getLinearDamping())
+              .setAngularDamping(getAngularDamping())
               .setFriction(getFriction())
               .setRestitution(getRestitution())
               .setRollingFriction(getRollingFriction());
@@ -144,6 +145,14 @@ public class BtRigidBodyComp extends BtColliderComp {
     public Vector3 getAngularVelocity() {
         return this.body.getAngularVelocity();
     }
+
+    public float getLinearDamping () {
+        return body.getLinearDamping();
+    }
+
+    public float getAngularDamping () {
+        return body.getAngularDamping();
+    }
     public float getRollingFriction() {
         return this.body.getRollingFriction();
     }
@@ -158,6 +167,14 @@ public class BtRigidBodyComp extends BtColliderComp {
     }
     public BtRigidBodyComp setLinearVelocity(Vector3 vel) {
         body.setLinearVelocity(vel);
+        return this;
+    }
+    public BtRigidBodyComp setLinearDamping(float damping) {
+        body.setDamping(damping, getAngularDamping());
+        return this;
+    }
+    public BtRigidBodyComp setAngularDamping(float damping) {
+        body.setDamping(getLinearDamping(), damping);
         return this;
     }
     public BtRigidBodyComp setAngularVelocity(Vector3 ang_vel) {

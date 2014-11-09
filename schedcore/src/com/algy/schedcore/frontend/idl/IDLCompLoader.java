@@ -17,12 +17,12 @@ public class IDLCompLoader {
         this.modifier = modifier;
     }
 
-    public BaseComp load (Map<String, IDLValue> dict) {
-        return creator.create(dict);
+    public BaseComp load (IDLGameContext context, Map<String, IDLValue> dict) {
+        return creator.create(context, dict);
     }
     
-    public void modify (BaseComp comp, Map<String, IDLValue> dict) {
-        modifier.modify(comp, dict);
+    public void modify (IDLGameContext context, BaseComp comp, Map<String, IDLValue> dict) {
+        modifier.modify(context, comp, dict);
     }
     
     public Class<? extends BaseComp> getModifiedCompType ( ) {

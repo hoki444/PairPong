@@ -6,17 +6,21 @@ public class Token {
         tSlash, // /
         tDot, // .
         tColon, // :
+        tGT, // >
+        tRShift, // >>
 
         tPackage, // package
         tDirectory, // directory
         tUsing, // using
         tUse, // use
         tUseserver, // useserver
+        tModifyserver, // modifyserver
         tCreate, // create
         tModify, // modify
         tDef, // def
         tEnd, // end
         tNull, // null
+        tAs, // as
         tName, // <name>
         
         tTrueFalse, // true | false

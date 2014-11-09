@@ -9,5 +9,5 @@ public interface IDLCompCreator {
      * key value model
      * 
      */
-    public BaseComp create (Map<String, IDLValue> dict);
+    public BaseComp create (IDLGameContext context, Map<String, IDLValue> dict);
 }

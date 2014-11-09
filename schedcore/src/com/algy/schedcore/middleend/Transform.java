@@ -50,7 +50,13 @@ public class Transform extends BaseComp {
     }
     
     public void syncFromPhysics(Matrix4 mat) {
+        float sx, sy, sz; // don't want to apply scale factors.
+        sx = this.mat.getScaleX();
+        sy = this.mat.getScaleY();
+        sz = this.mat.getScaleZ();
+
         this.mat.set(mat);
+        this.mat.scale(sx / mat.getScaleX(), sy / mat.getScaleY(), sz / mat.getScaleZ());
         this.syncRequired = false;
     }
 
@@ -75,6 +81,11 @@ public class Transform extends BaseComp {
 
     public Vector3 getTranslation(Vector3 position) {
         return this.mat.getTranslation(position);
+    }
+    
+    @Override
+    public String toString () {
+        return "Transform:\n" + this.mat;
     }
 
 }

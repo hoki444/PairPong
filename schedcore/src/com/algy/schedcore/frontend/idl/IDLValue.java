@@ -4,53 +4,79 @@ import java.util.Map;
 
 
 public class IDLValue {
-    protected static class ClassName {
-        public ClassName(String name) {
-            this.name = name;
-        }
-        public String name;
+    public static enum Type {
+        Integer, 
+        Float, 
+        String, 
+        Dict,
+        Boolean,
+        Null,
+        Array,
+        ClassName
+    }
+    private Object objBox;
+    private Type type;
+    
+    @Override
+    public String toString () {
+        return "IDL" + type + "(" + objBox + ")";
+    }
+    
+    private IDLValue (Object objBox, Type type) {
+        this.objBox = objBox;
+        this.type = type;
+    }
+    
+    public Type getType () {
+        return type;
     }
 
-    private Object objBox;
-    
-    private IDLValue (Object objBox) {
-        this.objBox = objBox;
-    }
-    
     public boolean isInteger () {
-        return objBox instanceof Integer;
+        return type == Type.Integer;
     }
 
     public boolean isFloat () {
-        return objBox instanceof Float;
+        return type == Type.Float;
     }
     
     public boolean isString () {
-        return objBox instanceof String;
+        return type == Type.String;
     }
     
     public boolean isClassName () {
-        return objBox instanceof ClassName;
+        return type == Type.ClassName;
     }
     
     public boolean isDict () {
-        return objBox instanceof Map;
+        return type == Type.Dict;
     }
     
     public boolean isBoolean () {
-        return objBox instanceof Boolean;
+        return type == Type.Boolean;
     }
+
+    public boolean isNumber () {
+        return isInteger() || isFloat();
+    }
+    
     
     public boolean isNull () {
-        return objBox == null;
+        return type == Type.Null;
     }
     
-    public int asInteger () {
-        return (Integer)objBox;
+    public boolean isArray () {
+        return type == Type.Array;
+    }
+    
+    public long asInteger () {
+        return (Long)objBox;
     }
     
     public float asFloat () {
-        return (Float)objBox;
+        if (isFloat())
+            return (Float)objBox;
+        else
+            return (float)((Long)objBox);
     }
     
     public String asString () {
@@ -58,7 +84,11 @@ public class IDLValue {
     }
     
     public String asClassName () {
-        return ((ClassName)objBox).name;
+        return (String)objBox;
+    }
+    
+    public IDLValue [] asArray () {
+        return (IDLValue [])objBox;
     }
     
     @SuppressWarnings("unchecked")
@@ -70,32 +100,35 @@ public class IDLValue {
         return (Boolean)objBox;
     }
     
-    public static IDLValue createInteger (int i) {
-        return new IDLValue(i);
+    public static IDLValue createInteger (long i) {
+        return new IDLValue(i, Type.Integer);
     }
     
     public static IDLValue createFloat (float f) {
-        return new IDLValue(f);
+        return new IDLValue(f, Type.Float);
     }
     
     public static IDLValue createString (String s) {
-        return new IDLValue(s);
+        return new IDLValue(s, Type.String);
     }
 
     public static IDLValue createClassName (String clsName) {
-        return new IDLValue(new ClassName(clsName));
+        return new IDLValue(clsName, Type.ClassName);
     }
 
     public static IDLValue createDict (Map<String, IDLValue> dict) {
-        return new IDLValue(dict);
+        return new IDLValue(dict, Type.Dict);
     }   
     
     public static IDLValue createBoolean (boolean b) {
-        return new IDLValue (b);
+        return new IDLValue (b, Type.Boolean);
     }
     
     public static IDLValue createNull () {
-        return new IDLValue(null);
+        return new IDLValue(null, Type.Null);
+    }
+    
+    public static IDLValue createArray (IDLValue [] array) {
+        return new IDLValue(array, Type.Array);
     }
 }
-

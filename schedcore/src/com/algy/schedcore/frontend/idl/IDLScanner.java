@@ -26,6 +26,8 @@ public class IDLScanner {
         keywords.put("true", TokType.tTrueFalse);
         keywords.put("false", TokType.tTrueFalse);
         keywords.put("useserver", TokType.tUseserver);
+        keywords.put("modifyserver", TokType.tModifyserver);
+        keywords.put("as", TokType.tAs);
     }
 
     public IDLScanner (final String source) {
@@ -147,7 +149,7 @@ public class IDLScanner {
                 } else {
                     type = TokType.tDot;
                 }
-            } else if (isLetter (c)) {
+            } else if (isFirstLetter (c)) {
                 builder.append(input.pop());
                 while (isLetter (input.peek()))
                     builder.append(input.pop());
@@ -161,7 +163,21 @@ public class IDLScanner {
                 continue;
             } else if (c == '#') {
                 input.pop();
-                while (!input.eof() && input.peek() != '\n') input.pop();
+                if (input.peek() == '|') {
+                    // multi-line comment #| abcdef |#
+                    input.pop();
+                    while (true)  {
+                        while (!input.eof() && input.peek() != '|') input.pop();
+                        if (input.eof())
+                            return errorToken("EOF encountered while reading multiline comment block");
+                        else if (input.pop() == '|') {
+                            if (!input.eof() && input.pop() == '#')
+                                break;
+                            continue;
+                        }
+                    }
+                } else 
+                    while (!input.eof() && input.peek() != '\n') input.pop();
                 continue;
             } else if (c == ':') {
                 builder.append(input.pop());
@@ -192,6 +208,14 @@ public class IDLScanner {
                     input.pop();
                 }
                 type = TokType.tString;
+            } else if (c == '>') {
+                builder.append(input.pop());
+                if (input.peek() == '>') {
+                    builder.append(input.pop());
+                    type = TokType.tRShift;
+                } else {
+                    type = TokType.tGT;
+                }
             } else {
                 return errorToken("Invalid character. Got '" + input.peek() + "'");
             }
@@ -235,6 +259,12 @@ public class IDLScanner {
         return c >= 'a' && c <= 'z' ||
                c >= 'A' && c <= 'Z' ||
                c >= '0' && c <= '9' ||
+               c == '_';
+    }
+
+    public static boolean isFirstLetter (char c) {
+        return c >= 'a' && c <= 'z' ||
+               c >= 'A' && c <= 'Z' ||
                c == '_';
     }
 }

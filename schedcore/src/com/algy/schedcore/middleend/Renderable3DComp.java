@@ -3,6 +3,7 @@ package com.algy.schedcore.middleend;
 import com.algy.schedcore.BaseComp;
 import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.g3d.RenderableProvider;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 
@@ -18,6 +19,7 @@ public abstract class Renderable3DComp extends BaseComp implements RenderablePro
         int newLen = arr.size;
         
         Transform transform = other(Transform.class);
+
         for (int idx = origLen; idx < newLen; idx++) {
             Renderable r = arr.get(idx);
             r.worldTransform.mul(transform.get());

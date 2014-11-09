@@ -1,28 +1,42 @@
 package com.algy.schedcore.frontend.idl;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 
+import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.Item;
 import com.algy.schedcore.middleend.GameItem;
-import com.algy.schedcore.middleend.asset.Eden;
-import com.algy.schedcore.util.Pair;
+import com.algy.schedcore.middleend.Transform;
+import com.algy.schedcore.middleend.asset.AssetList;
 
 class IDLParserForScene extends IDLParser {
-    private Eden eden;
+    private IDLGameContext context;
     private ArrayList<GameItem> sceneItems = new ArrayList<GameItem>();
-    private Item<BaseCompServer, Object> serverItem;
-    public IDLParserForScene(String source, Eden eden) {
+    private ArrayList<BaseCompServer> sceneServers = new ArrayList<BaseCompServer>();
+    private HashSet<BaseCompServer> modifiedServers = new HashSet<BaseCompServer>();
+
+    public IDLParserForScene(String source, IDLGameContext context) {
         super(source);
-        this.eden = eden;
-        this.serverItem = new Item<BaseCompServer, Object>(BaseCompServer.class);
+        this.context = context;
     }
-    
-    public IDLParserForScene(String source, Eden eden, Item<BaseCompServer, Object> serverItem) {
-        super(source);
-        this.eden = eden;
-        this.serverItem = serverItem;
+
+    public static GameItem fromDescList (IDLParser parser, 
+                                         IDLGameContext context,
+                                         ArrayList<CompDescriptor> creationList) {
+        GameItem gameItem = new GameItem();
+
+        for (CompDescriptor desc : creationList) {
+            IDLCompLoader loader = IDLLoader.assetGetCompLoader(desc.compName);
+            BaseComp comp = loader.load(context, desc.dict);
+            if (comp instanceof Transform) {
+                gameItem.remove(Transform.class);
+                gameItem.add(comp);
+            } else {
+                gameItem.add(comp);
+            }
+        }
+        return gameItem;
     }
 
     @Override
@@ -30,34 +44,57 @@ class IDLParserForScene extends IDLParser {
             Map<String, IDLValue> creationDict,
             Map<String, IDLValue> modificationDict) {
         IDLCompServerLoader loader = IDLLoader.assertGetCompServerLoader(assetName);
-        if (creationDict != null)
-            serverItem.add(loader.load(creationDict));
+        BaseCompServer server = null;
+        if (creationDict != null) {
+            server = loader.make(context, creationDict);
+        } else {
+            server = context.core().server(loader.getModifiedCompServerType());
+        }
+
         if (modificationDict != null) {
-            loader.modify(serverItem.as(loader.getModifiedCompServerType()), modificationDict);
+            if (server != null) {
+                loader.modify(context, server, modificationDict);
+            }
+        }
+
+        if (creationDict != null) {
+            sceneServers.add(server);
+        } else if (modificationDict != null) {
+            modifiedServers.add(server);
         }
     }
 
     @Override
-    protected void actionUseItem(String assetName, ArrayList<CompDescriptor> modificationList) {
-        GameItem proto = eden.make(assetName);
-        if (proto == null) {
+    protected void actionUseItem(String assetName, String itemName, ArrayList<CompDescriptor> modificationList) {
+        GameItem gameItem = context.eden().make(assetName);
+        if (gameItem == null) {
             throw new IDLNameError(assetName + " is not found " + getCurrentScannerLoc());
         }
         for (CompDescriptor desc : modificationList) {
             IDLCompLoader loader = IDLLoader.assetGetCompLoader(desc.compName);
-            loader.modify(proto.as(loader.getModifiedCompType()), desc.dict);
+            loader.modify(context, gameItem.as(loader.getModifiedCompType()), desc.dict);
         }
-        sceneItems.add(proto);
-    }
-
-    @Override
-    protected void actionCreateItem(ArrayList<CompDescriptor> creationList) {
-        GameItem gameItem = IDLLoader.fromDescList(this, creationList);
+        gameItem.setName(itemName);
         sceneItems.add(gameItem);
     }
 
-    public Pair<ArrayList<GameItem>, Item<BaseCompServer, Object>> getResult () {
-        return Pair.cons(sceneItems, serverItem);
-            
+    @Override
+    protected void actionCreateItem(String itemName, ArrayList<CompDescriptor> creationList) {
+        GameItem gameItem = fromDescList(this, context, creationList);
+        gameItem.setName(itemName);
+        sceneItems.add(gameItem);
+    }
+    
+    public IDLResult getResult () {
+        IDLResult result = new IDLResult();
+        result.createdItems = sceneItems;
+        result.createdServers = sceneServers;
+        result.modifiedServers = new ArrayList<BaseCompServer>(modifiedServers);
+        AssetList assetList = new AssetList();
+        for (GameItem item : sceneItems) {
+            item.getUsedAsset(assetList);
+        }
+        result.requiredAssetList = assetList;
+        return result;
     }
 }

@@ -46,13 +46,30 @@ public class IDLParser {
         try {
             itemDefModule();
         } catch (ParseJumpException e) {
-            throw new IDLParsingError(e.errMsg, e.errToken.locinfo);
+            throw new IDLParsingError(e.errMsg + " " + e.errToken.locinfo, e.errToken.locinfo);
+        }
+    }
+
+    public final IDLValue parseIDLValue () {
+        try {
+            return value();
+        } catch (ParseJumpException e) {
+            throw new IDLParsingError(e.errMsg + " " + e.errToken.locinfo, e.errToken.locinfo);
+        }
+    }
+    
+    public final void parseModLang () {
+        try {
+            modModule();
+        } catch (ParseJumpException e) {
+            throw new IDLParsingError(e.errMsg + " " + e.errToken.locinfo, e.errToken.locinfo);
         }
     }
 
     public final TokenLocInfo getCurrentScannerLoc() {
         return scanner.getCurrentLocInfo();
     }
+    
     
     protected String usedPackageName = "";
     protected String usedDirName = "";
@@ -66,18 +83,23 @@ public class IDLParser {
             
     }
 
-    protected void actionDefItem(String assetName,
+    protected void actionDefItem(String slashName,
             ArrayList<CompDescriptor> creationList) {
     }
-    
-    protected void actionUseItem(String assetName, ArrayList<CompDescriptor> modificationList) { }
-    protected void actionUseServer(String assetName,
+    protected void actionUseItem(String slashName, String itemName, ArrayList<CompDescriptor> modificationList) { }
+    protected void actionUseServer(String slashName,
             Map<String, IDLValue> creationDict,
             Map<String, IDLValue> modificationDict) {
     }
+    
+    protected void actionModifyServer(String slashName, Map<String, IDLValue> modificationDict) {
+    }
             
+    
+    protected void actionModifyItem (String itemName, ArrayList<CompDescriptor> modificationList) {
+    }
 
-    protected void actionCreateItem(ArrayList<CompDescriptor> creationList) {
+    protected void actionCreateItem(String itemName, ArrayList<CompDescriptor> creationList) {
     }
 
     private Token expect (Token.TokType ... toks) {
@@ -102,6 +124,14 @@ public class IDLParser {
         throw new ParseJumpException("expected " + builder + ", got " + result.type, result);
     }
     
+    private Token expectNewlineOrEOF ( ) {
+        if (peekType() != TokType.tEOF) {
+            return expect (TokType.tEndline);
+        } else {
+            return scanner.peek();
+        }
+    }
+    
     private Token consume () {
         Token result = scanner.pop();
         if (result.type == TokType.tError) {
@@ -117,26 +147,69 @@ public class IDLParser {
             throw new ParseJumpException(peeked.value, peeked);
         return type;
     }
+
+    private void modModule () {
+        MODULE_LOOP: 
+        while (true) {
+            switch (peekType()) {
+            case tModify:
+                consume ();
+                String destItemName = strings ();
+                expect(TokType.tEndline);
+                ArrayList<CompDescriptor> modlist = compDeclList(TokType.tModify);
+
+                expect(TokType.tEnd);
+                expectNewlineOrEOF();
+                
+                actionModifyItem(destItemName, modlist);
+                break;
+            case tModifyserver:
+                consume ();
+                String slashName = slashName ();
+                Map<String, IDLValue> dict = dictExpr();
+                expect(TokType.tEndline);
+                expect(TokType.tEnd);
+                expectNewlineOrEOF();
+                actionModifyServer(slashName, dict);
+                break;
+            case tUsing:
+                using();
+                break;
+            case tEOF:
+                break MODULE_LOOP;
+            default:
+                expect(TokType.tModify, TokType.tModifyserver, TokType.tUsing, TokType.tEOF);
+                break;
+            }
+        }
+    }
     
     private void sceneModule () {
         MODULE_LOOP: 
         while (true) {
             switch (peekType()) {
             case tUse:
+            {
                 consume();
-                String assetName = assetName();
+                String slashName = slashName();
+                String itemName = null;
+                
+                if (peekType() == TokType.tAs) {
+                    consume ();
+                    itemName = strings ();
+                }
+                
                 expect (TokType.tEndline);
                 ArrayList<CompDescriptor> modificationList = compDeclList (TokType.tModify);
                 expect (TokType.tEnd);
                 
-                if (peekType() != TokType.tEOF) {
-                    expect (TokType.tEndline);
-                }
-                actionUseItem (assetName, modificationList);
+                expectNewlineOrEOF();
+                actionUseItem (slashName, itemName, modificationList);
                 break;
+            }
             case tUseserver:
                 consume ();
-                String serverName = assetName();
+                String serverName = slashName();
                 Map<String, IDLValue> modificationDict = null, creationDict = null;
                 expect (TokType.tEndline);
 
@@ -161,21 +234,25 @@ public class IDLParser {
                                                  errTok);
                 }
                 expect (TokType.tEnd);
-                if (peekType() != TokType.tEOF) {
-                    expect (TokType.tEndline);
-                }
+                expectNewlineOrEOF();
                 actionUseServer(serverName, creationDict, modificationDict);
                 break;
             case tCreate:
+            {
                 consume();
-                expect (TokType.tEndline);
-                ArrayList<CompDescriptor> creationList = compDeclList (null) ;
-                expect (TokType.tEnd);
-                if (peekType() != TokType.tEOF) {
-                    expect (TokType.tEndline);
+                String itemName = null;
+                if (peekType() == TokType.tAs) {
+                    consume ();
+                    itemName = strings ();
                 }
-                actionCreateItem (creationList);
+
+                expect (TokType.tEndline);
+                ArrayList<CompDescriptor> creationList = compDeclList (TokType.tCreate) ;
+                expect (TokType.tEnd);
+                expectNewlineOrEOF();
+                actionCreateItem (itemName, creationList);
                 break;
+            }
             case tUsing:
                 using ();
                 break;
@@ -199,15 +276,13 @@ public class IDLParser {
             switch (peekType()) {
                 case tDef:
                     consume();
-                    String assetName = assetName ();
+                    String slashName = slashName ();
                     expect (TokType.tEndline);
-                    ArrayList<CompDescriptor> creationList = compDeclList (null) ;
+                    ArrayList<CompDescriptor> creationList = compDeclList (TokType.tCreate) ;
                     expect(TokType.tEnd);
 
-                    if (peekType() != TokType.tEOF) {
-                        expect (TokType.tEndline);
-                    }
-                    actionDefItem (assetName, creationList);
+                    expectNewlineOrEOF();
+                    actionDefItem (slashName, creationList);
                     break;
                 case tUsing:
                     using ();
@@ -231,7 +306,7 @@ public class IDLParser {
             String dirname;
             if (peekType() != TokType.tEndline &&
                 peekType() != TokType.tEOF) {
-                dirname = assetName();
+                dirname = slashName();
             } else
                 dirname = "";
             if (peekType() != TokType.tEOF) {
@@ -268,12 +343,7 @@ public class IDLParser {
             builder.append("/");
             builder.append(expect(TokType.tName).value);
         }
-        
-        return builder.toString();
-    }
-
-    private String assetName () {
-        String result = slashName ();
+        String result = builder.toString();
         if ("".equals(usedDirName)) {
             return result;
         } else
@@ -323,7 +393,7 @@ public class IDLParser {
             if (headLabel != null)
                 expect (headLabel);
 
-            String compName = assetName ();
+            String compName = slashName ();
             Map<String, IDLValue> dict = dictExpr ();
             expect (TokType.tEndline);
             result.add(new CompDescriptor(compName, dict));
@@ -332,6 +402,7 @@ public class IDLParser {
     }
 
     private Map<String, IDLValue> dictExpr () {
+        if (peekType() == TokType.tGT) consume ();
         expect (TokType.tEndline);
         TreeMap<String, IDLValue> result = new TreeMap<String, IDLValue> ();
         
@@ -346,24 +417,41 @@ public class IDLParser {
         }
         expect(TokType.tEnd);
         return result;
-
+    }
+    
+    private IDLValue [] arrayExpr () {
+        expect (TokType.tRShift);
+        expect (TokType.tEndline);
+        ArrayList<IDLValue> list = new ArrayList<IDLValue>();
+        
+        while (peekType() != TokType.tEnd) {
+            IDLValue val = value ();
+            expect(TokType.tEndline);
+            list.add(val);
+        }
+        expect(TokType.tEnd);
+        IDLValue [] result = new IDLValue [list.size()];
+        return list.toArray(result);
+    }
+    
+    private String strings () {
+        String val = expect(TokType.tString).value;
+        while (peekType() == TokType.tString)
+            val += consume().value;
+        return val;
     }
     
     private IDLValue value () {
         IDLValue result = null;
         switch (peekType()) {
         case tInteger:
-            result = IDLValue.createInteger(Integer.parseInt(consume().value));
+            result = IDLValue.createInteger(Long.parseLong(consume().value));
             break;
         case tFloat:
             result = IDLValue.createFloat(Float.parseFloat(consume().value));
             break;
         case tString:
-            String val = consume().value;
-            while (peekType() == TokType.tString)
-                val += consume().value;
-            
-            result = IDLValue.createString(val);
+            result = IDLValue.createString(strings ());
             break;
         case tName:
             result = IDLValue.createClassName(className ());
@@ -381,6 +469,12 @@ public class IDLParser {
             consume();
             result = IDLValue.createNull();
             break;
+        case tRShift:
+            result = IDLValue.createArray(arrayExpr());
+            break;
+        case tGT:
+            result = IDLValue.createDict(dictExpr ());
+            break;
         default:
             expect(TokType.tInteger, 
                    TokType.tFloat,
@@ -388,7 +482,9 @@ public class IDLParser {
                    TokType.tName,
                    TokType.tEndline,
                    TokType.tTrueFalse,
-                   TokType.tNull);
+                   TokType.tNull,
+                   TokType.tRShift,
+                   TokType.tGT);
             break;
         }
         return result;

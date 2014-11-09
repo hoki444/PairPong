@@ -6,6 +6,10 @@ public abstract class BaseComp implements IComp {
     public Item<BaseComp, ICore> owner() {
         return this.owner;
     }
+    public Item<BaseComp, ICore> item () {
+        // just an alias of "owner()"
+        return this.owner;
+    }
     
     public ICore core() {
         return owner.owner();
@@ -21,12 +25,15 @@ public abstract class BaseComp implements IComp {
 
     public final void adhereTo(Item<BaseComp, ICore> c) {
         this.owner = c;
-        if (c != null)
+        if (c != null) {
             onAdhered();
-        else
+        } else {
             onDetached();
+        }
     }
-
-    protected abstract void onAdhered();
-    protected abstract void onDetached();
+    
+    public void onItemAdded () { }
+    public void onItemRemoved () { }
+    protected void onAdhered() { }
+    protected void onDetached() { }
 }

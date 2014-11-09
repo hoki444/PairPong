@@ -16,6 +16,10 @@ public class PointLightComp extends LightComp {
         this.pointLight = pointLight;
     }
 
+    public void setIntensity(float intensity) {
+        pointLight.intensity = intensity;
+    }
+
     @Override
     public IComp duplicate() {
         return new PointLightComp(new PointLight().set(pointLight));

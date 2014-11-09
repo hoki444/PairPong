@@ -1,54 +1,56 @@
 package com.algy.schedcore.frontend.idl;
 
-import java.util.ArrayList;
-
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.Item;
-import com.algy.schedcore.frontend.idl.IDLParser.CompDescriptor;
-import com.algy.schedcore.middleend.GameItem;
+import com.algy.schedcore.frontend.idl.reflection.IDLCompServerTemplate;
+import com.algy.schedcore.frontend.idl.reflection.IDLCompTemplate;
+import com.algy.schedcore.frontend.idl.reflection.templates.BtDetectorTemplate;
+import com.algy.schedcore.frontend.idl.reflection.templates.BtPhysicsWorldTemplate;
+import com.algy.schedcore.frontend.idl.reflection.templates.BtRigidBodyTemplate;
+import com.algy.schedcore.frontend.idl.reflection.templates.CameraServerTemplate;
+import com.algy.schedcore.frontend.idl.reflection.templates.LightCompTemplate;
+import com.algy.schedcore.frontend.idl.reflection.templates.SimpleModelCompTemplate;
+import com.algy.schedcore.frontend.idl.reflection.templates.TransformTemplate;
+import com.algy.schedcore.middleend.CameraServer;
+import com.algy.schedcore.middleend.LightComp;
+import com.algy.schedcore.middleend.ModelFactoryComp;
 import com.algy.schedcore.middleend.Transform;
-import com.algy.schedcore.middleend.asset.AssetDirectory;
-import com.algy.schedcore.middleend.asset.Eden;
-import com.algy.schedcore.util.Pair;
-import com.badlogic.gdx.files.FileHandle;
+import com.algy.schedcore.middleend.bullet.BtDetectorComp;
+import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
+import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
+import com.algy.schedcore.util.ObjectDirectory;
 
 public class IDLLoader {
-    private static AssetDirectory<IDLCompLoader> compLoaders = new AssetDirectory<IDLCompLoader>();
-    private static AssetDirectory<IDLCompServerLoader> compServerLoaders = new AssetDirectory<IDLCompServerLoader>();
+    private static ObjectDirectory<IDLCompLoader> compLoaders = new ObjectDirectory<IDLCompLoader>();
+    private static ObjectDirectory<IDLCompServerLoader> compServerLoaders = new ObjectDirectory<IDLCompServerLoader>();
     
     
     static {
-        // TODO
+        registerCompTemplate("transform", TransformTemplate.class, Transform.class);
+        registerCompTemplate("light", LightCompTemplate.class, LightComp.class);
+        registerCompTemplate("bullet/detector", BtDetectorTemplate.class, BtDetectorComp.class);
+        registerCompTemplate("bullet/rigidBody", BtRigidBodyTemplate.class, BtRigidBodyComp.class);
+        registerCompTemplate("simpleModel", SimpleModelCompTemplate.class, ModelFactoryComp.class);
+        registerCompServerTemplate("camera", CameraServerTemplate.class, CameraServer.class);
+        registerCompServerTemplate("bullet/world", 
+                                   BtPhysicsWorldTemplate.class, 
+                                   BtPhysicsWorld.class);
     }
     
-    static GameItem fromDescList (IDLParser parser, 
-            ArrayList<CompDescriptor> creationList) {
-        GameItem gameItem = new GameItem();
 
-        for (CompDescriptor desc : creationList) {
-            IDLCompLoader loader = IDLLoader.assetGetCompLoader(desc.compName);
-            BaseComp comp = loader.load(desc.dict);
-            if (comp instanceof Transform) {
-                gameItem.remove(Transform.class);
-                gameItem.add(comp);
-            } else {
-                gameItem.add(comp);
-            }
-        }
-        return gameItem;
-    }
-
-    public synchronized static boolean hasCompLoader (String assetName) {
+    public synchronized static 
+    boolean hasCompLoader (String assetName) {
         return compLoaders.has(assetName);
     }
     
-    public synchronized static boolean hasServerLoader (String assetName) {
+    public synchronized static 
+    boolean hasServerLoader (String assetName) {
         return compServerLoaders.has(assetName);
 
     }
     
-    public synchronized static IDLCompLoader assetGetCompLoader (String assetName) {
+    public synchronized static 
+    IDLCompLoader assetGetCompLoader (String assetName) {
         IDLCompLoader result = getCompLoader (assetName);
         if (result == null) {
             throw new IDLNameError(assetName + " is not found");
@@ -56,7 +58,8 @@ public class IDLLoader {
         return result;
     }
 
-    public synchronized static IDLCompServerLoader assertGetCompServerLoader (String assetName) {
+    public synchronized static 
+    IDLCompServerLoader assertGetCompServerLoader (String assetName) {
         IDLCompServerLoader result = getCompServerLoader (assetName);
         
         if (result == null) {
@@ -65,17 +68,39 @@ public class IDLLoader {
         return result;
     }
     
-    public synchronized static IDLCompLoader getCompLoader (String assetName) {
+    public synchronized static 
+    IDLCompLoader getCompLoader (String assetName) {
         IDLCompLoader result = compLoaders.get(assetName);
         return result;
     }
 
-    public synchronized static IDLCompServerLoader getCompServerLoader (String assetName) {
+    public synchronized static 
+    IDLCompServerLoader getCompServerLoader (String assetName) {
         IDLCompServerLoader result = compServerLoaders.get(assetName);
         return result;
     }
     
-    public synchronized static void registerCompLoader (IDLCompLoader loader) {
+    public synchronized static void 
+    registerCompTemplate (String name, 
+                          Class<? extends IDLCompTemplate> templateClass,
+                          Class<? extends BaseComp> associatedType) {
+        IDLCompCreatorModifier cm = 
+                IDLCompTemplate.makeCreatorModifier(templateClass, associatedType);
+        registerCompLoader(new IDLCompLoader(name, cm, cm));
+    }
+
+    public synchronized static void 
+    registerCompServerTemplate (String name, 
+                                Class<? extends IDLCompServerTemplate> templateClass,
+                                Class<? extends BaseCompServer> associatedType) {
+        IDLCompServerCreatorModifier cm = 
+                IDLCompServerTemplate.makeCreatorModifier(templateClass, associatedType);
+        registerCompServerLoader(new IDLCompServerLoader(name, cm, cm));
+    }
+    
+    
+    public synchronized static 
+    void registerCompLoader (IDLCompLoader loader) {
         String assetName = loader.assetName;
         if (compLoaders.has(assetName)) {
             throw new IDLNameError("Tried to register " + assetName + " as a IDL component loader, " +
@@ -86,24 +111,22 @@ public class IDLLoader {
         }
     }
     
-    public synchronized static void registerCompServerLoader (IDLCompServerLoader loader) {
-        String assetName = loader.assetName;
-        if (compServerLoaders.has(assetName)) {
-            throw new IDLNameError("Tried to register " + assetName + " as a IDL component server loader, " +
+    public synchronized static 
+    void registerCompServerLoader (IDLCompServerLoader loader) {
+        String compServerName = loader.compServerName;
+        if (compServerLoaders.has(compServerName)) {
+            throw new IDLNameError("Tried to register " + compServerName + " as a IDL component server loader, " +
                                    "But already have loader with the same name");
                            
         } else {
-            compServerLoaders.put(assetName, loader, true);
+            compServerLoaders.put(compServerName, loader, true);
         }
     }
     
     
-    
-    public synchronized static Eden loadItemDef (FileHandle fileHandle) {
-        return loadItemDef (fileHandle.readString());
-    }
-    public synchronized static Eden loadItemDef (String source) {
-        IDLParserForDef parser = new IDLParserForDef(source);
+    public synchronized static 
+    IDLResult loadItemDef (String source, IDLGameContext context) {
+        IDLParserForDef parser = new IDLParserForDef(source, context);
         try {
             parser.parseItemLang();
         } catch (Throwable t) {
@@ -112,23 +135,25 @@ public class IDLLoader {
         return parser.getResult();
     }
     
-    public synchronized static
-    Pair<ArrayList<GameItem>, Item<BaseCompServer, Object>> 
-    loadScene (FileHandle fileHandle, Eden eden, Item<BaseCompServer, ?> serverItem) {
-        return loadScene (fileHandle.readString(), eden, serverItem);
-    }
    
-    @SuppressWarnings("unchecked")
-    public synchronized static
-    Pair<ArrayList<GameItem>, Item<BaseCompServer, Object>> 
-    loadScene (String source, Eden eden, Item<BaseCompServer, ?> serverItem) {
+    public synchronized static IDLResult
+    loadScene (String source, IDLGameContext context) {
         IDLParserForScene parser;
-        if (serverItem == null)
-            parser = new IDLParserForScene(source, eden);
-        else
-            parser = new IDLParserForScene(source, eden, (Item<BaseCompServer, Object>)serverItem);
+        parser = new IDLParserForScene(source, context);
         try {
             parser.parseSceneLang();
+        } catch (Throwable t) {
+            throw new IDLLoadError(t);
+        }
+        return parser.getResult();
+    }
+    
+    public synchronized static IDLResult
+    modifyScene (String source, IDLGameContext context) {
+        IDLParserForMod parser;
+        parser = new IDLParserForMod(source, context);
+        try {
+            parser.parseModLang();
         } catch (Throwable t) {
             throw new IDLLoadError(t);
         }

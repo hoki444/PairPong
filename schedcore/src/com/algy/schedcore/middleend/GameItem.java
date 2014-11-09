@@ -1,23 +1,49 @@
 package com.algy.schedcore.middleend;
 
 import com.algy.schedcore.BaseComp;
+import com.algy.schedcore.BaseCompServer;
 import com.algy.schedcore.ICore;
 import com.algy.schedcore.Item;
+import com.algy.schedcore.middleend.asset.AssetList;
+import com.algy.schedcore.middleend.asset.AssetServer;
+import com.algy.schedcore.middleend.asset.AssetUsable;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
 public class GameItem extends Item<BaseComp, ICore> {
     GameItem prev = null, next = null;
+    private String name = null;
 
     public GameItem() {
         super(BaseComp.class);
         this.add(new Transform(0, 0, 0)); 
     }
-
+    
     private GameItem(Transform transform) {
         super(BaseComp.class);
         this.add(transform);
+    }
+
+    public String getName () {
+        return name;
+    }
+    
+    public void setName (String newName) {
+        GameCore core = core();
+        String oldName = name;
+        this.name = newName;
+        if (core != null) {
+            core.updateNameMap(this, oldName);
+        }
+    }
+    
+    public void getUsedAsset (AssetList assetListOut) {
+        for (BaseComp comp : this) {
+            if (comp instanceof AssetUsable) {
+                ((AssetUsable)comp).declareAsset(assetListOut);
+            }
+        }
     }
     
     public GameItem duplicate (Matrix4 trMat) {
@@ -54,9 +80,19 @@ public class GameItem extends Item<BaseComp, ICore> {
         return duplicate((Matrix4)null);
 
     }
-    
     public Transform getTransform() {
         return this.as(Transform.class);
     }
     
+    protected GameCore core () {
+        return (GameCore)owner();
+    }
+    
+    protected <T extends BaseCompServer> T server(Class<T> serverClass) {
+        return core().server(serverClass);
+    }
+    
+    protected AssetServer assetServer() {
+        return server(AssetServer.class);
+    }
 }

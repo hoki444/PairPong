@@ -2,26 +2,29 @@ package com.algy.schedcore.frontend.idl;
 
 import java.util.ArrayList;
 
-import com.algy.schedcore.frontend.idl.IDLParser.CompDescriptor;
 import com.algy.schedcore.middleend.GameItem;
-import com.algy.schedcore.middleend.asset.Eden;
+import com.algy.schedcore.util.ObjectDirectory;
 
 class IDLParserForDef extends IDLParser {
-    public IDLParserForDef(String source) {
+    private IDLGameContext context;
+    public IDLParserForDef(String source, IDLGameContext context) {
         super(source);
+        this.context = context;
     }
-    private Eden result = new Eden();
+    private ObjectDirectory<GameItem> resultDir = new ObjectDirectory<GameItem>();
 
     @Override
-    protected void actionDefItem(String assetName, ArrayList<CompDescriptor> creationList) {
-        if (result.hasPrototype(assetName))
-            throw new IDLNameError("duplicated name of item (" + assetName + ") " + 
+    protected void actionDefItem(String slashName, ArrayList<CompDescriptor> creationList) {
+        if (resultDir.has(slashName))
+            throw new IDLNameError("duplicated name of item (" + slashName + ") " + 
                                    getCurrentScannerLoc());
-        GameItem gameItem = IDLLoader.fromDescList(this, creationList);
-        result.putPrototype(assetName, gameItem);
+        GameItem gameItem = IDLParserForScene.fromDescList(this, context, creationList);
+        resultDir.put(slashName, gameItem, true);
     }
     
-    public Eden getResult () {
+    public IDLResult getResult () {
+        IDLResult result = new IDLResult();
+        result.newItemDef = resultDir;
         return result;
     }
 }

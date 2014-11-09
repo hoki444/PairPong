@@ -5,5 +5,5 @@ import java.util.Map;
 import com.algy.schedcore.BaseCompServer;
 
 public interface IDLCompServerCreator {
-    public BaseCompServer create (Map<String, IDLValue> dict);
+    public BaseCompServer create (IDLGameContext context, Map<String, IDLValue> dict);
 }

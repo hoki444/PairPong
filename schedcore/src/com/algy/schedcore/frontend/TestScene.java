@@ -8,31 +8,42 @@ import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
+import com.badlogic.gdx.graphics.g3d.environment.ShadowMap;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 
 public class TestScene extends Scene {
-
     private Model boxModel, ballModel;
+    private Texture tex;
     @Override
     public void postRender() {
+        SpriteBatch sb = new SpriteBatch();
+        sb.begin();
+        sb.draw(tex, 0, 0, 100, 100);
+        sb.end();
     }
 
     @Override
     public void firstPreparation() {
+        tex = new Texture("doge.jpg");
         core.server(EnvServer.class).ambientLightColor.set(.2f, .2f, .2f, 1); 
         core.server(BtPhysicsWorld.class).world.setGravity(new Vector3(0, -9.8f, 0));
         
         boxModel = new ModelBuilder().createBox(4, .2f, 4, 
-                new Material(ColorAttribute.createDiffuse(1f, 0.5f, 0.3f, 1f),
-                             ColorAttribute.createSpecular(.3f, .3f, .3f, 1f)), 
-                Usage.Position | Usage.Normal);
+                new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
+                             ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
+                             TextureAttribute.createSpecular(new TextureRegion(tex))),
+                Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         ballModel = new ModelBuilder().createSphere(.8f, .8f, .8f, 10, 10, 
                 new Material(ColorAttribute.createDiffuse(0.5f, 0.5f, 0.5f, 1f),
                              ColorAttribute.createSpecular(.95f, .95f, .95f, 1f),
@@ -42,8 +53,9 @@ public class TestScene extends Scene {
 
     @Override
     public void prepare() {
-        core.server(CameraServer.class).setPosition(new Vector3(3, .2f, 3))
-                                       .lookAt(new Vector3(0, 0, 0)); 
+        core.server(CameraServer.class).setPosition(new Vector3(1, 5f, 1))
+                                       .lookAt(new Vector3(0, 0, 0))
+                                       .setUpVector(new Vector3(1, 0, 0)); 
         GameItem boardItem = new GameItem(), 
                  ballItem = new GameItem(),
                  lightItem = new GameItem();

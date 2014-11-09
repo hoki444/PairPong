@@ -9,7 +9,7 @@ import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.bullet.CollisionComp.CollisionInfo;
 import com.algy.schedcore.util.IntegerBitmap;
-import com.algy.schedcore.util.MutableLister;
+import com.algy.schedcore.util.Lister;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.ContactListener;
@@ -28,6 +28,7 @@ import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSol
 
 
 public class BtPhysicsWorld extends BaseSchedServer {
+
     private static class CollisionIterable implements Iterable<CollisionInfo> {
         private btPersistentManifold manifold;
         private boolean isFirst;
@@ -203,7 +204,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
     }
 
     @Override
-    public void hookFilters(MutableLister<Class<? extends BaseComp>> sigs) {
+    public void listCompSignatures(Lister<Class<? extends BaseComp>> sigs) {
         sigs.add(BtColliderComp.class);
     }
 
@@ -216,9 +217,9 @@ public class BtPhysicsWorld extends BaseSchedServer {
             if (ccomp instanceof BtRigidBodyComp) {
                 this.world.addRigidBody(((BtRigidBodyComp)comp).getRigidBody());
                 ((BtRigidBodyComp)comp).getRigidBody().setUserValue(collId);
-            } else if (ccomp instanceof BtCollObjComp) {
-                this.world.addCollisionObject(((BtCollObjComp)comp).getCollObj());
-                ((BtCollObjComp)comp).getCollObj().setUserValue(collId);
+            } else if (ccomp instanceof BtDetectorComp) {
+                this.world.addCollisionObject(((BtDetectorComp)comp).getCollObj());
+                ((BtDetectorComp)comp).getCollObj().setUserValue(collId);
             }
         }
     }
@@ -230,8 +231,8 @@ public class BtPhysicsWorld extends BaseSchedServer {
             collBitmap.remove(ccomp.getCollId());
             if (ccomp instanceof BtRigidBodyComp) {
                 this.world.removeRigidBody(((BtRigidBodyComp)comp).getRigidBody());
-            } else if (ccomp instanceof BtCollObjComp) {
-                this.world.removeCollisionObject(((BtCollObjComp)comp).getCollObj());
+            } else if (ccomp instanceof BtDetectorComp) {
+                this.world.removeCollisionObject(((BtDetectorComp)comp).getCollObj());
             }
         }
     }
@@ -266,5 +267,13 @@ public class BtPhysicsWorld extends BaseSchedServer {
         this.ctrtSolver.release();
         this.world.release();
         this.contactListener.release();
+    }
+
+    public Vector3 getGravity() {
+        return this.world.getGravity();
+    }
+
+    public void setGravity(Vector3 gravity) {
+        this.world.setGravity(gravity);
     }
 }

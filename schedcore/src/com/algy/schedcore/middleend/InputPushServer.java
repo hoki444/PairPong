@@ -2,7 +2,7 @@ package com.algy.schedcore.middleend;
 
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.util.MutableLister;
+import com.algy.schedcore.util.Lister;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
@@ -21,7 +21,7 @@ public class InputPushServer extends BaseCompServer {
 
 
     @Override
-    public void hookFilters(MutableLister<Class<? extends BaseComp>> sigs) {
+    public void listCompSignatures(Lister<Class<? extends BaseComp>> sigs) {
         sigs.add(InputComp.class);
     }
 

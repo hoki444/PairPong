@@ -2,9 +2,11 @@ package com.algy.schedcore.middleend.asset;
 
 import java.util.Map.Entry;
 
+import com.algy.schedcore.util.ObjectDirectory;
+
 public class TestAssetDirectory {
     public static void main(String [] args) {
-        AssetDirectory<String> assetDirectory = new AssetDirectory<String>();
+        ObjectDirectory<String> assetDirectory = new ObjectDirectory<String>();
         
         assetDirectory.put("holly/xxxk", "NO SWEARING...", true);
         if(!assetDirectory.put("holly/land/billy", "Hi!", true))

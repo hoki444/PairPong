@@ -1,13 +1,32 @@
 package com.algy.schedcore.middleend;
 
+import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.util.Lister;
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.math.Vector3;
 
-public abstract class CameraServer extends BaseCompServer {
+public class CameraServer extends BaseCompServer {
     private boolean isDirty = false;
+    private boolean isPersp;
+    private OrthographicCamera ortho;
+    private PerspectiveCamera persp;
     
-    protected abstract Camera getInternalCamera ();
+    public CameraServer (float vwidth, float vheight, float fieldOfView) {
+        isPersp = true;
+        persp = new PerspectiveCamera(fieldOfView, vwidth, vheight);
+    }
+
+    public CameraServer (float vwidth, float vheight) {
+        isPersp = false;
+        ortho = new OrthographicCamera(vwidth, vheight);
+    }
+    
+    protected Camera getInternalCamera () {
+        return isPersp? persp : ortho;
+    }
 
     // Aspect from outter env
     public Camera getCamera() {
@@ -19,6 +38,36 @@ public abstract class CameraServer extends BaseCompServer {
         return cam;
     }
     
+    public void setCamera (Camera camera) {
+        if (camera instanceof PerspectiveCamera) {
+            isDirty = false;
+            isPersp = true;
+            persp = (PerspectiveCamera)camera;
+        } else if (camera instanceof OrthographicCamera) {
+            isDirty = false;
+            isPersp = false;
+            ortho = (OrthographicCamera)camera;
+        } else
+            throw new IllegalArgumentException();
+    }
+    
+    public boolean isPerspective () { 
+        return isPersp;
+    }
+    
+    public void setFieldOfView (float fieldOfView) {
+        if (!isPersp)
+            throw new IllegalStateException("Camera server has an orthographic camera");
+        persp.fieldOfView = fieldOfView;
+        setDirty();
+    }
+    
+    public void resizeViewPort (float width, float height) {
+        getInternalCamera().viewportWidth = width;
+        getInternalCamera().viewportHeight = height;
+        setDirty();
+    }
+
     protected void setDirty() { 
         this.isDirty = true;
     }
@@ -56,5 +105,27 @@ public abstract class CameraServer extends BaseCompServer {
         this.getInternalCamera().lookAt(vec);
         return this;
     }
+    public float getNear () {
+        return getInternalCamera().near;
+    }
+    
+    public float getFar () {
+        return getInternalCamera().far;
+    }
+
+    @Override
+    public void listCompSignatures(Lister<Class<? extends BaseComp>> compSigList) { }
+
+    @Override
+    public void hookAddComp(BaseComp comp) { }
+
+    @Override
+    public void hookRemoveComp(BaseComp comp) { }
+
+    @Override
+    protected void onAdhered() { }
+
+    @Override
+    protected void onDetached() { }
 
 }

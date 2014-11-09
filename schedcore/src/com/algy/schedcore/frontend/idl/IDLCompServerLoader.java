@@ -5,23 +5,25 @@ import java.util.Map;
 import com.algy.schedcore.BaseCompServer;
 
 public class IDLCompServerLoader {
-    public final String assetName;
+    public final String compServerName;
     public IDLCompServerCreator creator;
     public IDLCompServerModifier modifier;
 
-    public IDLCompServerLoader(String assetName, IDLCompServerCreator creator,
+    public IDLCompServerLoader(
+            String compServerName, 
+            IDLCompServerCreator creator,
             IDLCompServerModifier modifier) {
-        this.assetName = assetName;
+        this.compServerName = compServerName;
         this.creator = creator;
         this.modifier = modifier;
     }
 
-    public BaseCompServer load (Map<String, IDLValue> dict) {
-        return creator.create(dict);
+    public BaseCompServer make (IDLGameContext context, Map<String, IDLValue> dict) {
+        return creator.create(context, dict);
     }
     
-    public BaseCompServer modify (BaseCompServer compServer, Map<String, IDLValue> dict) {
-        modifier.modify(compServer, dict);
+    public BaseCompServer modify (IDLGameContext context, BaseCompServer compServer, Map<String, IDLValue> dict) {
+        modifier.modify(context, compServer, dict);
         return compServer;
     }
     public Class<? extends BaseCompServer> getModifiedCompServerType ( ) {
