@@ -7,9 +7,9 @@ def box
     end
     material:
       diffuse:
-        r: 0.3
-        g: 0.3
-        b: 0.3
+        r: .4
+        g: .4
+        b: .4
       end
       specular:
         r: .7
