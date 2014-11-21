@@ -13,10 +13,12 @@ import com.badlogic.gdx.math.Vector3;
 
 public class LightCompTemplate extends IDLCompTemplate {
     private static class Directional {
+        @SuppressWarnings("unused")
         RequiredFields req = new RequiredFields("direction");
         public Vector3 direction = null;
     }
     private static class Point {
+        @SuppressWarnings("unused")
         RequiredFields req = new RequiredFields("intensity");
         public Float intensity = null;
     }

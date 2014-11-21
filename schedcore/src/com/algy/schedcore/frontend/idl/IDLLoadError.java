@@ -1,9 +1,7 @@
 package com.algy.schedcore.frontend.idl;
 
-import com.algy.schedcore.SchedcoreRuntimeError;
 
-public class IDLLoadError extends SchedcoreRuntimeError {
-
+public class IDLLoadError extends IDLError {
     public IDLLoadError() {
         super();
     }

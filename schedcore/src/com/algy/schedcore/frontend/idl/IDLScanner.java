@@ -170,9 +170,12 @@ public class IDLScanner {
                         while (!input.eof() && input.peek() != '|') input.pop();
                         if (input.eof())
                             return errorToken("EOF encountered while reading multiline comment block");
-                        else if (input.pop() == '|') {
-                            if (!input.eof() && input.pop() == '#')
+                        else { 
+                            input.pop();
+                            if (!input.eof() && input.peek() == '#') {
+                                input.pop();
                                 break;
+                            }
                             continue;
                         }
                     }

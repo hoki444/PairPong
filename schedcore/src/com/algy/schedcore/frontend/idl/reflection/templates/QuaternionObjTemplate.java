@@ -13,6 +13,7 @@ public class QuaternionObjTemplate extends IDLObjectReflectorTemplate {
         public float roll;
     }
     private static class AxisRotation {
+        @SuppressWarnings("unused")
         public static RequiredFields req = new RequiredFields("axis");
         public Vector3 axis;
         public float angle;

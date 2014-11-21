@@ -109,20 +109,20 @@ public class LazyAssetManager implements Disposable, AssetProvider {
         return new Promise<T>() {
             @Override
             public T get() {
-                if (isLoaded(fileName)) {
-                    return fileAssets.get(fileName, type);
-                } else if (allowOnTheFlyLoading) {
-                    getLogger().info("[On-the-fly loading] " + fileName);
-                    return loadImmediately(fileName, type);
-                } else
-                    throw new SchedcoreRuntimeError("Asset not loaded: " + fileName);
+                return LazyAssetManager.this.get(fileName, type);
             }
         };
     }
     
     @Override
     public <T> T get (String fileName, Class<T> type) {
-        return this.fileAssets.get(fileName, type);
+        if (isLoaded(fileName)) {
+            return fileAssets.get(fileName, type);
+        } else if (allowOnTheFlyLoading) {
+            getLogger().info("[On-the-fly loading] " + fileName);
+            return loadImmediately(fileName, type);
+        } else
+            throw new SchedcoreRuntimeError("Asset not loaded: " + fileName);
     }
 
     public <T, P extends AssetLoaderParameters<T>> void setLoader(

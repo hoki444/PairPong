@@ -1,9 +1,12 @@
 package com.algy.schedcore.frontend.idl;
 
+import java.util.Map;
+
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
 import com.algy.schedcore.frontend.idl.reflection.IDLCompServerTemplate;
 import com.algy.schedcore.frontend.idl.reflection.IDLCompTemplate;
+import com.algy.schedcore.frontend.idl.reflection.templates.AssetModelTemplate;
 import com.algy.schedcore.frontend.idl.reflection.templates.BtDetectorTemplate;
 import com.algy.schedcore.frontend.idl.reflection.templates.BtPhysicsWorldTemplate;
 import com.algy.schedcore.frontend.idl.reflection.templates.BtRigidBodyTemplate;
@@ -11,9 +14,11 @@ import com.algy.schedcore.frontend.idl.reflection.templates.CameraServerTemplate
 import com.algy.schedcore.frontend.idl.reflection.templates.LightCompTemplate;
 import com.algy.schedcore.frontend.idl.reflection.templates.SimpleModelCompTemplate;
 import com.algy.schedcore.frontend.idl.reflection.templates.TransformTemplate;
+import com.algy.schedcore.middleend.AssetModelComp;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.LightComp;
 import com.algy.schedcore.middleend.ModelFactoryComp;
+import com.algy.schedcore.middleend.SimpleCameraControllerComp;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
@@ -28,9 +33,27 @@ public class IDLLoader {
     static {
         registerCompTemplate("transform", TransformTemplate.class, Transform.class);
         registerCompTemplate("light", LightCompTemplate.class, LightComp.class);
+        registerCompTemplate("simpleModel", SimpleModelCompTemplate.class, ModelFactoryComp.class);
+        registerCompTemplate("asset/model", AssetModelTemplate.class, AssetModelComp.class);
         registerCompTemplate("bullet/detector", BtDetectorTemplate.class, BtDetectorComp.class);
         registerCompTemplate("bullet/rigidBody", BtRigidBodyTemplate.class, BtRigidBodyComp.class);
-        registerCompTemplate("simpleModel", SimpleModelCompTemplate.class, ModelFactoryComp.class);
+        registerCompLoader(new IDLCompLoader("debug/cameraController", 
+                new IDLCompCreator() {
+                    @Override
+                    public BaseComp create(IDLGameContext context, Map<String, IDLValue> dict) {
+                        return new SimpleCameraControllerComp();
+                    }
+                },
+                new IDLCompModifier() {
+                    @Override
+                    public void modify(IDLGameContext context, BaseComp freshComp,
+                            Map<String, IDLValue> dict) {
+                    }
+                    @Override
+                    public Class<? extends BaseComp> getType() {
+                        return SimpleCameraControllerComp.class;
+                    }
+                }));
         registerCompServerTemplate("camera", CameraServerTemplate.class, CameraServer.class);
         registerCompServerTemplate("bullet/world", 
                                    BtPhysicsWorldTemplate.class, 
@@ -53,7 +76,7 @@ public class IDLLoader {
     IDLCompLoader assetGetCompLoader (String assetName) {
         IDLCompLoader result = getCompLoader (assetName);
         if (result == null) {
-            throw new IDLNameError(assetName + " is not found");
+            throw new IDLNameError("The component name  '" + assetName + "' is not defined");
         }
         return result;
     }
@@ -63,7 +86,7 @@ public class IDLLoader {
         IDLCompServerLoader result = getCompServerLoader (assetName);
         
         if (result == null) {
-            throw new IDLNameError(assetName + " is not found");
+            throw new IDLNameError("The server name  '" + assetName + "' is not defined");
         }
         return result;
     }

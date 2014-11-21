@@ -83,6 +83,22 @@ public class Core implements ICore {
         return scheduler.suspend(comp.taskId(), tickGetter);
     }
     
+    public void suspendItem (Item<BaseComp, ICore> item) {
+        for (BaseComp comp : item) {
+            if (comp instanceof BaseSchedComp) {
+                suspendComp((BaseSchedComp)comp);
+            }
+        }
+    }
+    
+    public void resumeItem (Item<BaseComp, ICore> item) {
+        for (BaseComp comp : item) {
+            if (comp instanceof BaseSchedComp) {
+                resumeComp((BaseSchedComp)comp);
+            }
+        }
+    }
+    
     public boolean resumeComp (BaseSchedComp comp) {
         return scheduler.resume (comp.taskId(), tickGetter);
     }
@@ -124,6 +140,10 @@ public class Core implements ICore {
 
     public Item<BaseCompServer, ICore> getServerItem() {
         return this.serverItem;
+    }
+    
+    public Iterable<BaseCompServer> servers () {
+        return serverItem;
     }
 
     public <T extends BaseCompServer> T server(Class<T> cls) {

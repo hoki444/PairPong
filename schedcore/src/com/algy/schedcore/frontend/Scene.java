@@ -203,12 +203,30 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     }
 
     private BtPhysicsWorld worldServer;
+    
+    private int renderTaskId = -1;
     void internalPreparation () {
         this.modelBatch = new ModelBatch();
         if (config.useBulletPhysics) {
             BtPhysicsWorld.initBullet();
         }
         Gdx.graphics.setContinuousRendering(true);
+        
+        long period = config.itemRenderingPeriod;
+        renderTaskId = core.sched().addPeriodic(tickGetter.getTickCount(), 
+                                 new RenderWork(), 
+                                 period, 
+                                 0, 
+                                 RENDER_SIG);
+        suspendRendering();
+    }
+
+    protected void suspendRendering () {
+        core().sched().suspend(renderTaskId, tickGetter);
+    }
+
+    protected void resumeRendering () {
+        core().sched().resume(renderTaskId, tickGetter);
     }
     
     private class RenderWork implements ISchedTask {
@@ -234,16 +252,10 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     
     void internalPreRender () {
         if (first) {
-            long period = config.itemRenderingPeriod;
-            core.sched().addPeriodic(tickGetter.getTickCount(), 
-                                     new RenderWork(), 
-                                     period, 
-                                     0, 
-                                     RENDER_SIG);
+            resumeRendering();
             first = false;
         }
     }
-    
     
     void syncSceneState () {
         if (state != nextState) {
@@ -375,19 +387,23 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     public void reserveItem (Scene scene, ItemReservable coreProxy) {
         Done ();
     }
+
     @Override
     public void gatherAsset (Scene scene, AssetGathererProxy gathererProxy) {
         Done ();
     }
+
     @Override
     public void loadAsset (Scene scene, AssetLoadingController controller, AssetList newAssetList) {
         controller.join();
         Done ();
     }
+
     @Override
     public void beginResourceInitialization (Scene scene) {
         Done ();
     }
+
     @Override
     public void endResourceInitialization (Scene scene) {
         Done ();

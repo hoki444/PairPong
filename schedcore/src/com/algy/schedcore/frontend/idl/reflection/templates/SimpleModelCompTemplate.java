@@ -30,18 +30,21 @@ public class SimpleModelCompTemplate extends IDLCompTemplate {
         Vector3 from;
         Vector3 to;
     }
+
     public static class LineGrid {
         int xDivisions;
         int zDivisions;
         float xSize;
         float zSize;
     }
+
     public static class ModelShape {
         public float width;
         public float height;
         public float depth;
         public int divisions = 10;
     }
+
     public static class Capsule {
         public float radius;
         public float height;

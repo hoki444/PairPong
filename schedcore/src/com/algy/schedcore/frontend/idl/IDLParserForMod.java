@@ -21,6 +21,9 @@ class IDLParserForMod extends IDLParser {
     protected void actionModifyItem(String itemName,
             ArrayList<CompDescriptor> modificationList) {
         GameItem gameItem = context.core().getItemWithName(itemName);
+        if (gameItem == null) {
+            throw new IDLLoadError("gameItem with the name of '" + itemName + "' is not found");
+        }
         for (CompDescriptor desc : modificationList) {
             IDLCompLoader loader = IDLLoader.assetGetCompLoader(desc.compName);
             loader.modify(context, 

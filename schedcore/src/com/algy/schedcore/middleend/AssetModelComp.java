@@ -4,14 +4,13 @@ import com.algy.schedcore.IComp;
 import com.algy.schedcore.middleend.asset.AssetList;
 import com.algy.schedcore.middleend.asset.AssetServer;
 import com.algy.schedcore.middleend.asset.AssetUsable;
-import com.algy.schedcore.util.Promise;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.badlogic.gdx.math.Matrix4;
 
 public class AssetModelComp extends Renderable3DComp implements AssetUsable {
-    private String assetName;
+    public String assetName;
     public Matrix4 localTransform;
     
     public AssetModelComp (String assetName) {

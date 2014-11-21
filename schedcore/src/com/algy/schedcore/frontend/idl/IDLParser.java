@@ -3,6 +3,7 @@ package com.algy.schedcore.frontend.idl;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.jar.Attributes.Name;
 
 import com.algy.schedcore.frontend.idl.Token.TokType;
 
@@ -154,7 +155,7 @@ public class IDLParser {
             switch (peekType()) {
             case tModify:
                 consume ();
-                String destItemName = strings ();
+                String destItemName = expect (TokType.tName).value;
                 expect(TokType.tEndline);
                 ArrayList<CompDescriptor> modlist = compDeclList(TokType.tModify);
 
@@ -167,9 +168,8 @@ public class IDLParser {
                 consume ();
                 String slashName = slashName ();
                 Map<String, IDLValue> dict = dictExpr();
-                expect(TokType.tEndline);
-                expect(TokType.tEnd);
                 expectNewlineOrEOF();
+
                 actionModifyServer(slashName, dict);
                 break;
             case tUsing:
@@ -196,7 +196,7 @@ public class IDLParser {
                 
                 if (peekType() == TokType.tAs) {
                     consume ();
-                    itemName = strings ();
+                    itemName = expect(TokType.tName).value;
                 }
                 
                 expect (TokType.tEndline);
@@ -243,7 +243,7 @@ public class IDLParser {
                 String itemName = null;
                 if (peekType() == TokType.tAs) {
                     consume ();
-                    itemName = strings ();
+                    itemName = expect (TokType.tName).value;
                 }
 
                 expect (TokType.tEndline);
