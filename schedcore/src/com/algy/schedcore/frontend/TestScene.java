@@ -1,13 +1,16 @@
 package com.algy.schedcore.frontend;
 
+import com.algy.schedcore.IComp;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.DirectionalLightComp;
 import com.algy.schedcore.middleend.EnvServer;
 import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.Transform;
+import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
+import com.algy.schedcore.middleend.bullet.CollisionComp;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -21,12 +24,32 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 
+class MyCollision extends CollisionComp {
+
+	@Override
+	public IComp duplicate() {
+		return new MyCollision();
+	}
+
+	@Override
+	public void beginCollision(GameItem other) {
+		core().removeItem(other);
+	}
+
+	@Override
+	public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
+	}
+}
+
 public class TestScene extends Scene {
+	GameItem ballItem = new GameItem();
+
     @Override
 	public void reserveItem(Scene scene, ItemReservable coreProxy) {     
 		GameItem boardItem = new GameItem(), 
-                ballItem = new GameItem(),
-                lightItem = new GameItem();
+                 lightItem = new GameItem(),
+                 removerItem = new GameItem();
+		
        boardItem.as(Transform.class).modify().setTranslation(0, 0, 0);
        boardItem.add(BtRigidBodyComp
                      .staticBody(new btBoxShape(new Vector3(2.f, .1f, 2.f)))
@@ -48,9 +71,14 @@ public class TestScene extends Scene {
        for (float idx = 30; idx < 100; idx+=10) 
            coreProxy.reserveItem(ballItem.duplicate(new Vector3(0, idx * 0.1f, 0)));
        
+       removerItem.as(Transform.class).modify().setTranslation(0, -10f, 0);
+
+       removerItem.add(new BtDetectorComp(new btBoxShape(new Vector3(500.f, 1f, 500.f))));
+       removerItem.add(new MyCollision());
+       removerItem.add(new ModelComp(ballModel));
        coreProxy.reserveItem(boardItem);
        coreProxy.reserveItem(lightItem);
-       
+       coreProxy.reserveItem(removerItem);
        Done ();
 
 	}
@@ -75,6 +103,7 @@ public class TestScene extends Scene {
     public void postRender() {
         sb.begin();
         sb.draw(tex, 0, 0, 100, 100);
+        
         sb.end();
     }
 
