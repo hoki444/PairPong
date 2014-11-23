@@ -1,15 +1,14 @@
-package com.algy.schedcore.frontend;
-
-import android.util.Log;
+package com.odk.pairpong;
 
 import com.algy.schedcore.IComp;
+import com.algy.schedcore.frontend.ItemReservable;
+import com.algy.schedcore.frontend.Scene;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.DirectionalLightComp;
 import com.algy.schedcore.middleend.EnvServer;
 import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.Transform;
-import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
@@ -107,10 +106,10 @@ public class TestScene extends Scene {
     public void postRender() {
         sb.begin();
         sb.draw(tex, 0, 0, 100, 100);
-        n++;
+        n=n+rfunction.getint();
         if(n>100){
         	n=0;
-        	core.addItem(ballItem.duplicate(new Vector3(rfunction.getint()/10.0f, 3f, 0)));
+        	core.addItem(ballItem.duplicate(new Vector3(rfunction.getint(), 3f, 0)));
         }
         sb.end();
     }
