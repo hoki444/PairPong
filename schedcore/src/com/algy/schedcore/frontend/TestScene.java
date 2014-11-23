@@ -1,5 +1,7 @@
 package com.algy.schedcore.frontend;
 
+import android.util.Log;
+
 import com.algy.schedcore.IComp;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.DirectionalLightComp;
@@ -23,6 +25,7 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
+import com.odk.pairpong.ReceiverFunction;
 
 class MyCollision extends CollisionComp {
 
@@ -71,14 +74,14 @@ public class TestScene extends Scene {
        for (float idx = 30; idx < 100; idx+=10) 
            coreProxy.reserveItem(ballItem.duplicate(new Vector3(0, idx * 0.1f, 0)));
        
-       removerItem.as(Transform.class).modify().setTranslation(0, -10f, 0);
+       /*removerItem.as(Transform.class).modify().setTranslation(0, -10f, 0);
 
        removerItem.add(new BtDetectorComp(new btBoxShape(new Vector3(500.f, 1f, 500.f))));
        removerItem.add(new MyCollision());
-       removerItem.add(new ModelComp(ballModel));
+       removerItem.add(new ModelComp(ballModel));*/
        coreProxy.reserveItem(boardItem);
        coreProxy.reserveItem(lightItem);
-       coreProxy.reserveItem(removerItem);
+       //coreProxy.reserveItem(removerItem);
        Done ();
 
 	}
@@ -99,11 +102,16 @@ public class TestScene extends Scene {
     private SpriteBatch sb;
     
     private int n = 0;
+    private ReceiverFunction rfunction = new ReceiverFunction();
     @Override
     public void postRender() {
         sb.begin();
         sb.draw(tex, 0, 0, 100, 100);
-        
+        n++;
+        if(n>100){
+        	n=0;
+        	core.addItem(ballItem.duplicate(new Vector3(rfunction.getint()/10.0f, 3f, 0)));
+        }
         sb.end();
     }
 
