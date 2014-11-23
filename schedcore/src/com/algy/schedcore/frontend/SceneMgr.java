@@ -53,10 +53,14 @@ public class SceneMgr extends ApplicationAdapter {
     }
     
     public void create() {
+
     }
 
     public void dispose() {
-        this.assetManager.dispose();
+        synchronized (SceneMgr.class) {
+            this.assetManager.dispose();
+        	instance = null;
+        }
     }
 
     public final void pause() {

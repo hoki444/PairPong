@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="src" path="algysrc"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/user/PairPong/schedcore/src/libs/gdx.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/user/PairPong/schedcore/src/libs/gdx-backend-android.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/user/PairPong/schedcore/src/libs/gdx-bullet.jar"/>
+	<classpathentry kind="output" path="bin/classes"/>
+</classpath>
