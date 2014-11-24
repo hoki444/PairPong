@@ -9,7 +9,7 @@ import com.badlogic.gdx.math.Matrix4;
 
 public class ModelComp extends Renderable3DComp {
     // This component borrow ownership of the model.
-    // Thus, outter environment is responsible for disposing the model
+    // Thus, outer environment is responsible for disposing the model
     public ResourceBox<Model> modelBox;
     public boolean refCounted;
     public Matrix4 localTransform;
