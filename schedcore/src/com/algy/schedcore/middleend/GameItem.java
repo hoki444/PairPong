@@ -20,6 +20,22 @@ public class GameItem extends Item<BaseComp, ICore> {
         this.add(new Transform(0, 0, 0)); 
     }
     
+    public GameItem (BaseComp ... components) {
+        super(BaseComp.class);
+        boolean transformProvided = false;
+        
+        for (BaseComp comp : components) {
+            if (comp instanceof Transform) {
+                transformProvided = true;
+            } 
+            add(comp);
+        }
+
+        if (!transformProvided) {
+            add(new Transform(0, 0, 0));
+        }
+    }
+    
     private GameItem(Transform transform) {
         super(BaseComp.class);
         this.add(transform);
