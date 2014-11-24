@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import com.odk.pairpong.ReceiveBroadcastReceiver;
 
 public class ReceiverFunction {
-	public boolean[] getboolarray(){
+	public boolean[] getboolarray() {
 		return ReceiveBroadcastReceiver.boolarrayvalue;
 	}
-	public boolean getbool(){
+	public boolean getbool() {
 		return ReceiveBroadcastReceiver.boolvalue;
 	}
-	public byte[] getbytearray(){
+	public byte[] getbytearray() {
 		return ReceiveBroadcastReceiver.bytearrayvalue;
 	}
 	public byte getbyte(){

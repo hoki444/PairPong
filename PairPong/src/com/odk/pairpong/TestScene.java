@@ -27,7 +27,6 @@ import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 
 class MyCollision extends CollisionComp {
-
 	@Override
 	public IComp duplicate() {
 		return new MyCollision();
@@ -108,7 +107,7 @@ public class TestScene extends Scene {
         n=n+rfunction.getint();
         if(n>100){
         	n=0;
-        	core.addItem(ballItem.duplicate(new Vector3(1/10.0f, 3f, 0)));
+        	core.addItem(ballItem.duplicate(new Vector3(rfunction.getint(), 3f, 0)));
         }
         sb.end();
     }
