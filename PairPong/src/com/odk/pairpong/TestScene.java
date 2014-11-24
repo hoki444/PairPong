@@ -8,7 +8,9 @@ import com.algy.schedcore.middleend.DirectionalLightComp;
 import com.algy.schedcore.middleend.EnvServer;
 import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.ModelComp;
+import com.algy.schedcore.middleend.SimpleCameraControllerComp;
 import com.algy.schedcore.middleend.Transform;
+import com.algy.schedcore.middleend.bullet.BtDebugDrawerComp;
 import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
@@ -67,7 +69,7 @@ public class TestScene extends Scene {
        
 
        lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
-       lightItem.add(new DirectionalLightComp(new Vector3(0, -1f, 0.2f)).setColor(1.f, 1.f, 1.f, .2f));
+       lightItem.add(new DirectionalLightComp(new Vector3(0, -1f, 0.5f)).setColor(1.f, 1.f, 1.f, 1f));
 
        for (float idx = 30; idx < 100; idx+=10) 
            coreProxy.reserveItem(ballItem.duplicate(new Vector3(0, idx * 0.1f, 0)));
@@ -80,6 +82,8 @@ public class TestScene extends Scene {
        coreProxy.reserveItem(boardItem);
        coreProxy.reserveItem(lightItem);
        coreProxy.reserveItem(removerItem);
+       coreProxy.reserveItem(new GameItem(new BtDebugDrawerComp()));
+       coreProxy.reserveItem(new GameItem(new SimpleCameraControllerComp()));
        Done ();
 
 	}
