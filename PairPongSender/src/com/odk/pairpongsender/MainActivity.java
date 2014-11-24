@@ -24,8 +24,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
     		sfunction.setpackage("com.odk.pairpong");
     		sfunction.startreceiver("PairPongBoardActivity");
     	}
-    	else
+    	else{
     		sfunction.sendint(Integer.valueOf(((TextView)findViewById(R.id.sample_int_extra)).getText().toString()));
+    	}    
     }
 
 }

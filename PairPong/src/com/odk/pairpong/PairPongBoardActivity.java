@@ -3,7 +3,6 @@ package com.odk.pairpong;
 import android.os.Bundle;
 
 import com.algy.schedcore.frontend.SceneMgr;
-import com.algy.schedcore.frontend.TestScene;
 import com.badlogic.gdx.backends.android.AndroidApplication;
 
 public class PairPongBoardActivity extends AndroidApplication {
