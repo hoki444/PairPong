@@ -1,8 +1,10 @@
 package com.algy.schedcore.middleend.bullet;
 
 import com.algy.schedcore.IComp;
+import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.Transform;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject.CollisionFlags;
@@ -17,6 +19,9 @@ public class BtRigidBodyComp extends BtColliderComp {
         }
         @Override
         public void setWorldTransform(Matrix4 worldTrans) {
+        	/*
+        	 * NOTE: 
+        	 */
             owner().as(Transform.class).syncFromPhysics(worldTrans);
         }
     }
@@ -59,7 +64,9 @@ public class BtRigidBodyComp extends BtColliderComp {
     }
     
     public static BtRigidBodyComp kinematicBody (btCollisionShape shape) {
-        return new BtRigidBodyComp(shape, 0, null, CollisionFlags.CF_KINEMATIC_OBJECT);
+    	BtRigidBodyComp result = new BtRigidBodyComp(shape, 0, null, CollisionFlags.CF_KINEMATIC_OBJECT);
+    	
+    	return result;
     }
     
     public static BtRigidBodyComp dynamicBody (btCollisionShape shape, float mass) {
@@ -95,7 +102,7 @@ public class BtRigidBodyComp extends BtColliderComp {
     @Override
     protected void onAdhered() {
         Transform tr = owner().as(Transform.class);
-        body.proceedToTransform(tr.get());
+        forceMove(tr.get());
         tr.notifySynced();
     }
 
@@ -109,8 +116,17 @@ public class BtRigidBodyComp extends BtColliderComp {
 
     @Override
     public void forceMove(Matrix4 mat) {
+        Matrix4 dest = new Matrix4(mat);
+        float sx, sy, sz; // don't want to apply scale factors.
+    	sx = mat.getScaleX();
+    	sy = mat.getScaleY();
+    	sz = mat.getScaleZ();
+    	
+        dest.scale(1 / sx, 
+        		   1 / sy, 
+        		   1 / sz);
+        body.proceedToTransform(dest);
         body.activate();
-        this.body.proceedToTransform(mat);
     }
 
 
@@ -119,8 +135,9 @@ public class BtRigidBodyComp extends BtColliderComp {
         return this.body.getWorldTransform();
     }
 
-    public void activate() {
+    public BtRigidBodyComp activate() {
         body.activate();
+        return this;
     }
 
     /*

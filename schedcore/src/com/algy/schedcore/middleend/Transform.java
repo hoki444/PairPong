@@ -49,14 +49,16 @@ public class Transform extends BaseComp {
         this.syncRequired = false;
     }
     
-    public void syncFromPhysics(Matrix4 mat) {
+    public void syncFromPhysics(Matrix4 otherMat) {
+    	// don't want to apply scale factors.
         float sx, sy, sz; // don't want to apply scale factors.
-        sx = this.mat.getScaleX();
-        sy = this.mat.getScaleY();
-        sz = this.mat.getScaleZ();
+    	sx = this.mat.getScaleX();
+    	sy = this.mat.getScaleY();
+    	sz = this.mat.getScaleZ();
 
-        this.mat.set(mat);
-        this.mat.scale(sx / mat.getScaleX(), sy / mat.getScaleY(), sz / mat.getScaleZ());
+    	this.mat.set(otherMat);
+    	this.mat.scale(sx / otherMat.getScaleX(), sy / otherMat.getScaleY(), sz / otherMat.getScaleZ());
+
         this.syncRequired = false;
     }
 
