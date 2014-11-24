@@ -1,4 +1,4 @@
-package com.algy.schedcore.frontend;
+package com.odk.pairpong;
 
 import com.algy.schedcore.IComp;
 import com.algy.schedcore.frontend.ItemReservable;
@@ -9,6 +9,7 @@ import com.algy.schedcore.middleend.EnvServer;
 import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.Transform;
+import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
@@ -98,7 +99,7 @@ public class TestScene extends Scene {
 	private Model boxModel, ballModel;
     private Texture tex;
     private SpriteBatch sb;
-    
+    private ReceiverFunction rfunction = new ReceiverFunction();
     private int n = 0;
     @Override
     public void postRender() {
