@@ -19,8 +19,8 @@ public class SceneMgr extends ApplicationAdapter {
     static boolean bulletInitialized = false;
     public static SceneMgr instance = null;
     
-    static void initBullet () {
-        Bullet.init();
+    static synchronized void initBullet () {
+        Bullet.init(true);
         bulletInitialized = true;
     }
 

@@ -7,8 +7,6 @@ import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
 
 public class BtDetectorComp extends BtColliderComp {
-    // XXX: this version must lead to memory leak in Bullet's C++ side. Use refcount.
-
     private btCollisionShape shape;
     private btCollisionObject collObj;
     
@@ -17,7 +15,7 @@ public class BtDetectorComp extends BtColliderComp {
         this.collObj = new btCollisionObject();
         this.collObj.setCollisionShape(shape);
 
-        shape.obtain(); 
+        this.shape.obtain(); 
         this.collObj.obtain();
     }
 

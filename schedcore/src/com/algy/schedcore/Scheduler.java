@@ -172,6 +172,9 @@ public final class Scheduler {
     }
     
     static int vv = 0;
+    
+    private static SchedTime schedTimeLocal = new SchedTime(0, 0, 0, true);
+
     // Aspect from backend
     public Object runOnce(ITickGetter tickGetter) {
         // EDF(Earlist Deadline First) scheduling
@@ -196,12 +199,16 @@ public final class Scheduler {
             }
 
             execJob.lastStartTime = startTime;
+
+            // This is for preventing garbage
+            schedTimeLocal.first =  execJob.first;
+            schedTimeLocal.realDelta = realdelta;
+            schedTimeLocal.deadline = execJob.curDeadline;
+            schedTimeLocal.delta = period;
             // NOTE: this.currentJob can become null or other job 
             //       after schedule it (it means the current job is now rescheduled)
-            execJob.ti.task.schedule(new SchedTime(period,
-                                                   execJob.curDeadline,
-                                                   realdelta, 
-                                                   execJob.first));
+            execJob.ti.task.schedule(schedTimeLocal);
+
             long finishTime = tickGetter.getTickCount();
             long executionTime = finishTime - startTime;
             execJob.lastExecutionTime = executionTime;

@@ -198,8 +198,9 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         reservable.reserveServer(inputServer);
         reservable.reserveServer(eden());
         reservable.reserveServer(assetServer);
-        if (worldServer != null)
+        if (worldServer != null) {
             reservable.reserveServer(worldServer);
+        }
     }
 
     private BtPhysicsWorld worldServer;
@@ -207,9 +208,6 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     private int renderTaskId = -1;
     void internalPreparation () {
         this.modelBatch = new ModelBatch();
-        if (config.useBulletPhysics) {
-            BtPhysicsWorld.initBullet();
-        }
         Gdx.graphics.setContinuousRendering(true);
         
         long period = config.itemRenderingPeriod;

@@ -1,5 +1,6 @@
 package com.algy.schedcore.middleend.bullet;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.algy.schedcore.BaseComp;
@@ -24,11 +25,11 @@ import com.badlogic.gdx.physics.bullet.collision.btPersistentManifold;
 import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver;
 import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld;
 import com.badlogic.gdx.physics.bullet.dynamics.btDynamicsWorld;
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
 
 
 public class BtPhysicsWorld extends BaseSchedServer {
-
     private static class CollisionIterable implements Iterable<CollisionInfo> {
         private btPersistentManifold manifold;
         private boolean isFirst;
@@ -97,7 +98,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
             };
         }
     }
-    private IntegerBitmap<BtColliderComp> collBitmap = new IntegerBitmap<BtColliderComp>();
+    private IntegerBitmap<GameItem> collBitmap = new IntegerBitmap<GameItem>();
     
     private btCollisionConfiguration collConfig;
     public btDynamicsWorld world;
@@ -113,8 +114,8 @@ public class BtPhysicsWorld extends BaseSchedServer {
     public int maxSubStep = 3;
     
     public static void initBullet () {
-        // use reference counting & disable logging
-        Bullet.init();
+        // use reference counting & enable logging
+        Bullet.init(true);
     }
 
     public BtPhysicsWorld (Vector3 gravity, long schedPeriod, long worldPeriod) {
@@ -129,7 +130,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
     public BtPhysicsWorld (Vector3 gravity) {
         this(gravity, 30);
     }
-
+    
     private class PhysicsContactListner extends ContactListener {
         @Override
         public void onContactStarted(btCollisionObject colObj0,
@@ -137,35 +138,33 @@ public class BtPhysicsWorld extends BaseSchedServer {
             int userVal0 = colObj0.getUserValue();
             int userVal1 = colObj1.getUserValue();
             if (collBitmap.has(userVal0) && collBitmap.has(userVal1)) {
-                BtColliderComp ccomp0, ccomp1;
-                ccomp0 = collBitmap.get(userVal0);
-                ccomp1 = collBitmap.get(userVal1);
+                GameItem item0, item1;
+                item0 = collBitmap.get(userVal0);
+                item1 = collBitmap.get(userVal1);
                 
-                if (ccomp0.owner().has(CollisionComp.class))
-                    ccomp0.owner().as(CollisionComp.class).beginCollision((GameItem)(ccomp1.owner()));
-                if (ccomp1.owner().has(CollisionComp.class))
-                    ccomp1.owner().as(CollisionComp.class).beginCollision((GameItem)(ccomp0.owner()));
+                if (item0.has(CollisionComp.class))
+                    item0.as(CollisionComp.class).beginCollision(item1);
+                if (item1.has(CollisionComp.class))
+                    item1.as(CollisionComp.class).beginCollision(item0);
             }
         }
 
         @Override
         public void onContactEnded(btPersistentManifold manifold) {
-            // XXX
             int userVal0 = manifold.getBody0().getUserValue();
             int userVal1 = manifold.getBody1().getUserValue();
             
             if (collBitmap.has(userVal0) && collBitmap.has(userVal1)) {
-                BtColliderComp ccomp0, ccomp1;
-                ccomp0 = collBitmap.get(userVal0);
-                ccomp1 = collBitmap.get(userVal1);
+                GameItem item0, item1;
+                item0 = collBitmap.get(userVal0);
+                item1 = collBitmap.get(userVal1);
                 
-                if (ccomp0.owner().has(CollisionComp.class)) {
-                    ccomp0.owner().as(CollisionComp.class).endCollision((GameItem)(ccomp1.owner()),
-                            new CollisionIterable(manifold, true));
+                if (item0.has(CollisionComp.class)) {
+                    item0.as(CollisionComp.class).endCollision(item1, new CollisionIterable(manifold, true));
                 }
-                if (ccomp1.owner().has(CollisionComp.class))
-                    ccomp1.owner().as(CollisionComp.class).endCollision((GameItem)(ccomp0.owner()), 
-                            new CollisionIterable(manifold, false));
+                if (item1.has(CollisionComp.class)) {
+                    item1.as(CollisionComp.class).endCollision(item0, new CollisionIterable(manifold, false));
+                }
             }
         }
     }
@@ -184,16 +183,18 @@ public class BtPhysicsWorld extends BaseSchedServer {
     public void schedule(SchedTime time) {
         // Gather transforms to synchronize this component from Transform first.
         // XXX: IMPROVE ME
-        for (BtColliderComp comp : collBitmap) {
-            Transform transform = comp.owner().as(Transform.class);
-            if (transform.isSyncToPhysicsRequired()) {
-                comp.forceMove(transform.get());
+        for (GameItem gameItem : collBitmap) {
+            Transform transform = gameItem.as(Transform.class);
+            if (gameItem.has(BtColliderComp.class) && transform.isSyncToPhysicsRequired()) {
+                gameItem.as(BtColliderComp.class).forceMove(transform.get());
                 transform.notifySynced();
             }
         }
+
         // Simulate the physics world
-        world.stepSimulation(this.worldTps, maxSubStep);
+        advanceWorld();
     }
+    
 
     @Override
     public void beginSchedule() {
@@ -207,22 +208,104 @@ public class BtPhysicsWorld extends BaseSchedServer {
     public void listCompSignatures(Lister<Class<? extends BaseComp>> sigs) {
         sigs.add(BtColliderComp.class);
     }
+    
+    private class DeferedWorldUpdater {
+        public ArrayList<btRigidBody> bodyToBeAdded = new ArrayList<btRigidBody>();
+        public ArrayList<btCollisionObject> collObjToBeAdded = new ArrayList<btCollisionObject>();
+        public ArrayList<btRigidBody> bodyToBeRemoved = new ArrayList<btRigidBody>();
+        public ArrayList<btCollisionObject> collObjToBeRemoved = new ArrayList<btCollisionObject>();
+
+        private boolean simulatingWorld = false;
+        
+        public void begin () {
+            this.simulatingWorld = true;
+        }
+
+        public void end () {
+            for (btRigidBody body : bodyToBeAdded) {
+                world.addRigidBody(body);
+                body.release();
+            }
+            bodyToBeAdded.clear();
+
+            for (btRigidBody body : bodyToBeRemoved) {
+                world.removeRigidBody(body);
+                body.release();
+            }
+            bodyToBeRemoved.clear();
+
+            for (btCollisionObject collObj : collObjToBeAdded) {
+                world.addCollisionObject(collObj);
+                collObj.release();
+            }
+            collObjToBeAdded.clear();
+
+            for (btCollisionObject collObj : collObjToBeRemoved) {
+                world.removeCollisionObject(collObj);
+                collObj.release();
+            }
+            collObjToBeRemoved.clear();
+            
+            this.simulatingWorld = false;
+        }
+        
+        public void add(btRigidBody rigidBody) {
+            if (simulatingWorld) {
+                rigidBody.obtain();
+                bodyToBeAdded.add(rigidBody);
+            } else {
+                world.addRigidBody(rigidBody);
+            }
+        }
+        public void add(btCollisionObject collObj) {
+            if (simulatingWorld) {
+                collObj.obtain();
+                collObjToBeAdded.add(collObj);
+            } else {
+                world.addCollisionObject(collObj);
+            }
+        }
+
+        public void remove(btRigidBody rigidBody) {
+            if (simulatingWorld) {
+                rigidBody.obtain();
+                bodyToBeRemoved.add(rigidBody);
+            } else {
+                world.removeRigidBody(rigidBody);
+            }
+        }
+
+        public void remove(btCollisionObject collObj) {
+            if (simulatingWorld) {
+                collObj.obtain();
+                collObjToBeRemoved.add(collObj);
+            } else {
+                world.removeCollisionObject(collObj);
+            }
+        }
+    }
+    
+    private DeferedWorldUpdater updater = new DeferedWorldUpdater();
 
     @Override
     public void hookAddComp(BaseComp comp) {
         if (comp instanceof BtColliderComp) {
             BtColliderComp ccomp = (BtColliderComp) comp;
-            int collId = collBitmap.add(ccomp);
+            int collId = collBitmap.add((GameItem)ccomp.owner());
             ccomp.setCollId(collId);
             if (ccomp instanceof BtRigidBodyComp) {
-                this.world.addRigidBody(((BtRigidBodyComp)comp).getRigidBody());
-                ((BtRigidBodyComp)comp).getRigidBody().setUserValue(collId);
+                btRigidBody rigidBody = ((BtRigidBodyComp)comp).getRigidBody();
+                rigidBody.setUserValue(collId);
+                updater.add(rigidBody);
             } else if (ccomp instanceof BtDetectorComp) {
-                this.world.addCollisionObject(((BtDetectorComp)comp).getCollObj());
-                ((BtDetectorComp)comp).getCollObj().setUserValue(collId);
+                btCollisionObject collObject = ((BtDetectorComp)comp).getCollObj();
+                collObject.setUserValue(collId);
+                updater.add(collObject);
             }
-        }
+        } 
     }
+    
+    
 
     @Override
     public void hookRemoveComp(BaseComp comp) {
@@ -230,43 +313,53 @@ public class BtPhysicsWorld extends BaseSchedServer {
             BtColliderComp ccomp = (BtColliderComp) comp;
             collBitmap.remove(ccomp.getCollId());
             if (ccomp instanceof BtRigidBodyComp) {
-                this.world.removeRigidBody(((BtRigidBodyComp)comp).getRigidBody());
+                btRigidBody rigidBody = ((BtRigidBodyComp)comp).getRigidBody();
+                rigidBody.setUserValue(-1);
+                updater.remove(rigidBody);
             } else if (ccomp instanceof BtDetectorComp) {
-                this.world.removeCollisionObject(((BtDetectorComp)comp).getCollObj());
+                btCollisionObject collObject = ((BtDetectorComp)comp).getCollObj();
+                collObject.setUserValue(-1);
+                updater.remove(collObject);
             }
         }
     }
 
+    private void advanceWorld() {
+        updater.begin();
+        world.stepSimulation(this.worldTps, maxSubStep);
+        updater.end();
+    }
+    
+
     @Override
     protected void onAdhered() {
-        this.collConfig = new btDefaultCollisionConfiguration();
-        this.dispatcher = new btCollisionDispatcher(this.collConfig);
-        this.broadphase = new btDbvtBroadphase();
-        this.ctrtSolver = new btSequentialImpulseConstraintSolver();
-        this.world = new btDiscreteDynamicsWorld(dispatcher, 
+        collConfig = new btDefaultCollisionConfiguration();
+        dispatcher = new btCollisionDispatcher(this.collConfig);
+        broadphase = new btDbvtBroadphase();
+        ctrtSolver = new btSequentialImpulseConstraintSolver();
+        world = new btDiscreteDynamicsWorld(dispatcher, 
                                                  broadphase,
                                                  ctrtSolver,
                                                  collConfig);
-        this.world.setGravity(gravity);
-        this.contactListener = new PhysicsContactListner();
+        world.setGravity(gravity);
+        contactListener = new PhysicsContactListner();
 
-        this.collConfig.obtain();
-        this.dispatcher.obtain();
-        this.ctrtSolver.obtain();
-        this.broadphase.obtain();
-        this.world.obtain();
-        this.contactListener.obtain();
-        
+        collConfig.obtain();
+        dispatcher.obtain();
+        broadphase.obtain();
+        ctrtSolver.obtain();
+        world.obtain();
+        contactListener.obtain();
     }
 
     @Override
     protected void onDetached() {
-        this.collConfig.release();
-        this.dispatcher.release();
-        this.broadphase.release();
-        this.ctrtSolver.release();
-        this.world.release();
-        this.contactListener.release();
+        collConfig.release();
+        dispatcher.release();
+        broadphase.release();
+        ctrtSolver.release();
+        world.release();
+        contactListener.release();
     }
 
     public Vector3 getGravity() {

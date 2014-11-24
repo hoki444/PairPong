@@ -31,7 +31,6 @@ public class BtRigidBodyComp extends BtColliderComp {
                              float mass,
                              Vector3 localInertia,
                              int addFlag) {
-        shape.obtain();
         motionState = new TransformSynchronizer();
         this.shape = shape;
         this.mass = mass;
@@ -41,7 +40,7 @@ public class BtRigidBodyComp extends BtColliderComp {
         }
         this.localInertia = localInertia;
             
-        this.motionState = new TransformSynchronizer();
+        motionState = new TransformSynchronizer();
         body = new btRigidBody(mass,
                                motionState,
                                shape,
@@ -49,6 +48,10 @@ public class BtRigidBodyComp extends BtColliderComp {
         body.setCollisionFlags(body.getCollisionFlags() | 
                                addFlag | 
                                btCollisionObject.CollisionFlags.CF_CUSTOM_MATERIAL_CALLBACK);
+        this.shape.obtain();
+        body.obtain();
+        motionState.obtain();
+
     }
 
     public static BtRigidBodyComp staticBody (btCollisionShape shape) {
@@ -99,7 +102,9 @@ public class BtRigidBodyComp extends BtColliderComp {
     @Override
     protected void onDetached() {
         motionState.release();
+        body.setMotionState(null);
         body.release();
+        shape.release();
     }
 
     @Override
@@ -113,8 +118,9 @@ public class BtRigidBodyComp extends BtColliderComp {
     public Matrix4 getTransform() {
         return this.body.getWorldTransform();
     }
+
     public void activate() {
-        this.body.activate();
+        body.activate();
     }
 
     /*
@@ -185,6 +191,7 @@ public class BtRigidBodyComp extends BtColliderComp {
         this.body.setRollingFriction(frict);
         return this;
     }
+
     public BtRigidBodyComp setFriction(float frict) {
         this.body.setFriction(frict);
         return this;
