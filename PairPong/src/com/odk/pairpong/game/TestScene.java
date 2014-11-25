@@ -78,7 +78,7 @@ public class TestScene extends Scene {
         boardItem.as(Transform.class).modify().setTranslation(0, 0, 0);
         boardItem.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(2.f, .1f, 3.f)))
-                      .setFriction(0.7f)
+                      .setFriction(0.1f)
                       .setRestitution(0.98f));
         boardItem.add(new ModelComp(boxModel));
        
@@ -90,7 +90,7 @@ public class TestScene extends Scene {
         racketItem.add(BtRigidBodyComp
                       .kinematicBody(racketCollShape
                     		  )
-                      .setFriction(0.7f)
+                      .setFriction(0.1f)
                       .activate()
                       .setRestitution(0.98f))
                       ;
@@ -99,13 +99,13 @@ public class TestScene extends Scene {
         wallItem.as(Transform.class).modify().setTranslation(0, 2.0f, 3.1f);
         wallItem.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(2.f, 2.f, .1f)))
-                      .setFriction(0.7f)
+                      .setFriction(0.1f)
                       .setRestitution(0.98f));
         wallItem.add(new ModelComp(boxModel2));
 
         ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.15f), 1)
                      .setAngularVelocity(new Vector3(0, 0, -10))
-                     .setLinearVelocity(new Vector3(-1, 1, 0))
+                     .setLinearVelocity(new Vector3(2, 1, 2))
                      .setRestitution(0.98f));
         ballItem.add(new ModelComp(ballModel));
         ballItem.setName("ball");
@@ -144,7 +144,7 @@ public class TestScene extends Scene {
 	public void endResourceInitialization(Scene scene) {
         core.server(EnvServer.class).ambientLightColor.set(.2f, .2f, .2f, 1); 
         core.server(BtPhysicsWorld.class).world.setGravity(new Vector3(0, -9.8f, 0));
-
+        
         core.server(CameraServer.class).setPosition(new Vector3(-4, 3f, 0))
                                        .lookAt(new Vector3(0, 2f, 0))
                                        .setUpVector(new Vector3(1, 0, 0))
@@ -160,8 +160,14 @@ public class TestScene extends Scene {
     public void postRender() {
         sb.begin();
         n++;
-        racketItem.getTransform().modify().set(new Vector3(-2, 2, 0),new Quaternion(new Vector3(1,0,1), 270-n*3),
-        		new Vector3(0.03f,0.03f, 0.03f));
+        double[] pos = rfunction.getdoublearray();
+        if (pos!=null)
+        	racketItem.getTransform().modify().set(new Vector3(-2, 3.6f-(float)pos[1], (float)pos[0]*1.25f-2),new Quaternion(new Vector3(1,0,1), 270-n*3),
+        			new Vector3(0.03f,0.03f, 0.03f));
+        else{
+        	racketItem.getTransform().modify().set(new Vector3(-2, 2, 0),new Quaternion(new Vector3(1,0,1), 270-n*3),
+        			new Vector3(0.03f,0.03f, 0.03f));
+        }
         if(n>30){
         	n=1;
         }
