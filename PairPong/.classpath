@@ -10,5 +10,6 @@
 	<classpathentry kind="lib" path="libs/gdx-backend-android.jar"/>
 	<classpathentry kind="lib" path="libs/gdx-bullet.jar"/>
 	<classpathentry kind="lib" path="libs/gdx.jar"/>
+	<classpathentry kind="lib" path="libs/LGQPairAPIs.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

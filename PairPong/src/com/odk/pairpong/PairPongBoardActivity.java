@@ -12,7 +12,7 @@ public class PairPongBoardActivity extends AndroidApplication {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initialize(new SceneMgr(new TestScene(new QPairReceiverFunction())));
+        initialize(new SceneMgr(new TestScene(new QPairReceiverFunction(), new QPairSenderFunction(this))));
     }
 
     @Override

@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.TextView;
 
 public class MainActivity extends Activity implements View.OnClickListener {
-	SenderFunction sfunction= new SenderFunction(this);
+	SenderFunction sfunction= new QPairSenderFunction(this);
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {

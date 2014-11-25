@@ -76,9 +76,12 @@ public class TestScene extends Scene {
 
 
     private ReceiverFunction rfunction;
-	public TestScene (ReceiverFunction rfunction) {
+    private SenderFunction sfunction;
+	public TestScene (ReceiverFunction rfunction, SenderFunction sfunction) {
 		super();
 		this.rfunction = rfunction;
+		this.sfunction = sfunction;
+		this.sfunction.setpackage("com.odk.pairpongsender");
 	}
 
     @Override
@@ -111,8 +114,7 @@ public class TestScene extends Scene {
                       .kinematicBody(racketCollShape)
                       .setFriction(0.1f)
                       .activate()
-                      .setRestitution(1.f))
-                      ;
+                      .setRestitution(1.f));
         racketItem.setName("racket");
         
         wallItem.as(Transform.class).modify().setTranslation(0, 2.0f, 3.1f);

@@ -21,7 +21,7 @@ import android.view.WindowManager;
 public class ControllerActivity extends Activity {
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
-		SenderFunction sfunction= new SenderFunction(this);
+		SenderFunction sfunction= new QPairSenderFunction(this);
         super.onCreate(savedInstanceState);
         sfunction.setpackage("com.odk.pairpong");
         MyView myview= new MyView(this,sfunction);
