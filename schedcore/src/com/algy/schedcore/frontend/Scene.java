@@ -231,10 +231,12 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         @Override
         public void schedule(SchedTime time) {
             Environment env;
-            modelBatch.begin(core.server(CameraServer.class).getCamera());
-            env = core.server(EnvServer.class).makeEnvironment();
-            core.server(Render3DServer.class).render(modelBatch, env);
-            modelBatch.end();
+            if (core.getServerItem().has(CameraServer.class)) {
+                modelBatch.begin(core.server(CameraServer.class).getCamera());
+                env = core.server(EnvServer.class).makeEnvironment();
+                core.server(Render3DServer.class).render(modelBatch, env);
+                modelBatch.end();
+            }
         }
 
         @Override

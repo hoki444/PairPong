@@ -1,8 +1,6 @@
 package com.odk.pairpong.game;
 
-import com.algy.schedcore.BaseSchedComp;
 import com.algy.schedcore.IComp;
-import com.algy.schedcore.SchedTime;
 import com.algy.schedcore.frontend.ItemReservable;
 import com.algy.schedcore.frontend.Scene;
 import com.algy.schedcore.middleend.AssetModelComp;
@@ -10,6 +8,7 @@ import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.DirectionalLightComp;
 import com.algy.schedcore.middleend.EnvServer;
 import com.algy.schedcore.middleend.GameItem;
+import com.algy.schedcore.middleend.InputComp;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.PointLightComp;
 import com.algy.schedcore.middleend.SimpleCameraControllerComp;
@@ -19,6 +18,7 @@ import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -32,7 +32,6 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
-import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
 import com.badlogic.gdx.physics.bullet.collision.btCompoundShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 
@@ -53,11 +52,27 @@ class MyCollision extends CollisionComp {
 	}
 }
 
+class VibCollision extends CollisionComp {
+
+    @Override
+    public IComp duplicate() {
+        return new VibCollision();
+    }
+
+    @Override
+    public void beginCollision(GameItem other) {
+        Gdx.input.vibrate(80);
+    }
+
+    @Override
+    public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
+    }
+    
+}
+
 public class TestScene extends Scene {
-	GameItem ballItem = new GameItem();
-	GameItem racketItem = new GameItem(new Transform(new Vector3(0, 2, 0),
-			 new Quaternion(),
-			 new Vector3(0.03f, 0.03f, 0.03f)));
+	GameItem ballItem;
+	GameItem racketItem ;
 
 
     private ReceiverFunction rfunction;
@@ -72,9 +87,10 @@ public class TestScene extends Scene {
     			 debugdrawItem = new GameItem(new BtDebugDrawerComp()),
 				 wallItem = new GameItem(),
                  lightItem = new GameItem(),
-                 pointlightItem = new GameItem(new Transform(new Vector3(0, 2, 0)),
-                		 						new PointLightComp(30).setColor(1, 1, 1, 1)),
+                 pointlightItem = new GameItem(new Transform(new Vector3(0, 1, 0)),
+                		 						new PointLightComp(20).setColor(1, 1, 1, 1)),
                  removerItem = new GameItem();
+
         boardItem.as(Transform.class).modify().setTranslation(0, 0, 0);
         boardItem.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(2.f, .1f, 3.f)))
@@ -87,12 +103,15 @@ public class TestScene extends Scene {
         		new btBoxShape(new Vector3(.48f, .03f, .42f)));
         racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f, .03f, .03f), new Quaternion()),
         		new btBoxShape(new Vector3(.9f, .03f, .03f)));
+
+        racketItem = new GameItem(new Transform(new Vector3(0, 2, 0),
+			 new Quaternion(),
+			 new Vector3(0.03f, 0.03f, 0.03f)));
         racketItem.add(BtRigidBodyComp
-                      .kinematicBody(racketCollShape
-                    		  )
+                      .kinematicBody(racketCollShape)
                       .setFriction(0.1f)
                       .activate()
-                      .setRestitution(0.98f))
+                      .setRestitution(1.f))
                       ;
         racketItem.setName("racket");
         
@@ -103,6 +122,7 @@ public class TestScene extends Scene {
                       .setRestitution(0.98f));
         wallItem.add(new ModelComp(boxModel2));
 
+        ballItem = new GameItem(new Transform(0, 0.2f, 0));
         ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.15f), 1)
                      .setAngularVelocity(new Vector3(0, 0, -10))
                      .setLinearVelocity(new Vector3(2, 1, 2))
@@ -112,10 +132,11 @@ public class TestScene extends Scene {
        
        
         racketItem.add(new AssetModelComp("racket.obj"));
+        racketItem.add(new VibCollision());
        
 
         lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
-        lightItem.add(new DirectionalLightComp(new Vector3(0, -1f, 0.2f)).setColor(1.f, 1.f, 1.f, .2f));
+        lightItem.add(new DirectionalLightComp(new Vector3(0, -1f, 0.5f)).setColor(1.f, 1.f, 1.f, 1.0f));
 
         coreProxy.reserveItem(ballItem.duplicate(new Vector3(0, 2.8f, 0)));
        
@@ -133,22 +154,77 @@ public class TestScene extends Scene {
         coreProxy.reserveItem(lightItem);
         coreProxy.reserveItem(racketItem);
         coreProxy.reserveItem(debugdrawItem);
-        coreProxy.reserveItem(pointlightItem);
+        coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 1, 0)),
+                		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
+        coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 2, 0)),
+                		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
         coreProxy.reserveItem(removerItem);
-        coreProxy.reserveItem(new GameItem(new SimpleCameraControllerComp()));
+//        coreProxy.reserveItem(new GameItem(new SimpleCameraControllerComp()));
+        coreProxy.reserveItem(new GameItem(new InputComp() {
+            @Override
+            public IComp duplicate() {
+                return null;
+            }
+            
+            @Override
+            public boolean touchUp(int arg0, int arg1, int arg2, int arg3) {
+                return false;
+            }
+            
+            @Override
+            public boolean touchDragged(int arg0, int arg1, int arg2) {
+                // TODO Auto-generated method stub
+                return false;
+            }
+            
+            @Override
+            public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
+                core.clearAll();
+                initializeResource(TestScene.this);
+                return false;
+            }
+            
+            @Override
+            public boolean scrolled(int arg0) {
+                // TODO Auto-generated method stub
+                return false;
+            }
+            
+            @Override
+            public boolean mouseMoved(int arg0, int arg1) {
+                // TODO Auto-generated method stub
+                return false;
+            }
+            
+            @Override
+            public boolean keyUp(int arg0) {
+                // TODO Auto-generated method stub
+                return false;
+            }
+            
+            @Override
+            public boolean keyTyped(char arg0) {
+                // TODO Auto-generated method stub
+                return false;
+            }
+            
+            @Override
+            public boolean keyDown(int arg0) {
+                return false;
+            }
+        }));
         Done ();
-
 	}
 
 	@Override
 	public void endResourceInitialization(Scene scene) {
-        core.server(EnvServer.class).ambientLightColor.set(.2f, .2f, .2f, 1); 
+        core.server(EnvServer.class).ambientLightColor.set(.4f, .4f, .4f, 1); 
         core.server(BtPhysicsWorld.class).world.setGravity(new Vector3(0, -9.8f, 0));
         
         core.server(CameraServer.class).setPosition(new Vector3(-4, 3f, 0))
                                        .lookAt(new Vector3(0, 2f, 0))
                                        .setUpVector(new Vector3(1, 0, 0))
-                                       .setRange(1, 1000);
+                                       .setRange(1, 100);
         Done ();
 	}
 
@@ -156,8 +232,16 @@ public class TestScene extends Scene {
     private Texture tex;
     private SpriteBatch sb;
     private int n = 0;
+    private float theta;
+    private float alpha = 0.5f;
     @Override
     public void postRender() {
+        float curTheta;
+        Vector3 g = new Vector3(Gdx.input.getAccelerometerX(), Gdx.input.getAccelerometerY(), Gdx.input.getAccelerometerZ()).nor();
+        curTheta = (float) Math.toDegrees(Math.acos(g.dot(new Vector3(0, 0, 1))));
+        
+        theta = theta * (1 - alpha) + curTheta * alpha;
+
         sb.begin();
         n++;
         double[] pos = rfunction.getdoublearray();
@@ -168,11 +252,7 @@ public class TestScene extends Scene {
         	racketItem.getTransform().modify().set(new Vector3(-2, 2, 0),new Quaternion(new Vector3(1,0,1), 270-n*3),
         			new Vector3(0.03f,0.03f, 0.03f));
         }
-        if(n>30){
-        	n=1;
-        }
         sb.end();
-       
         
         
     }
@@ -184,12 +264,12 @@ public class TestScene extends Scene {
         boxModel = new ModelBuilder().createBox(4, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
-                             TextureAttribute.createSpecular(new TextureRegion(tex))),
+                             TextureAttribute.createDiffuse(new TextureRegion(tex))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         boxModel2 = new ModelBuilder().createBox(4, 4, .2f, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
-                             TextureAttribute.createSpecular(new TextureRegion(tex))),
+                             TextureAttribute.createDiffuse(new TextureRegion(tex))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         ballModel = new ModelBuilder().createSphere(.3f, .3f, .3f, 10, 10, 
                 new Material(ColorAttribute.createDiffuse(0.5f, 0.5f, 0.5f, 1f),
