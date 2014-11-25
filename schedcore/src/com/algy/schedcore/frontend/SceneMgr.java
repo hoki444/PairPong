@@ -1,5 +1,7 @@
 package com.algy.schedcore.frontend;
 
+import java.util.concurrent.Semaphore;
+
 import com.algy.schedcore.SchedcoreRuntimeError;
 import com.algy.schedcore.frontend.Scene.SceneState;
 import com.algy.schedcore.middleend.Eden;
@@ -69,6 +71,7 @@ public class SceneMgr extends ApplicationAdapter {
     }
 
     private boolean requestedToExit = false;
+
     public final void render() {
         if (currentScene == null) {
             Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -80,9 +83,10 @@ public class SceneMgr extends ApplicationAdapter {
             }
             return;
         }
-        currentScene.clearBuffers();
+
         switch (currentScene.getSceneState()) {
         case Preparing:
+            currentScene.clearBuffers();
             if (currentScene.first) {
                 currentScene.internalPreparation ();
                 currentScene.firstPreparation ();
@@ -91,19 +95,21 @@ public class SceneMgr extends ApplicationAdapter {
             currentScene.prepare();
             break;
         case InitResource:
+            currentScene.clearBuffers();
             currentScene.doInitResource();
             break;
         case Running:
+            currentScene.internalPreRender();
             if (!endScene) {
-                currentScene.internalPreRender();
-                currentScene.render();
-                currentScene.postRender();
+                currentScene.renderControl.render();
             } else {
                 currentScene.Done();
                 endScene = false;
             }
             break;
         case TearingDown:
+            currentScene.clearBuffers();
+            currentScene.internalPreTeardown();
             currentScene.tearDown();
             break;
         default:

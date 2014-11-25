@@ -3,7 +3,7 @@ package com.algy.schedcore.frontend;
 import com.badlogic.gdx.graphics.Color;
 
 public class SceneConfig {
-    public int itemRenderingPeriod = 20;
+    public int itemRenderingPeriod = 30;
     public boolean perspectiveCamera = true;
     public float fieldOfView = 67f;
 

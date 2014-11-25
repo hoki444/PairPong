@@ -1,6 +1,7 @@
 package com.algy.schedcore.frontend;
 
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
 
 import com.algy.schedcore.BaseCompServer;
 import com.algy.schedcore.ISchedTask;
@@ -184,7 +185,7 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
             if (!SceneMgr.bulletInitialized) {
                 SceneMgr.initBullet();
             }
-            worldServer = new BtPhysicsWorld(new Vector3(0, -9.8f, 0), 20);
+            worldServer = new BtPhysicsWorld(new Vector3(0, -9.8f, 0), 17);
         } else
             worldServer = null;
 
@@ -208,14 +209,14 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     private int renderTaskId = -1;
     void internalPreparation () {
         this.modelBatch = new ModelBatch();
-        Gdx.graphics.setContinuousRendering(true);
+        this.first = true;
         
         long period = config.itemRenderingPeriod;
         renderTaskId = core.sched().addPeriodic(tickGetter.getTickCount(), 
-                                 new RenderWork(), 
+                                 new RenderInvoker(), 
                                  period, 
                                  0, 
-                                 RENDER_SIG);
+                                 null);
         suspendRendering();
     }
 
@@ -227,16 +228,10 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         core().sched().resume(renderTaskId, tickGetter);
     }
     
-    private class RenderWork implements ISchedTask {
+    private class RenderInvoker implements ISchedTask {
         @Override
         public void schedule(SchedTime time) {
-            Environment env;
-            if (core.getServerItem().has(CameraServer.class)) {
-                modelBatch.begin(core.server(CameraServer.class).getCamera());
-                env = core.server(EnvServer.class).makeEnvironment();
-                core.server(Render3DServer.class).render(modelBatch, env);
-                modelBatch.end();
-            }
+            renderControl.requestSceneRender();
         }
 
         @Override
@@ -248,11 +243,73 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         }
     }
     
-    private String RENDER_SIG = "DrawIt!";
+    private class Updater {
+        private boolean stop = false;
+        private Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                while (!stop) {
+                    core.sched().runOnce(tickGetter);
+                }
+            }
+        };
+        private Thread thread;
+        
+        public synchronized void start () {
+            stop = false;
+            thread = new Thread(runnable);
+            thread.start();
+        }
+        public synchronized void stop () {
+            stop = true;
+            thread.interrupt();
+            /*
+            // this stub cause deadlock :(
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            */
+            thread = null;
+        }
+    }
+    private Updater updater = new Updater();
     
+    class RenderControl {
+        private Semaphore startSem = new Semaphore(0);
+        private Semaphore endSem = new Semaphore(0);
+        public RenderControl () {
+        }
+        
+        public void render () {
+            try {
+                startSem.acquire();
+                clearBuffers();
+                Scene.this.render();
+                postRender();
+                endSem.release();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void requestSceneRender() {
+            try {
+                startSem.release();
+                endSem.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    RenderControl renderControl;
+
     void internalPreRender () {
         if (first) {
+            renderControl = new RenderControl();
             resumeRendering();
+            updater.start();
             first = false;
         }
     }
@@ -298,7 +355,13 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     
 
     final void render () {
-        while (core.sched().runOnce(tickGetter) != RENDER_SIG);
+        Environment env;
+        if (core.getServerItem().has(CameraServer.class)) {
+            modelBatch.begin(core.server(CameraServer.class).getCamera());
+            env = core.server(EnvServer.class).makeEnvironment();
+            core.server(Render3DServer.class).render(modelBatch, env);
+            modelBatch.end();
+        }
     }
     
     final void destroy () {
@@ -374,6 +437,9 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         return false;
     }
     
+    void internalPreTeardown () {
+        updater.stop();
+    }
 
     public abstract void firstPreparation ();
     public abstract void postRender ();
