@@ -3,6 +3,7 @@ package com.odk.pairpong.game;
 import com.algy.schedcore.IComp;
 import com.algy.schedcore.frontend.ItemReservable;
 import com.algy.schedcore.frontend.Scene;
+import com.algy.schedcore.frontend.SceneMgr;
 import com.algy.schedcore.middleend.AssetModelComp;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.DirectionalLightComp;
@@ -11,7 +12,6 @@ import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.InputComp;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.PointLightComp;
-import com.algy.schedcore.middleend.SimpleCameraControllerComp;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.bullet.BtDebugDrawerComp;
 import com.algy.schedcore.middleend.bullet.BtDetectorComp;
@@ -134,7 +134,6 @@ public class TestScene extends Scene {
        
        
         racketItem.add(new AssetModelComp("racket.obj"));
-        racketItem.add(new VibCollision());
        
 
         lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
@@ -181,8 +180,7 @@ public class TestScene extends Scene {
             
             @Override
             public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
-                core.clearAll();
-                initializeResource(TestScene.this);
+                SceneMgr.switchScene(new TestScene(rfunction, sfunction));
                 return false;
             }
             

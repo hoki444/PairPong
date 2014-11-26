@@ -15,6 +15,7 @@ import android.widget.Toast;
 import com.lge.qpair.api.r1.IPeerContext;
 import com.lge.qpair.api.r1.IPeerIntent;
 import com.lge.qpair.api.r1.QPairConstants;
+import com.odk.pairpongsender.game.SenderFunction;
 
 public class QPairSenderFunction implements SenderFunction {
 	Activity myActivity;

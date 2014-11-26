@@ -4,7 +4,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
+
+import com.odk.pairpongsender.game.SenderFunction;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 	SenderFunction sfunction= new QPairSenderFunction(this);

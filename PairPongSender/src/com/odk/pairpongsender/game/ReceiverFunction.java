@@ -1,4 +1,4 @@
-package com.odk.pairpongsender;
+package com.odk.pairpongsender.game;
 
 import java.util.ArrayList;
 

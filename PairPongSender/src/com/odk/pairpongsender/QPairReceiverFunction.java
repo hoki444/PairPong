@@ -2,6 +2,8 @@ package com.odk.pairpongsender;
 
 import java.util.ArrayList;
 
+import com.odk.pairpongsender.game.ReceiverFunction;
+
 
 public class QPairReceiverFunction implements ReceiverFunction {
 	/* (non-Javadoc)
