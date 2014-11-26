@@ -1,7 +1,5 @@
 package com.odk.pairpongsender.game;
 
-import java.util.UUID;
-
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
@@ -56,8 +54,6 @@ public class MainGame extends ApplicationAdapter {
     private ReceiverFunction rfunction;
     private SpriteBatch spriteBatch;
     private GThetaProvider gThetaProvider = new GThetaProvider();
-    private float posX=0.45f;
-    private float posY=0.45f;
     
     private int width, height;
     
@@ -103,8 +99,11 @@ public class MainGame extends ApplicationAdapter {
         }
     }
     
-    private String lastReceiverUUID = "";
+    private String lastUUID = "";
 
+    private Json json = new Json();
+    private float posX = 0.45f;
+    private float posY = 0.45f;
     @Override
     public void render() {
         Gdx.gl.glViewport(0, 0, width, height);
@@ -113,8 +112,11 @@ public class MainGame extends ApplicationAdapter {
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
         float theta = gThetaProvider.obtainTheta();
+
+        boolean isTouched = false;
         // Input Polling
         if (Gdx.input.isTouched()) {
+            isTouched = true;
             posX = Gdx.input.getX() / (float)width;
             posY = 1 - Gdx.input.getY() / (float)height;
             if(posX<0.055f)
@@ -125,7 +127,16 @@ public class MainGame extends ApplicationAdapter {
                 posY=0.005f;
             if(posY>0.9f)
                 posY=0.9f;
-            senderRunnable.pend(new SenderRunnable(sfunction));
+            senderRunnable.pend(new SenderInfo(posX, posY, theta));
+        }
+        
+        String infoString = rfunction.getstring();
+        if (infoString != null && !infoString.equals("")) {
+            ReceiverInfo receiverInfo = json.fromJson(ReceiverInfo.class, infoString);
+            if (!receiverInfo.uuid.equals(lastUUID)) {
+                Gdx.input.vibrate(receiverInfo.duration);
+                lastUUID = receiverInfo.uuid;
+            }
         }
         
         // render by sprite batch

@@ -18,10 +18,8 @@ import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -34,9 +32,10 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btCompoundShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
+import com.badlogic.gdx.utils.Json;
 
 class MyCollision extends CollisionComp {
-
+    
 	@Override
 	public IComp duplicate() {
 		return new MyCollision();
@@ -53,15 +52,20 @@ class MyCollision extends CollisionComp {
 }
 
 class VibCollision extends CollisionComp {
+    private Json json = new Json();
+    private SenderFunction sfunction;
+    public VibCollision (SenderFunction sfunction) {
+        this.sfunction = sfunction;
+    }
 
     @Override
     public IComp duplicate() {
-        return new VibCollision();
+        return new VibCollision(sfunction);
     }
 
     @Override
     public void beginCollision(GameItem other) {
-        Gdx.input.vibrate(80);
+        sfunction.sendstring(json.toJson(new ReceiverInfo(80)));
     }
 
     @Override
@@ -230,36 +234,38 @@ public class TestScene extends Scene {
 
 	private Model boxModel, boxModel2, ballModel;
     private Texture tex;
-    private SpriteBatch sb;
-    private int n = 0;
-    private float theta;
-    private float alpha = 0.5f;
+    
+    private Json json = new Json();
+    private String lastUUID = "";
+    private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
+    private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
+    private StateInterpolater thetaIntp = new StateInterpolater(1, 90, 0, 900);
+    
     @Override
     public void postRender() {
-        float curTheta;
-        Vector3 g = new Vector3(Gdx.input.getAccelerometerX(), Gdx.input.getAccelerometerY(), Gdx.input.getAccelerometerZ()).nor();
-        curTheta = (float) Math.toDegrees(Math.acos(g.dot(new Vector3(0, 0, 1))));
-        
-        theta = theta * (1 - alpha) + curTheta * alpha;
-
-        sb.begin();
-        n++;
-        double[] pos = rfunction.getdoublearray();
-        if (pos!=null)
-        	racketItem.getTransform().modify().set(new Vector3(-2, 3.6f-(float)pos[1], (float)pos[0]*1.25f-2),new Quaternion(new Vector3(1,0,1), 270-n*3),
-        			new Vector3(0.03f,0.03f, 0.03f));
-        else{
-        	racketItem.getTransform().modify().set(new Vector3(-2, 2, 0),new Quaternion(new Vector3(1,0,1), 270-n*3),
-        			new Vector3(0.03f,0.03f, 0.03f));
+        String infoString = rfunction.getstring();
+        if (infoString != null && !infoString.equals("")) {
+            SenderInfo newInfo = json.fromJson(SenderInfo.class, infoString);
+            if (newInfo != null && !newInfo.uuid.equals(lastUUID)) {
+                posXIntp.setDestState((newInfo.posX - 0.5f) * 3);
+                posYIntp.setDestState(newInfo.posY * 4 + 0.2f);
+                thetaIntp.setDestState(newInfo.theta * 1.5f);
+                lastUUID = newInfo.uuid;
+            }
         }
-        sb.end();
-        
-        
+        posXIntp.update(0.03f);
+        posYIntp.update(0.03f);
+        thetaIntp.update(0.03f);
+
+        racketItem.getTransform().modify().set(new Vector3(-2, 
+                                                           posYIntp.getState(),
+                                                           posXIntp.getState()),
+                                               new Quaternion(new Vector3(0,0,1), thetaIntp.getState()),
+                                               new Vector3(0.03f,0.03f, 0.03f));
     }
 
     @Override
     public void firstPreparation() {
-    	sb  = new SpriteBatch();
         tex = new Texture("doge.jpg");
         boxModel = new ModelBuilder().createBox(4, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
@@ -281,7 +287,6 @@ public class TestScene extends Scene {
     @Override
     public void tearDown() {
         boxModel.dispose();
-        sb.dispose();
         Done ();
     }
 

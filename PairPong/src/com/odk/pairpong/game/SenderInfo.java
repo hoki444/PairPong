@@ -1,4 +1,4 @@
-package com.odk.pairpongsender.game;
+package com.odk.pairpong.game;
 
 import java.util.UUID;
 

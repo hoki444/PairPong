@@ -1,15 +1,16 @@
 package com.odk.pairpongsender.game;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.math.Vector3;
 
 public class GThetaProvider {
     private static float Alpha = 0.5f;
     private float old;
     private boolean isFirst;
+
     public GThetaProvider ( ) {
         isFirst = true;
     }
+
     public float obtainTheta() {
         if (isFirst) {
             float theta = getCur();
@@ -21,6 +22,7 @@ public class GThetaProvider {
             return old;
         }
     }
+
     private float getCur() {
         float x, y, z, l;
         x = Gdx.input.getAccelerometerX();
