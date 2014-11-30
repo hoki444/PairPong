@@ -251,7 +251,6 @@ public class QPairSenderFunction implements SenderFunction {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            
 			// get an IPeerContext
             IPeerContext peerContext = IPeerContext.Stub.asInterface(service);
             try {
@@ -260,7 +259,7 @@ public class QPairSenderFunction implements SenderFunction {
                 i.setComponent(finfo.activityname);
                 if(finfo.functionkind!="startactivity"){
                 	i.putStringExtra("datakind", finfo.whatsend);
-                    if(finfo.whatsend=="boolarray")
+                    if(finfo.whatsend == "boolarray")
                 		i.putBooleanArrayExtra("boolarray", finfo.sendingboolarray);
                 	else if(finfo.whatsend=="bool")
                 		i.putBooleanExtra("bool", finfo.sendingbool);
