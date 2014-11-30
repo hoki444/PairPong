@@ -5,7 +5,7 @@
 	<uses-permission android:name="com.lge.qpair.permission.USE_QPAIR_SERVICE" />
 	<uses-permission android:name="android.permission.VIBRATE"/>
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="13"
         android:targetSdkVersion="19" />
 
     <application
