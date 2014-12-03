@@ -1,5 +1,7 @@
 package com.odk.pairpongsender.game;
 
+import android.util.Log;
+
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
@@ -132,8 +134,10 @@ public class MainGame extends ApplicationAdapter {
         
         String infoString = rfunction.getstring();
         if (infoString != null && !infoString.equals("")) {
+        	Log.e("get", "string");
             ReceiverInfo receiverInfo = json.fromJson(ReceiverInfo.class, infoString);
             if (!receiverInfo.uuid.equals(lastUUID)) {
+            	Log.e("hastune", "miku");
                 Gdx.input.vibrate(receiverInfo.duration);
                 lastUUID = receiverInfo.uuid;
             }

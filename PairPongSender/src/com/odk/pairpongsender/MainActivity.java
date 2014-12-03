@@ -28,13 +28,13 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         View vw=new MyView(this);
 		setContentView(vw);
+    	sfunction.setpackage("com.odk.pairpong");
+    	sfunction.startreceiver("PairPongBoardActivity");
     }
     public void Startgame() {
         // bind QPair Service
-    	sfunction.setpackage("com.odk.pairpong");
-    	sfunction.startreceiver("PairPongBoardActivity");
     	Intent intent = new Intent(this, ControllerActivity.class);
-    	
+    	sfunction.sendbool(true);
     	startActivity(intent);
     }
     public void myDestroy(){

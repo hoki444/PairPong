@@ -251,6 +251,7 @@ public class QPairSenderFunction implements SenderFunction {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            
 			// get an IPeerContext
             IPeerContext peerContext = IPeerContext.Stub.asInterface(service);
             try {
@@ -259,48 +260,48 @@ public class QPairSenderFunction implements SenderFunction {
                 i.setComponent(finfo.activityname);
                 if(finfo.functionkind!="startactivity"){
                 	i.putStringExtra("datakind", finfo.whatsend);
-                    if(finfo.whatsend == "boolarray")
+                    if(finfo.whatsend.equals("boolarray"))
                 		i.putBooleanArrayExtra("boolarray", finfo.sendingboolarray);
-                	else if(finfo.whatsend=="bool")
+                	else if(finfo.whatsend.equals("bool"))
                 		i.putBooleanExtra("bool", finfo.sendingbool);
-                	else if(finfo.whatsend=="bytearray")
+                	else if(finfo.whatsend.equals("bytearray"))
                 		i.putByteArrayExtra("bytearray", finfo.sendingbytearray);
-                	else if(finfo.whatsend=="byte")
+                	else if(finfo.whatsend.equals("byte"))
                 		i.putByteExtra("byte", finfo.sendingbyte);
-                	else if(finfo.whatsend=="chararray")
+                	else if(finfo.whatsend.equals("chararray"))
                 		i.putCharArrayExtra("chararray", finfo.sendingchararray);
-                	else if(finfo.whatsend=="charsequence")
+                	else if(finfo.whatsend.equals("charsequence"))
                 		i.putCharSequenceExtra("charsequence", finfo.sendingcharsequence);
-                	else if(finfo.whatsend=="char")
+                	else if(finfo.whatsend.equals("char"))
                 		i.putCharExtra("char", finfo.sendingchar);
-                	else if(finfo.whatsend=="doublearray")
+                	else if(finfo.whatsend.equals("doublearray"))
                 		i.putDoubleArrayExtra("doublearray", finfo.sendingdoublearray);
-                	else if(finfo.whatsend=="double")
+                	else if(finfo.whatsend.equals("double"))
                 		i.putDoubleExtra("double", finfo.sendingdouble);
-                	else if(finfo.whatsend=="floatarray")
+                	else if(finfo.whatsend.equals("floatarray"))
                 		i.putFloatArrayExtra("floatarray", finfo.sendingfloatarray);
-                	else if(finfo.whatsend=="float")
+                	else if(finfo.whatsend.equals("float"))
                 		i.putFloatExtra("float", finfo.sendingfloat);
-                	else if(finfo.whatsend=="intarray")
+                	else if(finfo.whatsend.equals("intarray"))
                 		i.putIntArrayExtra("intarray", finfo.sendingintarray);
-                	else if(finfo.whatsend=="int")
+                	else if(finfo.whatsend.equals("int"))
                 		i.putIntExtra("int", finfo.sendingint);
-                	else if(finfo.whatsend=="longarray")
+                	else if(finfo.whatsend.equals("longarray"))
                 		i.putLongArrayExtra("longarray", finfo.sendinglongarray);
-                	else if(finfo.whatsend=="long")
+                	else if(finfo.whatsend.equals("long"))
                 		i.putLongExtra("long", finfo.sendinglong);
-                	else if(finfo.whatsend=="stringarray")
+                	else if(finfo.whatsend.equals("stringarray"))
                 		i.putStringArrayExtra("stringarray", finfo.sendingstringarray);
-                	else if(finfo.whatsend=="stringarraylist")
+                	else if(finfo.whatsend.equals("stringarraylist"))
                 		i.putStringArrayListExtra("stringarraylist", finfo.sendingstringarraylist);
-                	else if(finfo.whatsend=="string")
+                	else if(finfo.whatsend.equals("string"))
                 		i.putStringExtra("string", finfo.sendingstring);
                 }
                 IPeerIntent callback = peerContext.newPeerIntent();
                 
                 // set callback action
                 callback.setAction(CALLBACK_ACTION);
-                if(finfo.functionkind=="startactivity")
+                if(finfo.functionkind.equals("startactivity"))
                 	peerContext.startActivityOnPeer(i, callback);
                 else
                 	peerContext.sendBroadcastOnPeer(i, callback);

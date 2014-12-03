@@ -6,6 +6,7 @@ import android.view.WindowManager;
 
 import com.algy.schedcore.frontend.SceneMgr;
 import com.badlogic.gdx.backends.android.AndroidApplication;
+import com.odk.pairpong.game.MainScene;
 import com.odk.pairpong.game.TestScene;
 
 public class PairPongBoardActivity extends AndroidApplication {
@@ -14,7 +15,7 @@ public class PairPongBoardActivity extends AndroidApplication {
 	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        initialize(new SceneMgr(new TestScene(new QPairReceiverFunction(), new QPairSenderFunction(this))));
+        initialize(new SceneMgr(new MainScene(new QPairReceiverFunction(), new QPairSenderFunction(this))));
     }
 
     @Override

@@ -346,6 +346,7 @@ public class TestScene extends Scene {
     Score score= new Score();
 	BitmapFont bfont;
 	Batch batch;
+	int n=1800;
     private Json json = new Json();
     private String lastUUID = "";
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
@@ -377,9 +378,16 @@ public class TestScene extends Scene {
         if(score.reduceStuck()){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
+        if(n!=0)
+        	n--;
+        else
+            SceneMgr.switchScene(new MainScene(rfunction, sfunction));
     	batch.begin();
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Score : "+String.valueOf(score.getScore()), 0, 720);
+        if(n<300)
+        	bfont.setColor(Color.RED);
+        bfont.draw(batch, String.valueOf(n/30), 600, 720);
         if(score.showScore()){
         	bfont.setColor(Color.RED);
         	bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+String.valueOf((2*score.getCombo()-1)*100), 0, 600);
