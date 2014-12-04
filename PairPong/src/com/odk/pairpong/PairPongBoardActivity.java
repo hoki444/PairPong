@@ -22,5 +22,6 @@ public class PairPongBoardActivity extends AndroidApplication {
     protected void onDestroy() {
     	
     	super.onDestroy();
+    	System.exit(0);
     }
 }

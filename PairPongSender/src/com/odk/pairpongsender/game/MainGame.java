@@ -1,5 +1,6 @@
 package com.odk.pairpongsender.game;
 
+import android.content.Intent;
 import android.util.Log;
 
 import com.badlogic.gdx.ApplicationAdapter;
@@ -8,6 +9,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Json;
+import com.odk.pairpongsender.ControllerActivity;
 
 class SenderRunnable implements Runnable {
     private Object obj;
@@ -56,15 +58,17 @@ public class MainGame extends ApplicationAdapter {
     private ReceiverFunction rfunction;
     private SpriteBatch spriteBatch;
     private GThetaProvider gThetaProvider = new GThetaProvider();
+    private ControllerActivity nowactivity;
     
     private int width, height;
     
     private Thread senderThread;
     private SenderRunnable senderRunnable;
 
-    public MainGame (SenderFunction sfunction, ReceiverFunction rfunction) {
+    public MainGame (SenderFunction sfunction, ReceiverFunction rfunction, ControllerActivity nowactivity) {
         this.sfunction = sfunction;
         this.rfunction = rfunction;
+        this.nowactivity = nowactivity;
     }
 
     @Override
@@ -102,7 +106,7 @@ public class MainGame extends ApplicationAdapter {
     }
     
     private String lastUUID = "";
-
+    private int loading=0;
     private Json json = new Json();
     private float posX = 0.45f;
     private float posY = 0.45f;
@@ -134,15 +138,19 @@ public class MainGame extends ApplicationAdapter {
         
         String infoString = rfunction.getstring();
         if (infoString != null && !infoString.equals("")) {
-        	Log.e("get", "string");
             ReceiverInfo receiverInfo = json.fromJson(ReceiverInfo.class, infoString);
             if (!receiverInfo.uuid.equals(lastUUID)) {
-            	Log.e("hastune", "miku");
                 Gdx.input.vibrate(receiverInfo.duration);
                 lastUUID = receiverInfo.uuid;
             }
         }
-        
+        if(loading<30){
+        	loading++;
+            sfunction.sendint(0);
+        }
+        if (rfunction.getint()==7){
+        	nowactivity.myDestroy();
+        }
         // render by sprite batch
         spriteBatch.begin();
         spriteBatch.draw(texBoard, 0, 0, width, height);

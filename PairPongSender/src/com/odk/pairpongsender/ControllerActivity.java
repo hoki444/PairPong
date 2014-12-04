@@ -16,6 +16,10 @@ public class ControllerActivity extends AndroidApplication {
 		ReceiverFunction rfunction = new QPairReceiverFunction();
 
         sfunction.setpackage("com.odk.pairpong");
-        initialize(new MainGame(sfunction, rfunction));
+        initialize(new MainGame(sfunction, rfunction, this));
     }
+	public void myDestroy(){
+		super.onDestroy();
+		System.exit(0);
+	}
 }

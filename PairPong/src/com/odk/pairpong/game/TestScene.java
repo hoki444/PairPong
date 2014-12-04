@@ -378,10 +378,12 @@ public class TestScene extends Scene {
         if(score.reduceStuck()){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
-        if(n!=0)
-        	n--;
+        if(n==0 || !rfunction.getbool()){
+        	sfunction.sendint(7);
+            SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
+        }
         else
-            SceneMgr.switchScene(new MainScene(rfunction, sfunction));
+        	n--;
     	batch.begin();
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Score : "+String.valueOf(score.getScore()), 0, 720);
