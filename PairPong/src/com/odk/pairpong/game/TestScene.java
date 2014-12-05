@@ -246,6 +246,7 @@ public class TestScene extends Scene {
        
         racketItem.add(new AssetModelComp("racket.obj"));
         racketItem.add(new VibCollision(sfunction, score));
+        racketItem.setName("racket");
 
         lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
         lightItem.add(new DirectionalLightComp(new Vector3(0, -1f, 0.5f)).setColor(1.f, 1.f, 1.f, 1.0f));
@@ -358,7 +359,7 @@ public class TestScene extends Scene {
         if (infoString != null && !infoString.equals("")) {
             SenderInfo newInfo = json.fromJson(SenderInfo.class, infoString);
             if (newInfo != null && !newInfo.uuid.equals(lastUUID)) {
-                posXIntp.setDestState((newInfo.posX - 0.5f) * 3);
+                posXIntp.setDestState((newInfo.posX - 0.5f) * 6);
                 posYIntp.setDestState(newInfo.posY * 4 + 0.2f);
                 thetaIntp.setDestState(newInfo.theta * 1.5f);
                 lastUUID = newInfo.uuid;
@@ -403,7 +404,7 @@ public class TestScene extends Scene {
         racketItem.getTransform().modify().set(new Vector3(-2, 
                                                            posYIntp.getState(),
                                                            posXIntp.getState()),
-                                               new Quaternion(new Vector3(0,0,1), thetaIntp.getState()),
+                                               new Quaternion(new Vector3(0,0,1), 180f + thetaIntp.getState()),
                                                new Vector3(0.03f,0.03f, 0.03f));
     }
 
