@@ -197,7 +197,7 @@ public class TestScene extends Scene {
 
     @Override
 	public void reserveItem(Scene scene, ItemReservable coreProxy) { 
-    	GameItem boardItem = new GameItem(),
+    	GameItem boardItembo = new GameItem(),
     			 debugdrawItem = new GameItem(new BtDebugDrawerComp()),
 				 wallItem = new GameItem(),
                  lightItem = new GameItem(),
@@ -205,12 +205,17 @@ public class TestScene extends Scene {
                 		 						new PointLightComp(20).setColor(1, 1, 1, 1)),
                  removerItem = new GameItem();
 
-        boardItem.as(Transform.class).modify().setTranslation(0, 0, 0);
-        boardItem.add(BtRigidBodyComp
+        boardItembo.as(Transform.class).modify().setTranslation(0, 0, 0);
+        boardItembo.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(2.f, .1f, 3.f)))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
-        boardItem.add(new ModelComp(boxModel));
+        GameItem boardItemt = boardItembo.duplicate(new Vector3(0, 4.0f, 0));
+        GameItem boardItemba = boardItembo.duplicate(new Vector3(2.1f, 2.0f, 0),
+        		   new Quaternion(new Vector3(0,0,1), 90));
+        boardItembo.add(new ModelComp(boxModelbo));
+        boardItemba.add(new ModelComp(boxModelba));
+        boardItemt.add(new ModelComp(boxModelt));
        
         btCompoundShape racketCollShape = new btCompoundShape();
         racketCollShape.addChildShape(new Matrix4().set(new Vector3(-.75f, .03f, .03f), new Quaternion()),
@@ -233,8 +238,9 @@ public class TestScene extends Scene {
                       .staticBody(new btBoxShape(new Vector3(2.f, 2.f, .1f)))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
-        wallItem.add(new ModelComp(boxModel2));
-
+        GameItem wallItem2 = wallItem.duplicate(new Vector3(0, 2.0f, -3.1f));
+        wallItem.add(new ModelComp(boxModels));
+        wallItem2.add(new ModelComp(boxModels2));
         ballItem = new GameItem(new Transform(0, 0.2f, 0));
         ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.15f), 1)
                      .setAngularVelocity(new Vector3(0, 0, -10))
@@ -257,12 +263,11 @@ public class TestScene extends Scene {
 
         removerItem.add(new BtDetectorComp(new btBoxShape(new Vector3(50.f, 1f, 50.f))));
         removerItem.add(new MyCollision(ballItem,score));
-        coreProxy.reserveItem(boardItem);
-        coreProxy.reserveItem(boardItem.duplicate(new Vector3(0, 4.0f, 0)));
-        coreProxy.reserveItem(boardItem.duplicate(new Vector3(2.1f, 2.0f, 0),
-       		   new Quaternion(new Vector3(0,0,1), 90)));
+        coreProxy.reserveItem(boardItembo);
+        coreProxy.reserveItem(boardItemba);
+        coreProxy.reserveItem(boardItemt);
         coreProxy.reserveItem(wallItem);
-        coreProxy.reserveItem(wallItem.duplicate(new Vector3(0, 2.0f, -3.1f)));
+        coreProxy.reserveItem(wallItem2);
         coreProxy.reserveItem(lightItem);
         coreProxy.reserveItem(racketItem);
         coreProxy.reserveItem(debugdrawItem);
@@ -339,8 +344,8 @@ public class TestScene extends Scene {
         Done ();
 	}
 
-	private Model boxModel, boxModel2, ballModel;
-    private Texture tex;
+	private Model boxModelbo, boxModelba, boxModels, boxModels2, boxModelt, ballModel;
+    private Texture tex, bottom, top, side, side2, back;
     Score score= new Score();
 	BitmapFont bfont;
 	Batch batch;
@@ -413,16 +418,35 @@ public class TestScene extends Scene {
     	batch = new SpriteBatch();
         bfont.setColor(Color.WHITE);
         bfont.scale(3f);
-        tex = new Texture("doge.jpg");
-        boxModel = new ModelBuilder().createBox(4, .2f, 6, 
+        bottom = new Texture("bottom.png");
+        back = new Texture("back.png");
+        top = new Texture("top.png");
+        side = new Texture("side.png");
+        side2 = new Texture("side2.png");
+        boxModelbo = new ModelBuilder().createBox(4, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
-                             TextureAttribute.createDiffuse(new TextureRegion(tex))),
+                             TextureAttribute.createDiffuse(new TextureRegion(bottom))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
-        boxModel2 = new ModelBuilder().createBox(4, 4, .2f, 
+        boxModelba = new ModelBuilder().createBox(4, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
-                             TextureAttribute.createDiffuse(new TextureRegion(tex))),
+                             TextureAttribute.createDiffuse(new TextureRegion(back))),
+                Usage.Position | Usage.Normal | Usage.TextureCoordinates);
+        boxModelt = new ModelBuilder().createBox(4, .2f, 6, 
+                new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
+                             ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
+                             TextureAttribute.createDiffuse(new TextureRegion(top))),
+                Usage.Position | Usage.Normal | Usage.TextureCoordinates);
+        boxModels = new ModelBuilder().createBox(4, 4, .2f, 
+                new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
+                             ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
+                             TextureAttribute.createDiffuse(new TextureRegion(side))),
+                Usage.Position | Usage.Normal | Usage.TextureCoordinates);
+        boxModels2 = new ModelBuilder().createBox(4, 4, .2f, 
+                new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
+                             ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
+                             TextureAttribute.createDiffuse(new TextureRegion(side2))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         ballModel = new ModelBuilder().createSphere(.3f, .3f, .3f, 10, 10, 
                 new Material(ColorAttribute.createDiffuse(0.5f, 0.5f, 0.5f, 1f),
@@ -435,7 +459,9 @@ public class TestScene extends Scene {
     public void tearDown() {
     	batch.dispose();
         bfont.dispose();
-        boxModel.dispose();
+        boxModelbo.dispose();
+        boxModelba.dispose();
+        boxModels.dispose();
         Done ();
     }
 
