@@ -1,7 +1,6 @@
 package com.odk.pairpongsender;
 
 import android.os.Bundle;
-import android.view.WindowManager;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.odk.pairpongsender.game.MainGame;

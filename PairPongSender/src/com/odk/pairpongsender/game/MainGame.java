@@ -1,8 +1,5 @@
 package com.odk.pairpongsender.game;
 
-import android.content.Intent;
-import android.util.Log;
-
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;

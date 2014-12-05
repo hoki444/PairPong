@@ -1,10 +1,8 @@
 package com.odk.pairpongsender;
 
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.MotionEvent;
 
 public class MainScreen {

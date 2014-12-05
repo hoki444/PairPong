@@ -12,9 +12,9 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.widget.Toast;
 
-import com.lge.qpair.api.r1.IPeerContext;
-import com.lge.qpair.api.r1.IPeerIntent;
-import com.lge.qpair.api.r1.QPairConstants;
+import com.lge.qpair.api.r2.IPeerContext;
+import com.lge.qpair.api.r2.IPeerIntent;
+import com.lge.qpair.api.r2.QPairConstants;
 import com.odk.pairpong.game.SenderFunction;
 
 public class QPairSenderFunction implements SenderFunction {
@@ -26,7 +26,7 @@ public class QPairSenderFunction implements SenderFunction {
 		myActivity=activity;
 	}
 	void callService(){
-		final Intent intent = new Intent(QPairConstants.ACTION_QPAIR_SERVICE);
+		final Intent intent = new Intent(QPairConstants.ACTION_SERVICE);
 
         // Bind to the QPair service
         boolean bindResult = myActivity.bindService(intent, new MyServiceConnection(), 0);
@@ -302,9 +302,9 @@ public class QPairSenderFunction implements SenderFunction {
                 // set callback action
                 callback.setAction(CALLBACK_ACTION);
                 if(finfo.functionkind.equals("startactivity"))
-                	peerContext.startActivityOnPeer(i, callback);
+                	peerContext.startActivityOnPeer(i, callback, null);
                 else
-                	peerContext.sendBroadcastOnPeer(i, callback);
+                	peerContext.sendBroadcastOnPeer(i, callback, null);
             } catch (RemoteException e) {
             }
 
