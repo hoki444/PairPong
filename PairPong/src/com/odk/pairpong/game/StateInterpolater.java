@@ -37,7 +37,7 @@ public class StateInterpolater {
         state += v * dt;
     }
 
-    private static float smoothstep(float xedge0, float xedge1, float x, float vmin, float vmax)
+    public static float smoothstep(float xedge0, float xedge1, float x, float vmin, float vmax)
     {
         // Reference: http://en.wikipedia.org/wiki/Smoothstep
         // Scale, bias and saturate x to 0..1 range
@@ -47,5 +47,12 @@ public class StateInterpolater {
 
         // Evaluate polynomial
         return (vmax - vmin) * x*x*(3 - 2*x) + vmin;
+    }
+
+    public static float clamp(float x, float xmin, float xmax) {
+        x = x < xmin? xmin : x;
+        x = x > xmax? xmax : x;
+
+        return x;
     }
 }

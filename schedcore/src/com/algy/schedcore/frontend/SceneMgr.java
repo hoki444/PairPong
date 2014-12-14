@@ -19,7 +19,7 @@ public class SceneMgr extends ApplicationAdapter {
     public Eden eden = new Eden();
     
     static boolean bulletInitialized = false;
-    public static SceneMgr instance = null;
+    private static SceneMgr instance = null;
     
     static synchronized void initBullet () {
         Bullet.init(true);
@@ -28,11 +28,14 @@ public class SceneMgr extends ApplicationAdapter {
 
     public SceneMgr (Scene firstScene) {
         synchronized (SceneMgr.class) {
+            instance = this;
+            /*
             if (instance == null) {
                 instance = this;
             } else {
                 throw new SchedcoreRuntimeError("Scene manager cannot be created twice");
             }
+            */
         }
         startScene (firstScene);
     }
@@ -51,7 +54,10 @@ public class SceneMgr extends ApplicationAdapter {
     }
     
     public static void switchScene (Scene nextScene) {
-        instance.changeScene(nextScene);
+        synchronized (SceneMgr.class) {
+            if (instance != null)
+                instance.changeScene(nextScene);
+        }
     }
     
     public void create() {

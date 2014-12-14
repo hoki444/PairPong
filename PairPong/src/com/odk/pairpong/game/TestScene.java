@@ -12,7 +12,6 @@ import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.DirectionalLightComp;
 import com.algy.schedcore.middleend.EnvServer;
 import com.algy.schedcore.middleend.GameItem;
-import com.algy.schedcore.middleend.InputComp;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.PointLightComp;
 import com.algy.schedcore.middleend.Transform;
@@ -39,7 +38,6 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btCompoundShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
-import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.utils.Json;
 
 class MyCollision extends CollisionComp {
@@ -57,8 +55,7 @@ class MyCollision extends CollisionComp {
 		return new MyCollision(ballItem, score);
 	}
 
-	@Override
-	public void beginCollision(GameItem other) {
+	@Override public void beginCollision(GameItem other) {
 		core().removeItem(other);
 		GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
 		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
@@ -165,13 +162,15 @@ class VibCollision extends CollisionComp {
 
     @Override
     public void beginCollision(GameItem other) {
-        sfunction.sendstring(json.toJson(new ReceiverInfo(80)));
-        if(!score.isStuck()){
-        	score.addCombo();
-        	combo=score.getCombo();
-        	score.addScore((2*combo-1)*100);
-        	score.setStuck();
-        	score.setStartSpeed(other.as(BtRigidBodyComp.class).getLinearVelocity().len());
+        if ("ball".equals(other.getName())) {
+            sfunction.sendstring(json.toJson(new ReceiverInfo(80)));
+            if(!score.isStuck()){
+                score.addCombo();
+                combo=score.getCombo();
+                score.addScore((2*combo-1)*100);
+                score.setStuck();
+                score.setStartSpeed(other.as(BtRigidBodyComp.class).getLinearVelocity().len());
+            }
         }
     }
 
@@ -201,8 +200,6 @@ public class TestScene extends Scene {
     			 debugdrawItem = new GameItem(new BtDebugDrawerComp()),
 				 wallItem = new GameItem(),
                  lightItem = new GameItem(),
-                 pointlightItem = new GameItem(new Transform(new Vector3(0, 1, 0)),
-                		 						new PointLightComp(20).setColor(1, 1, 1, 1)),
                  removerItem = new GameItem();
 
         boardItem.as(Transform.class).modify().setTranslation(0, 0, 0);
@@ -218,10 +215,11 @@ public class TestScene extends Scene {
         racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f, .03f, .03f), new Quaternion()),
         		new btBoxShape(new Vector3(.9f, .03f, .03f)));
 
-        racketItem = new GameItem(new Transform(new Vector3(0, 2, 0),
+        racketItem = new GameItem(new Transform(new Vector3(0, 2, 0.2f),
 			 new Quaternion(),
 			 new Vector3(0.03f, 0.03f, 0.03f)));
         racketItem.add(BtRigidBodyComp
+                      // .kinematicBody(racketCollShape)
                       .kinematicBody(racketCollShape)
                       .setFriction(0.1f)
                       .activate()
@@ -266,65 +264,14 @@ public class TestScene extends Scene {
         coreProxy.reserveItem(wallItem.duplicate(new Vector3(0, 2.0f, -3.1f)));
         coreProxy.reserveItem(lightItem);
         coreProxy.reserveItem(racketItem);
-        coreProxy.reserveItem(debugdrawItem);
-        coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 1, 0)),
-                		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
-        coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 2, 0)),
-                		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
+//        coreProxy.reserveItem(debugdrawItem);
+        coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 1.5f, 0)),
+                		 					new PointLightComp(20).setColor(1, 1, 1, 1)));
+        coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 1.9f, 0)),
+                		 					new PointLightComp(20).setColor(1, 1, 1, 1)));
         coreProxy.reserveItem(removerItem);
 //        coreProxy.reserveItem(new GameItem(new SimpleCameraControllerComp()));
-        coreProxy.reserveItem(new GameItem(new InputComp() {
-            @Override
-            public IComp duplicate() {
-                return null;
-            }
-            
-            @Override
-            public boolean touchUp(int arg0, int arg1, int arg2, int arg3) {
-                return false;
-            }
-            
-            @Override
-            public boolean touchDragged(int arg0, int arg1, int arg2) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
-                SceneMgr.switchScene(new TestScene(rfunction, sfunction));
-                return false;
-            }
-            
-            @Override
-            public boolean scrolled(int arg0) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean mouseMoved(int arg0, int arg1) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean keyUp(int arg0) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean keyTyped(char arg0) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean keyDown(int arg0) {
-                return false;
-            }
-        }));
+
         Done ();
 	}
 
@@ -333,7 +280,7 @@ public class TestScene extends Scene {
         core.server(EnvServer.class).ambientLightColor.set(.4f, .4f, .4f, 1); 
         core.server(BtPhysicsWorld.class).world.setGravity(new Vector3(0, -9.8f, 0));
         
-        core.server(CameraServer.class).setPosition(new Vector3(-4, 3f, 0))
+        core.server(CameraServer.class).setPosition(new Vector3(-6, 3f, 0))
                                        .lookAt(new Vector3(0, 2f, 0))
                                        .setUpVector(new Vector3(1, 0, 0))
                                        .setRange(1, 100);
@@ -350,18 +297,19 @@ public class TestScene extends Scene {
     private String lastUUID = "";
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
-    private StateInterpolater thetaIntp = new StateInterpolater(1, 90, 0, 900);
     
+    private float racketDestTheta = 0.f;
     @Override
     public void postRender() {
     	Random random = new Random();
         String infoString = rfunction.getstring();
+
         if (infoString != null && !infoString.equals("")) {
             SenderInfo newInfo = json.fromJson(SenderInfo.class, infoString);
             if (newInfo != null && !newInfo.uuid.equals(lastUUID)) {
-                posXIntp.setDestState((newInfo.posX - 0.5f) * 6);
-                posYIntp.setDestState(newInfo.posY * 4 + 0.2f);
-                thetaIntp.setDestState(newInfo.theta * 1.5f);
+                posXIntp.setDestState((newInfo.posX - 0.5f) * 8);
+                posYIntp.setDestState((newInfo.posY - 0.33f) * 4);
+                racketDestTheta = newInfo.theta;
                 lastUUID = newInfo.uuid;
             }
         }
@@ -400,12 +348,22 @@ public class TestScene extends Scene {
         batch.end();
         posXIntp.update(0.03f);
         posYIntp.update(0.03f);
-        thetaIntp.update(0.03f);
-        racketItem.getTransform().modify().set(new Vector3(-2, 
+        
+        float curAngle = racketItem.getTransform().getRotation(new Quaternion()).getAxisAngle(new Vector3(0, 0, 1));
+
+        float sgn = (racketDestTheta > curAngle)? +1f:-1f;
+        float omega = sgn * StateInterpolater.smoothstep(0f, 90, Math.abs(racketDestTheta - curAngle), 0, 500);
+        System.out.println("CUR ANGLE: " + curAngle + " Omega: " + omega + " DEST ANGLE: " + racketDestTheta);
+        
+                                               
+        /*
+        racketItem.getTransform().modify().set(new Vector3(-3, 
                                                            posYIntp.getState(),
                                                            posXIntp.getState()),
-                                               new Quaternion(new Vector3(0,0,1), 180f + thetaIntp.getState()),
+                                               new Quaternion(new Vector3(0, 0, 1), curAngle),
                                                new Vector3(0.03f,0.03f, 0.03f));
+                                               */
+        racketItem.as(BtRigidBodyComp.class).setAngularVelocity(new Vector3(0, 0, omega));
     }
 
     @Override

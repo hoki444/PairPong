@@ -228,9 +228,11 @@ public final class Scheduler {
                 execJob.ewmaExecutionTime = (4 * oldExecutionTime + executionTime) / 5;
             }
             if (finishTime > execJob.curDeadline) {
+                /*
                 System.out.println("Task " + execJob.ti.taskId + " missed deadline. " + 
                                    (finishTime - execJob.curDeadline) +
                                    " avgExecTime. " + execJob.ewmaExecutionTime);
+                                   */
             }
             if (this.currentJob != null && this.currentJob == execJob) {
                 evictCurrentJob(execJob.curReltime + period);
