@@ -1,5 +1,8 @@
 package com.odk.pairpongsender;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -29,7 +32,7 @@ public class Recoder {
 		pnt.setTextSize(textsize);
 		pnt.setColor(Color.BLACK);
 		canvas.drawText("High Score", x/2-textsize*2.48f, y/10, pnt);
-		if(loading==60){
+		if(loading>=60&& score!=7){
 			textsize=textsize/2;
 			pnt.setTextSize(textsize);
 			rank= scorelist.getRank(myscore);
@@ -42,7 +45,7 @@ public class Recoder {
 				canvas.drawText("Name", x*7/12, y*3/12, pnt);
 				canvas.drawText("Date", x*9/12, y*3/12, pnt);
 				for(int n=0;n<5;n++){
-					canvas.drawText(String.valueOf(n), x/12, y*(4+n)/12, pnt);
+					canvas.drawText(String.valueOf(n+1), x/12, y*(4+n)/12, pnt);
 					canvas.drawText(String.valueOf(scorelist.scores[n].score), x*3/12, y*(4+n)/12, pnt);
 					canvas.drawText(scorelist.scores[n].name, x*7/12, y*(4+n)/12, pnt);
 					canvas.drawText(String.valueOf(scorelist.scores[n].date), x*9/12, y*(4+n)/12, pnt);
@@ -102,14 +105,14 @@ public class Recoder {
 		if(nowpointer<7)
 			nowpointer++;
 	}
-	public int TouchEvent(MotionEvent event, int x, int y) {
+	public String TouchEvent(MotionEvent event, int x, int y) {
 		if(event.getX()>x/11&&event.getAction()==MotionEvent.ACTION_DOWN &&
-				loading==60 && !showscore){
+				loading>=60 && !showscore){
 			if(event.getY()>y*5/12&&event.getY()<y*9/12){
 				pressData((int)(event.getX()*11/x)-1,(int)(event.getY()*12/y)-6);
 			}
 		}
-		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN && loading==60){
+		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN && loading>=60){
 			if(event.getY()>y*5/6&&event.getY()<y*19/20){
 				if(showscore){
 					showscore=false;
@@ -117,18 +120,19 @@ public class Recoder {
 					for(int n=0;n<8;n++)
 						names[n]=' ';
 					nowpointer=0;
-					return 1;
+					return "main";
 				}
 				else{
 					name=String.valueOf(names);
 					showscore=true;
-					scorelist.update(rank,myscore,name,12040805);
+					scorelist.update(rank,myscore,name,
+							new SimpleDateFormat("MM/dd HH:mm").format(new Date(System.currentTimeMillis())));
 					loading=30;
 				}
 			}
-			return 7;
+			return "score";
 		}
-		return 7;
+		return "score";
 	}
 
 }

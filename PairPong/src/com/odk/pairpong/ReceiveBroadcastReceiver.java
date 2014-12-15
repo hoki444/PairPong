@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 public class ReceiveBroadcastReceiver extends BroadcastReceiver {
 	static boolean[] boolarrayvalue;
@@ -26,6 +27,7 @@ public class ReceiveBroadcastReceiver extends BroadcastReceiver {
 	static ArrayList<String> stringarraylistvalue;
 	static String stringvalue;
     public void onReceive(Context context, Intent intent) {
+    	
     	if(intent.getStringExtra("datakind").equals("boolarray"))
     		boolarrayvalue = intent.getBooleanArrayExtra("boolarray");
     	else if(intent.getStringExtra("datakind").equals("bool"))

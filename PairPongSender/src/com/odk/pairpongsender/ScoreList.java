@@ -2,7 +2,7 @@ package com.odk.pairpongsender;
 
 public class ScoreList {
 	public Score[] scores= new Score[5];
-	ScoreList( int[] scores, String[] names, int[] dates){
+	ScoreList( int[] scores, String[] names, String[] dates){
 		for(int n=0;n<5;n++)
 			this.scores[n]= new Score(scores[n],names[n],dates[n]);
 	}
@@ -20,7 +20,7 @@ public class ScoreList {
 		else
 			return 1;
 	}
-	public void update(int rank, int score, String name, int date){
+	public void update(int rank, int score, String name, String date){
 		for(int n=4;n>rank-1;n--){
 			
 			scores[n]=scores[n-1];
@@ -30,8 +30,8 @@ public class ScoreList {
 	class Score{
 		public int score;
 		public String name;
-		public int date;
-		Score(int s, String n, int d){
+		public String date;
+		Score(int s, String n, String d){
 			score=s;
 			name=n;
 			date=d;

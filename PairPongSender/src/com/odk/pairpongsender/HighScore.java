@@ -35,14 +35,14 @@ public class HighScore {
 		pnt.setColor(Color.WHITE);
 		canvas.drawText("Exit", x/2-textsize*1f, y*109/120, pnt);
 	}
-	public int TouchEvent(MotionEvent event, int x, int y) {
+	public String TouchEvent(MotionEvent event, int x, int y) {
 		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN){
 			if(event.getY()>y*5/6&&event.getY()<y*19/20){
-				return 1;
+				return "main";
 			}
-			return 4;
+			return "highscore";
 		}
-		return 4;
+		return "highscore";
 	}
 
 }

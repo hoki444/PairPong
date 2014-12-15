@@ -7,7 +7,7 @@ import android.view.WindowManager;
 import com.algy.schedcore.frontend.SceneMgr;
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.odk.pairpong.game.MainScene;
-import com.odk.pairpong.game.TestScene;
+import com.odk.pairpong.game.GameScene;
 
 public class PairPongBoardActivity extends AndroidApplication {
 	

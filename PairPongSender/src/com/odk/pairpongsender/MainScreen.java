@@ -24,23 +24,23 @@ public class MainScreen {
 		canvas.drawText("High Score", x/2-textsize*2.27f, y*89/120, pnt);
 		canvas.drawText("Exit", x/2-textsize*1f, y*109/120, pnt);
 	}
-	public int TouchEvent(MotionEvent event, int x, int y) {
+	public String TouchEvent(MotionEvent event, int x, int y) {
 		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN){
 			if(event.getY()>y/3&&event.getY()<y*9/20){
-				return 2;
+				return "play";
 			}
 			if(event.getY()>y/2&&event.getY()<y*37/60){
-				return 3;
+				return "option";
 			}
 			if(event.getY()>y*2/3&&event.getY()<y*47/60){
-				return 4;
+				return "highscore";
 			}
 			if(event.getY()>y*5/6&&event.getY()<y*19/20){
-				return 5;
+				return "exit";
 			}
-			return 1;
+			return "main";
 		}
-		return 1;
+		return "main";
 	}
 
 }

@@ -141,7 +141,7 @@ public class MainGame extends ApplicationAdapter {
                 lastUUID = receiverInfo.uuid;
             }
         }
-        if(loading<30){
+        if(loading<15){
         	loading++;
             sfunction.sendint(0);
         }

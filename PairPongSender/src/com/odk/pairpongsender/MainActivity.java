@@ -23,10 +23,12 @@ import com.odk.pairpongsender.game.ReceiverFunction;
 import com.odk.pairpongsender.game.SenderFunction;
 
 public class MainActivity extends Activity {
+	static boolean shutdown=false;
 	SharedPreferences pref;
+	static int[] options = new int[1];
 	int[] scores = new int[5];
 	String[] names = new String[5];
-	int[] dates = new int[5];
+	String[] dates = new String[5];
 	ScoreList slist;
 	SenderFunction sfunction= new QPairSenderFunction(this);
 	ReceiverFunction rfunction= new QPairReceiverFunction();
@@ -37,8 +39,9 @@ public class MainActivity extends Activity {
     	for(int n=0;n<5;n++){
     		scores[n]=pref.getInt("KEY_SCORE"+String.valueOf(n), 5000-1000*n);
     		names[n]=pref.getString("KEY_NAME"+String.valueOf(n), "ODK");
-    		dates[n]=pref.getInt("KEY_DATE"+String.valueOf(n), 12041551);
+    		dates[n]=pref.getString("KEY_DATE"+String.valueOf(n), "12/04 15:51");
     	}
+		options[0]=pref.getInt("KEY_OPTION1", 1);
     	slist = new ScoreList(scores,names,dates);
     	myactivity=this;
         super.onCreate(savedInstanceState);
@@ -65,13 +68,15 @@ public class MainActivity extends Activity {
     		editor.remove("KEY_NAME"+String.valueOf(n));
     		editor.putString("KEY_NAME"+String.valueOf(n), slist.scores[n].name);
     		editor.remove("KEY_DATE"+String.valueOf(n));
-    		editor.putInt("KEY_DATE"+String.valueOf(n), slist.scores[n].date);
+    		editor.putString("KEY_DATE"+String.valueOf(n), slist.scores[n].date);
     	}
+		editor.remove("KEY_OPTION1");
+		editor.putInt("KEY_OPTION1", options[0]);
         editor.commit();
     }
     
     class MyView extends View{
-    	int mode;
+    	String mode;
     	Point dsize;
     	Display display;
     	Resources res = getResources();
@@ -86,7 +91,7 @@ public class MainActivity extends Activity {
 			super(context);
 			score=0;
 			loading=0;
-			mode=1;
+			mode="main";
 			dsize = new Point(0,0);
 			mscreen = new MainScreen();
 			recoder = new Recoder(slist);
@@ -100,13 +105,13 @@ public class MainActivity extends Activity {
 		public void onDraw(Canvas canvas){
 		
 			canvas.drawColor(Color.LTGRAY);
-			if(mode==1)
+			if(mode.equals("main"))
 				mscreen.Draw(canvas, Pnt, dsize.x, dsize.y);
-			if(mode==3)
-				option.Draw(canvas, Pnt, dsize.x, dsize.y);
-			if(mode==4)
+			if(mode.equals("option"))
+				option.Draw(canvas, Pnt, dsize.x, dsize.y, res);
+			if(mode.equals("highscore"))
 				highscore.Draw(canvas, Pnt, dsize.x, dsize.y);
-			if(mode==7)
+			if(mode.equals("score"))
 				recoder.Draw(canvas, Pnt, dsize.x, dsize.y,score);
 				
 		}
@@ -114,19 +119,23 @@ public class MainActivity extends Activity {
 		{
 			if(loading==30){
 				if(event.getAction()==MotionEvent.ACTION_DOWN||event.getAction()==MotionEvent.ACTION_MOVE){
-					int pastmode=mode;
-					if(mode==1)
+					String pastmode=mode;
+					if(mode.equals("main"))
 						mode=mscreen.TouchEvent(event, dsize.x, dsize.y);
-					if(mode==3)
+					if(mode.equals("option")){
 						mode=option.TouchEvent(event, dsize.x, dsize.y);
-					if(mode==4)
+						if(mode.equals("main")){
+							savePref();
+						}
+					}
+					if(mode.equals("highscore"))
 						mode=highscore.TouchEvent(event, dsize.x, dsize.y);
-					if(mode==7){
+					if(mode.equals("score")){
 						mode=recoder.TouchEvent(event, dsize.x, dsize.y);
-						if(mode==1)
+						if(mode.equals("main"))
 							savePref();
 					}
-					if(pastmode!=mode)
+					if(!pastmode.equals(mode))
 						loading=15;
 					return true;
 				}
@@ -139,20 +148,28 @@ public class MainActivity extends Activity {
 				if(loading<30){
 					loading++;
 					if(rfunction.getint()==7){
-						mode=7;
+						mode="score";
 						makename();
+					}
+					if(loading>15){
+						sfunction.sendbool(false);
 					}
 				}
 				else{
-					if(mode==1){
-					}
-					else if(mode==2){
-						mode=6;
+					if(mode.equals("main"))
+						sfunction.sendintarray(options);
+					if(mode.equals("play")){
+						mode="playing";
 						myactivity.Startgame();
 					}
-					else if(mode==5)
+					else if(mode.equals("exit"))
 						myactivity.myDestroy();
-					else if(mode==7){
+					else if(mode.equals("playing")&&shutdown){
+						shutdown=false;
+						mode="main";
+						loading=15;
+					}
+					else if(mode.equals("score")){
 						if((score=rfunction.getint())==7)
 							sfunction.sendbool(false);
 						else

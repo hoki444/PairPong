@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.lge.qpair.api.r2.IPeerContext;
@@ -255,6 +256,8 @@ public class QPairSenderFunction implements SenderFunction {
 			// get an IPeerContext
             IPeerContext peerContext = IPeerContext.Stub.asInterface(service);
             try {
+            	if(finfo.whatsend!=null)
+            		Log.e("sending", finfo.whatsend);
                 IPeerIntent i = peerContext.newPeerIntent();
 
                 i.setComponent(finfo.activityname);

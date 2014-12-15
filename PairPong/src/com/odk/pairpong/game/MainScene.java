@@ -4,10 +4,12 @@ import com.algy.schedcore.frontend.Scene;
 import com.algy.schedcore.frontend.SceneMgr;
 
 public class MainScene extends Scene {
+	int[] option;
 	private ReceiverFunction rfunction;
     private SenderFunction sfunction;
 	public MainScene(ReceiverFunction rfunction, SenderFunction sfunction){
 		super();
+		option=new int[1];
 		this.rfunction = rfunction;
 		this.sfunction = sfunction;
 		this.sfunction.setpackage("com.odk.pairpongsender");
@@ -21,8 +23,10 @@ public class MainScene extends Scene {
 	@Override
 	public void postRender() {
 		// TODO Auto-generated method stub
+		option=rfunction.getintarray();
+		
 		if(rfunction.getbool()){
-            SceneMgr.switchScene(new TestScene(rfunction, sfunction));
+            SceneMgr.switchScene(new GameScene(rfunction, sfunction, option));
 		}
 	}
 
