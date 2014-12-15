@@ -65,5 +65,9 @@ public class BtDetectorComp extends BtColliderComp {
     public Matrix4 getTransform() {
         return this.collObj.getWorldTransform();
     }
+
+    @Override
+    public void onAddedToWorld() {
+    }
     
 }

@@ -189,6 +189,14 @@ public class BtPhysicsWorld extends BaseSchedServer {
                 gameItem.as(BtColliderComp.class).forceMove(transform.get());
                 transform.notifySynced();
             }
+
+            if (gameItem.has(BtRigidBodyComp.class)) {
+                BtRigidBodyComp bodyComp = gameItem.as(BtRigidBodyComp.class);
+                Vector3 forcedGravity = bodyComp.getForcedGravity();
+                if (forcedGravity != null) {
+                    bodyComp.getRigidBody().setGravity(forcedGravity);
+                }
+            }
         }
 
         // Simulate the physics world
@@ -209,11 +217,16 @@ public class BtPhysicsWorld extends BaseSchedServer {
         sigs.add(BtColliderComp.class);
     }
     
+    private static class Operation {
+        public btRigidBody rigidBody;
+        public btCollisionObject collObject;
+        public BtColliderComp colliderComp;
+        public CollisionFilter filter;
+    }
+
     private class DeferedWorldUpdater {
-        public ArrayList<btRigidBody> bodyToBeAdded = new ArrayList<btRigidBody>();
-        public ArrayList<btCollisionObject> collObjToBeAdded = new ArrayList<btCollisionObject>();
-        public ArrayList<btRigidBody> bodyToBeRemoved = new ArrayList<btRigidBody>();
-        public ArrayList<btCollisionObject> collObjToBeRemoved = new ArrayList<btCollisionObject>();
+        public ArrayList<Operation> addition = new ArrayList<Operation>();
+        public ArrayList<Operation> removal  = new ArrayList<Operation>();
 
         private boolean simulatingWorld = false;
         
@@ -222,54 +235,88 @@ public class BtPhysicsWorld extends BaseSchedServer {
         }
 
         public void end () {
-            for (btRigidBody body : bodyToBeAdded) {
-                world.addRigidBody(body);
-                body.release();
-            }
-            bodyToBeAdded.clear();
+            for (Operation op : addition) {
+                if (op.rigidBody != null) {
+                    if (op.filter != null) {
+                        world.addRigidBody(op.rigidBody, op.filter.group, op.filter.mask);
+                    } else {
+                        world.addRigidBody(op.rigidBody);
+                    }
+                    op.rigidBody.release();
+                }
 
-            for (btRigidBody body : bodyToBeRemoved) {
-                world.removeRigidBody(body);
-                body.release();
+                if (op.collObject != null) {
+                    if (op.filter != null)
+                        world.addCollisionObject(op.collObject, op.filter.group, op.filter.mask);
+                    else
+                        world.addCollisionObject(op.collObject);
+                    op.collObject.release();
+                }
+                op.colliderComp.onAddedToWorld();
             }
-            bodyToBeRemoved.clear();
+            addition.clear();
 
-            for (btCollisionObject collObj : collObjToBeAdded) {
-                world.addCollisionObject(collObj);
-                collObj.release();
+            for (Operation op : removal) {
+                if (op.rigidBody != null) {
+                    world.removeRigidBody(op.rigidBody);
+                    op.rigidBody.release();
+                }
+                if (op.collObject != null) {
+                    world.removeCollisionObject(op.collObject);
+                    op.collObject.release();
+                }
             }
-            collObjToBeAdded.clear();
+            removal.clear();
 
-            for (btCollisionObject collObj : collObjToBeRemoved) {
-                world.removeCollisionObject(collObj);
-                collObj.release();
-            }
-            collObjToBeRemoved.clear();
-            
             this.simulatingWorld = false;
         }
         
-        public void add(btRigidBody rigidBody) {
+        public void add(BtRigidBodyComp comp) {
+            btRigidBody rigidBody = comp.getRigidBody();
+            CollisionFilter collFilter = comp.getCollisionFilter();
             if (simulatingWorld) {
                 rigidBody.obtain();
-                bodyToBeAdded.add(rigidBody);
+                Operation op = new Operation();
+                op.rigidBody = rigidBody;
+                op.colliderComp = comp;
+                op.filter = collFilter;
+                addition.add(op);
             } else {
-                world.addRigidBody(rigidBody);
+                if (collFilter != null)
+                    world.addRigidBody(rigidBody, collFilter.group, collFilter.mask);
+                else
+                    world.addRigidBody(rigidBody);
+
+                if (comp.getForcedGravity() != null)
+                    rigidBody.setGravity(comp.getForcedGravity());
+                comp.onAddedToWorld();
             }
         }
-        public void add(btCollisionObject collObj) {
+
+        public void add(BtDetectorComp comp, CollisionFilter collFilter) {
+            btCollisionObject collObj = comp.getCollObj();
             if (simulatingWorld) {
                 collObj.obtain();
-                collObjToBeAdded.add(collObj);
+                Operation op = new Operation();
+                op.collObject = collObj;
+                op.colliderComp = comp;
+                op.filter = collFilter;
+                addition.add(op);
             } else {
-                world.addCollisionObject(collObj);
+                if (collFilter != null)
+                    world.addCollisionObject(collObj, collFilter.group, collFilter.mask);
+                else
+                    world.addCollisionObject(collObj);
+                comp.onAddedToWorld();
             }
         }
 
         public void remove(btRigidBody rigidBody) {
             if (simulatingWorld) {
                 rigidBody.obtain();
-                bodyToBeRemoved.add(rigidBody);
+                Operation op = new Operation();
+                op.rigidBody = rigidBody;
+                removal.add(op);
             } else {
                 world.removeRigidBody(rigidBody);
             }
@@ -278,7 +325,9 @@ public class BtPhysicsWorld extends BaseSchedServer {
         public void remove(btCollisionObject collObj) {
             if (simulatingWorld) {
                 collObj.obtain();
-                collObjToBeRemoved.add(collObj);
+                Operation op = new Operation();
+                op.collObject = collObj;
+                removal.add(op);
             } else {
                 world.removeCollisionObject(collObj);
             }
@@ -296,11 +345,11 @@ public class BtPhysicsWorld extends BaseSchedServer {
             if (ccomp instanceof BtRigidBodyComp) {
                 btRigidBody rigidBody = ((BtRigidBodyComp)comp).getRigidBody();
                 rigidBody.setUserValue(collId);
-                updater.add(rigidBody);
+                updater.add((BtRigidBodyComp)comp);
             } else if (ccomp instanceof BtDetectorComp) {
                 btCollisionObject collObject = ((BtDetectorComp)comp).getCollObj();
                 collObject.setUserValue(collId);
-                updater.add(collObject);
+                updater.add(((BtDetectorComp)comp), null); //TODO
             }
         } 
     }

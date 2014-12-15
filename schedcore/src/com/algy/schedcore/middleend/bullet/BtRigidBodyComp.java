@@ -1,10 +1,8 @@
 package com.algy.schedcore.middleend.bullet;
 
 import com.algy.schedcore.IComp;
-import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.Transform;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject.CollisionFlags;
@@ -32,12 +30,17 @@ public class BtRigidBodyComp extends BtColliderComp {
     private Vector3 localInertia;
     private btMotionState motionState;
     
+    private Vector3 forcedGravity = null;
+    private CollisionFilter collFilter;
+    
     private BtRigidBodyComp (btCollisionShape shape,
                              float mass,
                              Vector3 localInertia,
-                             int addFlag) {
+                             int addFlag,
+                             CollisionFilter collFilter) {
         motionState = new TransformSynchronizer();
         this.shape = shape;
+        this.collFilter = collFilter;
         this.mass = mass;
         if (localInertia == null) {
             localInertia = new Vector3();
@@ -56,45 +59,70 @@ public class BtRigidBodyComp extends BtColliderComp {
         this.shape.obtain();
         body.obtain();
         motionState.obtain();
-
+    }
+    
+    public static BtRigidBodyComp staticBody (btCollisionShape shape, CollisionFilter collFilter) {
+        return new BtRigidBodyComp(shape, 0, null, 0, collFilter);
     }
 
     public static BtRigidBodyComp staticBody (btCollisionShape shape) {
-        return new BtRigidBodyComp(shape, 0, null, 0);
+        return BtRigidBodyComp.staticBody(shape, null);
     }
     
-    public static BtRigidBodyComp kinematicBody (btCollisionShape shape) {
-    	BtRigidBodyComp result = new BtRigidBodyComp(shape, 0, null, CollisionFlags.CF_KINEMATIC_OBJECT);
+    public static BtRigidBodyComp kinematicBody (btCollisionShape shape, CollisionFilter collFilter) {
+    	BtRigidBodyComp result = new BtRigidBodyComp(shape, 0, null, CollisionFlags.CF_KINEMATIC_OBJECT, collFilter);
     	
     	return result;
     }
+    public static BtRigidBodyComp kinematicBody (btCollisionShape shape) {
+    	return kinematicBody(shape, null);
+    }
     
     public static BtRigidBodyComp dynamicBody (btCollisionShape shape, float mass) {
-        return dynamicBody(shape, mass, null);
+        return dynamicBody(shape, mass, null, null);
+    }
+
+    public static BtRigidBodyComp dynamicBody (btCollisionShape shape, float mass, CollisionFilter collFilter) {
+        return dynamicBody(shape, mass, null, collFilter);
     }
 
     public static BtRigidBodyComp dynamicBody (btCollisionShape shape, float mass, Vector3 localInertia) {
-        BtRigidBodyComp result = new BtRigidBodyComp(shape, mass, localInertia, 0);
+        return dynamicBody(shape, mass, localInertia, null);
+    }
+
+    public static BtRigidBodyComp dynamicBody (btCollisionShape shape, float mass, Vector3 localInertia, CollisionFilter collFilter) {
+        BtRigidBodyComp result = new BtRigidBodyComp(shape, mass, localInertia, 0, collFilter);
         return result;
     }
 
     public btRigidBody getRigidBody() {
         return body;
     }
+    
+    
+    @Override
+    public void onAddedToWorld() {
+        if (forcedGravity != null) {
+            body.setGravity(forcedGravity);
+        }
+    }
+
 
     @Override
     public IComp duplicate() {
         BtRigidBodyComp result = new BtRigidBodyComp(shape, 
                                    getMass(), 
                                    new Vector3(getLocalInertia()), 
-                                   body.getCollisionFlags());
+                                   body.getCollisionFlags(),
+                                   collFilter);
         result.setAngularVelocity(getAngularVelocity())
               .setLinearVelocity(getLinearVelocity())
               .setLinearDamping(getLinearDamping())
               .setAngularDamping(getAngularDamping())
               .setFriction(getFriction())
               .setRestitution(getRestitution())
-              .setRollingFriction(getRollingFriction());
+              .setRollingFriction(getRollingFriction())
+              .forceGravity(getForcedGravity());
         return result;
     }
 
@@ -104,6 +132,7 @@ public class BtRigidBodyComp extends BtColliderComp {
         Transform tr = owner().as(Transform.class);
         forceMove(tr.get());
         tr.notifySynced();
+        
     }
 
     @Override
@@ -155,6 +184,11 @@ public class BtRigidBodyComp extends BtColliderComp {
     public Vector3 getLocalInertia() {
         return localInertia;
     }
+
+    public CollisionFilter getCollisionFilter () {
+        return collFilter;
+    }
+
     /*
      * Below functions are general getter/setter of common attributes of rigid body, 
      * used to duplicate this component.
@@ -181,6 +215,10 @@ public class BtRigidBodyComp extends BtColliderComp {
     }
     public float getFriction() {
         return this.body.getFriction();
+    }
+
+    public Vector3 getForcedGravity() {
+        return forcedGravity;
     }
 
 
@@ -213,4 +251,10 @@ public class BtRigidBodyComp extends BtColliderComp {
         this.body.setFriction(frict);
         return this;
     }
+    
+    public BtRigidBodyComp forceGravity(Vector3 g) {
+        forcedGravity = g;
+        return this;
+    }
+    
 }

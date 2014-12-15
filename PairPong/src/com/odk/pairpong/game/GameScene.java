@@ -21,6 +21,7 @@ import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
+import com.algy.schedcore.middleend.bullet.CollisionFilter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
@@ -39,7 +40,6 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btCompoundShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
-import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.utils.Json;
 
 class MyCollision extends CollisionComp {
@@ -57,15 +57,16 @@ class MyCollision extends CollisionComp {
 		return new MyCollision(ballItem, score);
 	}
 
-	@Override
+	@Override 
 	public void beginCollision(GameItem other) {
-		core().removeItem(other);
-		GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
-		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
-				new Vector3(2, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
-		newBall.setName("ball");
-		core().addItem(newBall);
-		score.resetCombo();
+	    if ("ball".equals(other.getName())) {
+            core().removeItem(other);
+            GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
+            newBall.as(BtRigidBodyComp.class).setLinearVelocity(
+                    new Vector3(2, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
+            newBall.setName("ball");
+            core().addItem(newBall);
+	    }
 	}
 
 	@Override
@@ -184,6 +185,10 @@ class VibCollision extends CollisionComp {
 }
 
 public class GameScene extends Scene {
+    public static short GROUP_WALL = 1;
+    public static short GROUP_BALL = 2;
+    public static short GROUP_RACKET = 4;
+
 	GameItem ballItem;
 	GameItem racketItem ;
 	int[] option;
@@ -211,7 +216,8 @@ public class GameScene extends Scene {
 
         boardItembo.as(Transform.class).modify().setTranslation(0, 0, 0);
         boardItembo.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(2.f, .1f, 3.f)))
+                      .staticBody(new btBoxShape(new Vector3(2.f, .1f, 3.f)), 
+                                  new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
         GameItem boardItemt = boardItembo.duplicate(new Vector3(0, 4.0f, 0));
@@ -231,22 +237,26 @@ public class GameScene extends Scene {
 			 new Quaternion(),
 			 new Vector3(0.03f*(1.5f-0.5f*option[0]), 0.03f*(1.5f-0.5f*option[0]), 0.03f*(1.5f-0.5f*option[0]))));
         racketItem.add(BtRigidBodyComp
-                      .kinematicBody(racketCollShape)
+                      .kinematicBody(racketCollShape, new CollisionFilter(GROUP_RACKET, GROUP_BALL))
                       .setFriction(0.1f)
                       .activate()
-                      .setRestitution(1.f));
+                      .setRestitution(1.f)
+                      .forceGravity(new Vector3()));
         racketItem.setName("racket");
         
         wallItem.as(Transform.class).modify().setTranslation(0, 2.0f, 3.1f);
         wallItem.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(2.f, 2.f, .1f)))
+                      .staticBody(new btBoxShape(new Vector3(2.f, 2.f, .1f)),
+                                  new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
         GameItem wallItem2 = wallItem.duplicate(new Vector3(0, 2.0f, -3.1f));
         wallItem.add(new ModelComp(boxModels));
         wallItem2.add(new ModelComp(boxModels2));
         ballItem = new GameItem(new Transform(0, 0.2f, 0));
-        ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.15f), 1)
+        ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.15f), 1, 
+                                                 new CollisionFilter(GROUP_BALL, 
+                                                                     (short)(GROUP_WALL | GROUP_RACKET)))
                      .setAngularVelocity(new Vector3(0, 0, -10))
                      .setLinearVelocity(new Vector3(2, 1, 2))
                      .setRestitution(0.98f));
@@ -386,9 +396,11 @@ public class GameScene extends Scene {
         if(score.reduceStuck()){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
-        if(n==0){
+        if(n==0 || !rfunction.getbool()){
+            /*
         	sfunction.sendint(7);
             SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
+            */
         }
         if(!rfunction.getbool()){
         	SceneMgr.switchScene(new MainScene(rfunction, sfunction));
@@ -461,7 +473,7 @@ public class GameScene extends Scene {
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         ballModel = new ModelBuilder().createSphere(.3f, .3f, .3f, 10, 10, 
                 new Material(ColorAttribute.createDiffuse(0.5f, 0.5f, 0.5f, 1f),
-                             ColorAttribute.createSpecular(.95f, .95f, .95f, 1f),
+                             ColorAttribute.createSpecular(.95f, .95f, .55f, 1f),
                              ColorAttribute.createAmbient(.1f, .2f, .1f, 1f)),
                 Usage.Position | Usage.Normal); 
     }
