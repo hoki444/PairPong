@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -25,10 +26,11 @@ import com.odk.pairpongsender.game.SenderFunction;
 public class MainActivity extends Activity {
 	static boolean shutdown=false;
 	SharedPreferences pref;
-	static int[] options = new int[1];
+	static int[] options = new int[2];
 	int[] scores = new int[5];
 	String[] names = new String[5];
 	String[] dates = new String[5];
+	String[] soptions = new String[5];
 	ScoreList slist;
 	SenderFunction sfunction= new QPairSenderFunction(this);
 	ReceiverFunction rfunction= new QPairReceiverFunction();
@@ -39,10 +41,12 @@ public class MainActivity extends Activity {
     	for(int n=0;n<5;n++){
     		scores[n]=pref.getInt("KEY_SCORE"+String.valueOf(n), 5000-1000*n);
     		names[n]=pref.getString("KEY_NAME"+String.valueOf(n), "ODK");
+    		soptions[n]=pref.getString("KEY_SOPTION"+String.valueOf(n), "10");
     		dates[n]=pref.getString("KEY_DATE"+String.valueOf(n), "12/04 15:51");
     	}
 		options[0]=pref.getInt("KEY_OPTION1", 1);
-    	slist = new ScoreList(scores,names,dates);
+		options[1]=pref.getInt("KEY_OPTION2", 0);
+    	slist = new ScoreList(scores,names,dates,soptions);
     	myactivity=this;
         super.onCreate(savedInstanceState);
         View vw=new MyView(this);
@@ -50,6 +54,12 @@ public class MainActivity extends Activity {
     	sfunction.setpackage("com.odk.pairpong");
     	sfunction.startreceiver("PairPongBoardActivity");
     }
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+	    if(keyCode==KeyEvent.KEYCODE_BACK) {
+	    	myDestroy();
+	    }
+	    return true;
+	}
     public void Startgame() {
         // bind QPair Service
     	Intent intent = new Intent(this, ControllerActivity.class);
@@ -67,11 +77,15 @@ public class MainActivity extends Activity {
     		editor.putInt("KEY_SCORE"+String.valueOf(n), slist.scores[n].score);
     		editor.remove("KEY_NAME"+String.valueOf(n));
     		editor.putString("KEY_NAME"+String.valueOf(n), slist.scores[n].name);
+    		editor.remove("KEY_SOPTION"+String.valueOf(n));
+    		editor.putString("KEY_SOPTION"+String.valueOf(n), slist.scores[n].option);
     		editor.remove("KEY_DATE"+String.valueOf(n));
     		editor.putString("KEY_DATE"+String.valueOf(n), slist.scores[n].date);
     	}
 		editor.remove("KEY_OPTION1");
 		editor.putInt("KEY_OPTION1", options[0]);
+		editor.remove("KEY_OPTION2");
+		editor.putInt("KEY_OPTION2", options[1]);
         editor.commit();
     }
     
@@ -147,12 +161,12 @@ public class MainActivity extends Activity {
 				invalidate();
 				if(loading<30){
 					loading++;
-					if(rfunction.getint()==7){
+					if(rfunction.getint()==7){//스코어화면 전환조건
 						mode="score";
 						makename();
 					}
 					if(loading>15){
-						sfunction.sendbool(false);
+						sfunction.sendbool(false);//태블릿에서 게임 실행중이면 종료
 					}
 				}
 				else{
@@ -170,10 +184,10 @@ public class MainActivity extends Activity {
 						loading=15;
 					}
 					else if(mode.equals("score")){
-						if((score=rfunction.getint())==7)
-							sfunction.sendbool(false);
+						if((score=rfunction.getint())==7)//스코어 입력이 끝나지 않았는가
+							sfunction.sendbool(false);//스코어 입력 요청
 						else
-							sfunction.sendint(1);
+							sfunction.sendint(1);//메인 화면으로 보내기
 					}
 				}
 				mHandler.sendEmptyMessageDelayed(0, 33);

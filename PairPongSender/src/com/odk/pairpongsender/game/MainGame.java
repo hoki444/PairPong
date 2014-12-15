@@ -143,9 +143,9 @@ public class MainGame extends ApplicationAdapter {
         }
         if(loading<15){
         	loading++;
-            sfunction.sendint(0);
+            sfunction.sendint(0);//스코어 입력 완료조건 해제
         }
-        if (rfunction.getint()==7){
+        if (rfunction.getint()==7||rfunction.getint()==1){//7은 스코어 화면으로, 1은 메인 화면으로 넘어갑니다.
         	nowactivity.myDestroy();
         }
         // render by sprite batch

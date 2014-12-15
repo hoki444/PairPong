@@ -72,15 +72,42 @@ class MyCollision extends CollisionComp {
 	public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
 	}
 }
+class BackCollision extends CollisionComp {
+	Score score;
+	Random random = new Random();
+	BackCollision(Score score){
+		super();
+		this.score=score;
+	}
+    
+	@Override
+	public IComp duplicate() {
+		return new BackCollision(score);
+	}
 
+	@Override
+	public void beginCollision(GameItem other) {
+		if(score.getCombo()!=0){
+			Vector3 tempv =new Vector3();
+			other.getTransform().getTranslation(tempv);
+			score.addAScore(tempv.y);
+		}
+	}
+
+	@Override
+	public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
+	}
+}
 class Score{
 	private int score;
 	private int combo;
 	private int stucktime;
+	private int ascoretime;
 	private int regentime;
 	private float startspeed;
 	private int scoretime;
 	private int vscore;
+	private int ascore;
 	private int[] option;
 	Score(int[] o){
 		option = o;
@@ -121,6 +148,8 @@ class Score{
 			if(stucktime==0)
 				return true;
 		}
+		if(ascoretime!=0)
+			ascoretime--;
 		if(scoretime!=0)
 			scoretime--;
 		if(regentime!=0)
@@ -141,12 +170,23 @@ class Score{
 	public boolean showScore(){
 		return scoretime!=0;
 	}
+	public boolean showAScore(){
+		return ascoretime!=0;
+	}
 	public void addVScore(float endspeed){
-		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option[0]));
+		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option[0])*(1-0.2*option[1]));
 		score+=vscore;
+	}
+	public void addAScore(float hity){
+		ascore=(int) ((200-(1.3-hity)*(1.3-hity)*28)*(0.5+0.5*option[0])*(1.4-0.4*option[1]));
+		score+=ascore;
+		ascoretime=30;
 	}
 	public int getVscore(){
 		return vscore;
+	}
+	public int getAscore(){
+		return ascore;
 	}
 }
 
@@ -219,6 +259,7 @@ public class GameScene extends Scene {
         		   new Quaternion(new Vector3(0,0,1), 90));
         boardItembo.add(new ModelComp(boxModelbo));
         boardItemba.add(new ModelComp(boxModelba));
+        boardItemba.add(new BackCollision(score));
         boardItemt.add(new ModelComp(boxModelt));
        
         btCompoundShape racketCollShape = new btCompoundShape();
@@ -383,14 +424,14 @@ public class GameScene extends Scene {
     		core().addItem(newBall);
     		score.resetCombo();
         }
-        if(score.reduceStuck()){
+        if(score.reduceStuck()&&option[1]!=1){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
         if(n==0){
-        	sfunction.sendint(7);
+        	sfunction.sendint(7);//스마트폰 스코어 전환 시그널
             SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
         }
-        if(!rfunction.getbool()){
+        if(!rfunction.getbool()){//폰에서 종료시 종료
         	SceneMgr.switchScene(new MainScene(rfunction, sfunction));
         }
         else
@@ -404,11 +445,15 @@ public class GameScene extends Scene {
         if(score.showScore()){
         	bfont.setColor(Color.RED);
         	bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+
-        	String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option[0]))), 0, 600);
-        	if(!score.isStuck()){
+        	String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option[0]))), 0, 640);
+        	if(!score.isStuck()&&option[1]!=1){
         		bfont.setColor(Color.GREEN);
-        		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 480);
+        		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 560);
         	}
+        }
+        if(score.showAScore()){
+        	bfont.setColor(Color.BLUE);
+        	bfont.draw(batch, " Accuacy bonus : "+String.valueOf(score.getAscore()), 0, 480);
         }
         batch.end();
         posXIntp.update(0.03f);
