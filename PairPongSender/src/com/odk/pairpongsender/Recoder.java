@@ -128,7 +128,8 @@ public class Recoder {
 					showscore=true;
 					scorelist.update(rank,myscore,name,
 							new SimpleDateFormat("MM/dd HH:mm").format(new Date(System.currentTimeMillis())),
-							String.valueOf(MainActivity.options[0])+String.valueOf(MainActivity.options[1]));
+							String.valueOf(MainActivity.options[0])+String.valueOf(MainActivity.options[1])
+									+String.valueOf(MainActivity.options[2]));
 					loading=30;
 				}
 			}

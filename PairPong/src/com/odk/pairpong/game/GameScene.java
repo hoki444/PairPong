@@ -66,6 +66,7 @@ class MyCollision extends CollisionComp {
 		newBall.setName("ball");
 		core().addItem(newBall);
 		score.resetCombo();
+    	score.setLife(score.getLife()-1);
 	}
 
 	@Override
@@ -108,8 +109,10 @@ class Score{
 	private int scoretime;
 	private int vscore;
 	private int ascore;
+	private int life;
 	private int[] option;
 	Score(int[] o){
+		life=1800;
 		option = o;
 		score=0;
 		vscore=0;
@@ -118,6 +121,16 @@ class Score{
 		regentime=0;
 		startspeed=0;
 		scoretime=0;
+	}
+	public void timePass(){
+		life--;
+	}
+	public void setLife(int l){
+		if(option[2]!=0)
+			life=l;
+	}
+	public int getLife(){
+		return life;
 	}
 	public void setStartSpeed(float f){
 		startspeed=f;
@@ -131,7 +144,7 @@ class Score{
 		regentime=0;
 	}
 	public void addScore(int p){
-		score+=p*(0.5+0.5*option[0]);
+		score+=p*(0.5+0.5*option[0])*(1+0.1*option[2]);
 	}
 	public int getScore(){
 		return score;
@@ -174,13 +187,17 @@ class Score{
 		return ascoretime!=0;
 	}
 	public void addVScore(float endspeed){
-		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option[0])*(1-0.2*option[1]));
+		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option[0])*(1-0.2*option[1])*(1+0.1*option[2]));
 		score+=vscore;
 	}
 	public void addAScore(float hity){
-		ascore=(int) ((200-(1.3-hity)*(1.3-hity)*28)*(0.5+0.5*option[0])*(1.4-0.4*option[1]));
-		score+=ascore;
-		ascoretime=30;
+		if(option[1]!=0){
+			ascore=(int) ((200-(1.33-hity)*(1.33-hity)*122)*(0.5+0.5*option[0])*(1.4-0.4*option[1])*(1+0.1*option[2]));
+			if(ascore>0){
+				score+=ascore;
+				ascoretime=30;
+			}
+		}
 	}
 	public int getVscore(){
 		return vscore;
@@ -237,6 +254,10 @@ public class GameScene extends Scene {
 		this.rfunction = rfunction;
 		this.sfunction = sfunction;
 		this.sfunction.setpackage("com.odk.pairpongsender");
+		if(option[2]==1)
+			score.setLife(5);
+		if(option[2]==2)
+			score.setLife(1);
 	}
 
     @Override
@@ -395,7 +416,6 @@ public class GameScene extends Scene {
     Score score;
 	BitmapFont bfont;
 	Batch batch;
-	int n=1800;
     private Json json = new Json();
     private String lastUUID = "";
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
@@ -423,29 +443,48 @@ public class GameScene extends Scene {
     		newBall.setName("ball");
     		core().addItem(newBall);
     		score.resetCombo();
+        	score.setLife(score.getLife()-1);
         }
         if(score.reduceStuck()&&option[1]!=1){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
-        if(n==0){
+        if(score.getLife()==0){
         	sfunction.sendint(7);//스마트폰 스코어 전환 시그널
             SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
         }
+        if(option[2]==0)
+        	score.timePass();
         if(!rfunction.getbool()){//폰에서 종료시 종료
         	SceneMgr.switchScene(new MainScene(rfunction, sfunction));
         }
-        else
-        	n--;
     	batch.begin();
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Score : "+String.valueOf(score.getScore()), 0, 720);
-        if(n<300)
+        if(score.getScore()>option[4]){
+        	bfont.draw(batch, "1st Score!!", 800, 720);
+        }
+        for(int i=0;i<4;i++){
+        	if(score.getScore()<option[4+i]&&score.getScore()>option[5+i]){
+        		bfont.draw(batch, String.valueOf(i+1)+"th Score : "+String.valueOf(option[4+i]),
+        				800, 720);
+        		bfont.draw(batch, "last : "+String.valueOf(option[4+i]-score.getScore()), 800, 640);
+        	}
+        }
+        if(score.getScore()<option[8]){
+        	bfont.draw(batch, "5th Score : "+String.valueOf(option[8]),
+    				800, 720);
+    		bfont.draw(batch, "last : "+String.valueOf(option[8]-score.getScore()), 800, 640);
+        }
+        if((score.getLife()<300&&option[2]==0)||score.getLife()<2)
         	bfont.setColor(Color.RED);
-        bfont.draw(batch, String.valueOf(n/30), 600, 720);
+        if(option[2]==0)
+        	bfont.draw(batch, String.valueOf(score.getLife()/30), 600, 720);
+        else
+        	bfont.draw(batch, "last ball : "+String.valueOf(score.getLife()-1), 450, 720);
         if(score.showScore()){
         	bfont.setColor(Color.RED);
         	bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+
-        	String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option[0]))), 0, 640);
+        	String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option[0])*(1+0.1*option[2]))), 0, 640);
         	if(!score.isStuck()&&option[1]!=1){
         		bfont.setColor(Color.GREEN);
         		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 560);

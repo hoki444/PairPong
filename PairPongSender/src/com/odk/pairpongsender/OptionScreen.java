@@ -9,7 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.view.MotionEvent;
 
-public class Option {
+public class OptionScreen {
 	int textsize;
 	public void Draw(Canvas canvas, Paint pnt, int x, int y,Resources res) {
 		Bitmap check = ((BitmapDrawable)res.getDrawable(R.drawable.check)).getBitmap();
@@ -22,39 +22,35 @@ public class Option {
 		pnt.setTextSize(textsize);
 		canvas.drawText("Racket size", x/12, y/4, pnt);
 		canvas.drawText("Large", x*2/20, y/3, pnt);
-		canvas.drawText("regular", x*6/20, y/3, pnt);
-		canvas.drawText("small", x*10/20, y/3, pnt);
+		canvas.drawText("Regular", x*6/20, y/3, pnt);
+		canvas.drawText("Small", x*10/20, y/3, pnt);
 		canvas.drawText("Bonus Score", x/12, y*5/12, pnt);
 		canvas.drawText("Velocity", x*2/20, y/2, pnt);
 		canvas.drawText("Accuracy", x*6/20, y/2, pnt);
 		canvas.drawText("Both", x*10/20, y/2, pnt);
-		canvas.drawRect(x*4/20, y*6/20, x*5/20, y/3, pnt);
-		canvas.drawRect(x*8/20, y*6/20, x*9/20, y/3, pnt);
-		canvas.drawRect(x*12/20, y*6/20, x*13/20, y/3, pnt);
-		canvas.drawRect(x*4/20, y*9/20, x*5/20, y/2, pnt);
-		canvas.drawRect(x*8/20, y*9/20, x*9/20, y/2, pnt);
-		canvas.drawRect(x*12/20, y*9/20, x*13/20, y/2, pnt);
-		canvas.drawBitmap(check, null, new Rect(x*(4+4*MainActivity.options[0])/20, y*6/20,
-				x*(5+4*MainActivity.options[0])/20, y/3), pnt);
-		canvas.drawBitmap(check, null, new Rect(x*(4+4*MainActivity.options[1])/20, y*9/20,
-				x*(5+4*MainActivity.options[1])/20, y/2), pnt);
+		canvas.drawText("Game mode", x/12, y*7/12, pnt);
+		canvas.drawText("Classic", x*2/20, y*2/3, pnt);
+		canvas.drawText("Servive", x*6/20, y*2/3, pnt);
+		canvas.drawText("InfCombo", x*10/20, y*2/3, pnt);
+		for(int n=0;n<3;n++){
+			canvas.drawRect(x*9/40, y*(17+10*n)/60, x*11/40, y*(2+n)/6, pnt);
+			canvas.drawRect(x*17/40, y*(17+10*n)/60, x*19/40, y*(2+n)/6, pnt);
+			canvas.drawRect(x*25/40, y*(17+10*n)/60, x*27/40, y*(2+n)/6, pnt);
+			canvas.drawBitmap(check, null, new Rect(x*(9+8*MainActivity.options[n])/40, y*(17+10*n)/60,
+					x*(11+8*MainActivity.options[n])/40, y*(2+n)/6), pnt);
+		}
 		canvas.drawRect(x/3, y*5/6, x*2/3, y*19/20, pnt);
 		pnt.setTextSize(textsize);
 		pnt.setColor(Color.WHITE);
 		canvas.drawText("Exit", x/2-textsize*1f, y*109/120, pnt);
 	}
 	public String TouchEvent(MotionEvent event, int x, int y) {
-		if(event.getY()>y*6/20&&event.getY()<y/3&&event.getAction()==MotionEvent.ACTION_DOWN){
-			for(int n=0;n<3;n++){
-				if(event.getX()>x*(4+4*n)/20&&event.getY()<x*(5+4*n)/20){
-					MainActivity.options[0]=n;
-				}
-			}
-		}
-		if(event.getY()>y*9/20&&event.getY()<y/2&&event.getAction()==MotionEvent.ACTION_DOWN){
-			for(int n=0;n<3;n++){
-				if(event.getX()>x*(4+4*n)/20&&event.getY()<x*(5+4*n)/20){
-					MainActivity.options[1]=n;
+		for(int l=0;l<3;l++){
+			if(event.getY()>y*(16+10*l)/60&&event.getY()<y*(21+10*l)/60&&event.getAction()==MotionEvent.ACTION_DOWN){
+				for(int n=0;n<3;n++){
+					if(event.getX()>x*(8+8*n)/40&&event.getX()<x*(11+8*n)/40){
+						MainActivity.options[l]=n;
+					}
 				}
 			}
 		}
