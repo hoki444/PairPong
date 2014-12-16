@@ -12,7 +12,7 @@ public class NullReceiverFunction implements ReceiverFunction {
 	@Override
 	public boolean getbool() {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override

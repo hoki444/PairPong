@@ -3,27 +3,30 @@ package com.algy.schedcore.middleend.bullet;
 import com.algy.schedcore.IComp;
 import com.algy.schedcore.middleend.Transform;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
 
 public class BtDetectorComp extends BtColliderComp {
     private btCollisionShape shape;
     private btCollisionObject collObj;
-    
-    public BtDetectorComp (btCollisionShape shape) {
+    private CollisionFilter collFilter;
+    public BtDetectorComp (btCollisionShape shape, CollisionFilter collFilter) {
         this.shape = shape;
         this.collObj = new btCollisionObject();
         this.collObj.setCollisionShape(shape);
+        this.collFilter = collFilter;
 
         this.shape.obtain(); 
         this.collObj.obtain();
     }
+    
+    public BtDetectorComp (btCollisionShape shape) {
+        this(shape, (CollisionFilter)null);
+    }
 
     @Override
     public IComp duplicate() {
-        return new BtDetectorComp(shape);
+        return new BtDetectorComp(shape, collFilter);
     }
     
 
@@ -70,4 +73,7 @@ public class BtDetectorComp extends BtColliderComp {
     public void onAddedToWorld() {
     }
     
+    public CollisionFilter getCollisionFilter() {
+        return collFilter;
+    }
 }

@@ -47,8 +47,9 @@ public class Recoder {
 				for(int n=0;n<5;n++){
 					canvas.drawText(String.valueOf(n+1), x/12, y*(4+n)/12, pnt);
 					canvas.drawText(String.valueOf(scorelist.scores[n].score), x*3/12, y*(4+n)/12, pnt);
+					canvas.drawText(scorelist.scores[n].option, x*5/12, y*(4+n)/12, pnt);
 					canvas.drawText(scorelist.scores[n].name, x*7/12, y*(4+n)/12, pnt);
-					canvas.drawText(String.valueOf(scorelist.scores[n].date), x*9/12, y*(4+n)/12, pnt);
+					canvas.drawText(scorelist.scores[n].date, x*9/12, y*(4+n)/12, pnt);
 				}
 				canvas.drawText("Your Score : "+ String.valueOf(myscore), x/6, y*9/12, pnt);
 				if(rank<6)
@@ -126,7 +127,9 @@ public class Recoder {
 					name=String.valueOf(names);
 					showscore=true;
 					scorelist.update(rank,myscore,name,
-							new SimpleDateFormat("MM/dd HH:mm").format(new Date(System.currentTimeMillis())));
+							new SimpleDateFormat("MM/dd HH:mm").format(new Date(System.currentTimeMillis())),
+							String.valueOf(MainActivity.options[0])+String.valueOf(MainActivity.options[1])
+									+String.valueOf(MainActivity.options[2]));
 					loading=30;
 				}
 			}

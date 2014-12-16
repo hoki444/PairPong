@@ -118,7 +118,11 @@ public class MainGame extends ApplicationAdapter {
 
         boolean isTouched = false;
         // Input Polling
-        if (Gdx.input.isTouched()) {
+        if(loading<15){
+        	loading++;
+            sfunction.sendint(0);//스코어 입력 완료조건 해제
+        }
+        else if (Gdx.input.isTouched()) {
             isTouched = true;
             posX = Gdx.input.getX() / (float)width;
             posY = 1 - Gdx.input.getY() / (float)height;
@@ -141,11 +145,8 @@ public class MainGame extends ApplicationAdapter {
                 lastUUID = receiverInfo.uuid;
             }
         }
-        if(loading<15){
-        	loading++;
-            sfunction.sendint(0);
-        }
-        if (rfunction.getint()==7){
+
+        if (rfunction.getint()==7||rfunction.getint()==1){//7은 스코어 화면으로, 1은 메인 화면으로 넘어갑니다.
         	nowactivity.myDestroy();
         }
         // render by sprite batch

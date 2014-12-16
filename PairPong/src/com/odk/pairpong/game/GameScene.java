@@ -12,9 +12,9 @@ import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.DirectionalLightComp;
 import com.algy.schedcore.middleend.EnvServer;
 import com.algy.schedcore.middleend.GameItem;
-import com.algy.schedcore.middleend.InputComp;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.PointLightComp;
+import com.algy.schedcore.middleend.SimpleCameraControllerComp;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.bullet.BtDebugDrawerComp;
 import com.algy.schedcore.middleend.bullet.BtDetectorComp;
@@ -24,6 +24,7 @@ import com.algy.schedcore.middleend.bullet.CollisionComp;
 import com.algy.schedcore.middleend.bullet.CollisionFilter;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
@@ -62,12 +63,14 @@ class MyCollision extends CollisionComp {
 	@Override 
 	public void beginCollision(GameItem other) {
 	    if ("ball".equals(other.getName())) {
-            core().removeItem(other);
-            GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
-            newBall.as(BtRigidBodyComp.class).setLinearVelocity(
-                    new Vector3(2, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
-            newBall.setName("ball");
-            core().addItem(newBall);
+		core().removeItem(other);
+		GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
+		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
+				new Vector3(3, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
+		newBall.setName("ball");
+		core().addItem(newBall);
+		score.resetCombo();
+    	score.setLife(score.getLife()-1);
 	    }
 	}
 
@@ -75,17 +78,46 @@ class MyCollision extends CollisionComp {
 	public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
 	}
 }
+class BackCollision extends CollisionComp {
+	Score score;
+	Random random = new Random();
+	BackCollision(Score score){
+		super();
+		this.score=score;
+	}
+    
+	@Override
+	public IComp duplicate() {
+		return new BackCollision(score);
+	}
 
+	@Override
+	public void beginCollision(GameItem other) {
+		if(score.getCombo()!=0){
+			Vector3 tempv =new Vector3();
+			other.getTransform().getTranslation(tempv);
+			score.addAScore(tempv.y);
+		}
+	}
+
+	@Override
+	public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
+	}
+}
 class Score{
 	private int score;
 	private int combo;
 	private int stucktime;
+	private int ascoretime;
 	private int regentime;
 	private float startspeed;
 	private int scoretime;
 	private int vscore;
+	private int ascore;
+	private int life;
 	private int[] option;
 	Score(int[] o){
+		life=1800;
 		option = o;
 		score=0;
 		vscore=0;
@@ -94,6 +126,16 @@ class Score{
 		regentime=0;
 		startspeed=0;
 		scoretime=0;
+	}
+	public void timePass(){
+		life--;
+	}
+	public void setLife(int l){
+		if(option[2]!=0)
+			life=l;
+	}
+	public int getLife(){
+		return life;
 	}
 	public void setStartSpeed(float f){
 		startspeed=f;
@@ -107,7 +149,7 @@ class Score{
 		regentime=0;
 	}
 	public void addScore(int p){
-		score+=p*(0.5+0.5*option[0]);
+		score+=p*(0.5+0.5*option[0])*(1+0.1*option[2]);
 	}
 	public int getScore(){
 		return score;
@@ -124,6 +166,8 @@ class Score{
 			if(stucktime==0)
 				return true;
 		}
+		if(ascoretime!=0)
+			ascoretime--;
 		if(scoretime!=0)
 			scoretime--;
 		if(regentime!=0)
@@ -144,12 +188,27 @@ class Score{
 	public boolean showScore(){
 		return scoretime!=0;
 	}
+	public boolean showAScore(){
+		return ascoretime!=0;
+	}
 	public void addVScore(float endspeed){
-		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option[0]));
+		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option[0])*(1-0.2*option[1])*(1+0.1*option[2]));
 		score+=vscore;
+	}
+	public void addAScore(float hity){
+		if(option[1]!=0){
+			ascore=(int) ((200-(1.33-hity)*(1.33-hity)*122)*(0.5+0.5*option[0])*(1.4-0.4*option[1])*(1+0.1*option[2]));
+			if(ascore>0){
+				score+=ascore;
+				ascoretime=30;
+			}
+		}
 	}
 	public int getVscore(){
 		return vscore;
+	}
+	public int getAscore(){
+		return ascore;
 	}
 }
 
@@ -228,6 +287,7 @@ public class GameScene extends Scene {
     public static short GROUP_WALL = 1;
     public static short GROUP_BALL = 2;
     public static short GROUP_RACKET = 4;
+    public static short GROUP_DETECTOR = 8;
 
 	GameItem ballItem;
 	GameItem racketItem ;
@@ -245,6 +305,10 @@ public class GameScene extends Scene {
 		this.rfunction = rfunction;
 		this.sfunction = sfunction;
 		this.sfunction.setpackage("com.odk.pairpongsender");
+		if(option[2]==1)
+			score.setLife(5);
+		if(option[2]==2)
+			score.setLife(1);
 	}
 
     @Override
@@ -254,20 +318,20 @@ public class GameScene extends Scene {
 				 wallItem = new GameItem(),
                  lightItem = new GameItem(),
                  pointlightItem = new GameItem(new Transform(new Vector3(0, 1, 0)),
-                		 						new PointLightComp(20).setColor(1, 1, 1, 1)),
+                		 						new PointLightComp(10).setColor(1, 1, 1, 1)),
                  removerItem = new GameItem();
 
-        boardItembo.as(Transform.class).modify().setTranslation(0, 0, 0);
+        boardItembo.as(Transform.class).modify().setTranslation(1f, 0, 0);
         boardItembo.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(2.f, .1f, 3.f)), 
-                                  new CollisionFilter(GROUP_WALL, GROUP_BALL))
+                      .staticBody(new btBoxShape(new Vector3(3.f, .1f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
-        GameItem boardItemt = boardItembo.duplicate(new Vector3(0, 4.0f, 0));
-        GameItem boardItemba = boardItembo.duplicate(new Vector3(2.1f, 2.0f, 0),
+        GameItem boardItemt = boardItembo.duplicate(new Vector3(1f, 4.0f, 0));
+        GameItem boardItemba = boardItembo.duplicate(new Vector3(4.1f, 2.0f, 0),
         		   new Quaternion(new Vector3(0,0,1), 90));
         boardItembo.add(new ModelComp(boxModelbo));
         boardItemba.add(new ModelComp(boxModelba));
+        boardItemba.add(new BackCollision(score));
         boardItemt.add(new ModelComp(boxModelt));
        
         btCompoundShape racketCollShape = new btCompoundShape();
@@ -276,33 +340,32 @@ public class GameScene extends Scene {
         racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f, .03f, .03f), new Quaternion()),
         		new btBoxShape(new Vector3(.9f, .03f, .03f)));
 
-        racketItem = new GameItem(new Transform(new Vector3(0, 2, 0),
-			 new Quaternion(),
+        racketItem = new GameItem(new Transform(new Vector3(-2, 2.2f, 0),
+			 new Quaternion(new Vector3(0, 0, -1), 90),
 			 new Vector3(0.03f*(1.5f-0.5f*option[0]), 0.03f*(1.5f-0.5f*option[0]), 0.03f*(1.5f-0.5f*option[0]))));
         racketItem.add(BtRigidBodyComp
-                      .kinematicBody(racketCollShape, new CollisionFilter(GROUP_RACKET, GROUP_BALL))
+                      .dynamicBody(racketCollShape, 1000, new CollisionFilter(GROUP_RACKET, GROUP_BALL))
                       .setFriction(0.1f)
                       .activate()
                       .setRestitution(1.f)
                       .forceGravity(new Vector3()));
         racketItem.setName("racket");
         
-        wallItem.as(Transform.class).modify().setTranslation(0, 2.0f, 3.1f);
+        wallItem.as(Transform.class).modify().setTranslation(1f, 2.0f, 3.1f);
         wallItem.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(2.f, 2.f, .1f)),
-                                  new CollisionFilter(GROUP_WALL, GROUP_BALL))
+                      .staticBody(new btBoxShape(new Vector3(3.f, 2.f, .1f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
-        GameItem wallItem2 = wallItem.duplicate(new Vector3(0, 2.0f, -3.1f));
+        GameItem wallItem2 = wallItem.duplicate(new Vector3(1f, 2.0f, -3.1f));
         wallItem.add(new ModelComp(boxModels));
         wallItem2.add(new ModelComp(boxModels2));
         ballItem = new GameItem(new Transform(0, 0.2f, 0));
         ballItem.add(new BallCollision(wallSound, racketSound));
         ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.15f), 1, 
                                                  new CollisionFilter(GROUP_BALL, 
-                                                                     (short)(GROUP_WALL | GROUP_RACKET)))
+                                                                     (short)(GROUP_DETECTOR | GROUP_WALL | GROUP_RACKET)))
                      .setAngularVelocity(new Vector3(0, 0, -10))
-                     .setLinearVelocity(new Vector3(2, 1, 2))
+                     .setLinearVelocity(new Vector3(3, 1, 2))
                      .setRestitution(0.98f));
         ballItem.add(new ModelComp(ballModel));
         ballItem.setName("ball");
@@ -320,7 +383,7 @@ public class GameScene extends Scene {
        
         removerItem.as(Transform.class).modify().setTranslation(0, -10f, 0);
 
-        removerItem.add(new BtDetectorComp(new btBoxShape(new Vector3(50.f, 1f, 50.f))));
+        removerItem.add(new BtDetectorComp(new btBoxShape(new Vector3(50.f, 1f, 50.f)), new CollisionFilter(GROUP_DETECTOR, (short)-1)));
         removerItem.add(new MyCollision(ballItem,score));
         coreProxy.reserveItem(boardItembo);
         coreProxy.reserveItem(boardItemba);
@@ -335,6 +398,7 @@ public class GameScene extends Scene {
         coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 2, 0)),
                 		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
         coreProxy.reserveItem(removerItem);
+        coreProxy.reserveItem(new GameItem(new SimpleCameraControllerComp()));
         Done ();
 	}
 
@@ -351,16 +415,16 @@ public class GameScene extends Scene {
 	}
 
 	private Model boxModelbo, boxModelba, boxModels, boxModels2, boxModelt, ballModel;
-    private Texture tex, bottom, top, side, side2, back;
+    private Texture tex, bottom, top, side, side2, back, ballTex;
     Score score;
 	BitmapFont bfont;
 	Batch batch;
-	int n=1800;
     private Json json = new Json();
     private String lastUUID = "";
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
-    
+    float rawTheta = 0;
+    static final int RACKET_SPEED = 10;
     @Override
     public void postRender() {
     	Random random = new Random();
@@ -370,6 +434,7 @@ public class GameScene extends Scene {
             if (newInfo != null && !newInfo.uuid.equals(lastUUID)) {
                 posXIntp.setDestState((newInfo.posX - 0.5f) * 6);
                 posYIntp.setDestState(newInfo.posY * 4 + 0.2f);
+                rawTheta = newInfo.theta;
                 lastUUID = newInfo.uuid;
             }
         }
@@ -377,59 +442,110 @@ public class GameScene extends Scene {
         	core.removeItem(core.getItemWithName("ball"));
         	GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
     		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
-    				new Vector3(2, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
+    				new Vector3(3, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
     		newBall.setName("ball");
     		core().addItem(newBall);
     		score.resetCombo();
+        	score.setLife(score.getLife()-1);
         }
-        if(score.reduceStuck()){
+        if(score.reduceStuck()&&option[1]!=1){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
-        if(n==0 || !rfunction.getbool()){
-            /*
-        	sfunction.sendint(7);
-            SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
-            */
+        if(score.getLife()==0){
+        	sfunction.sendint(7);//스마트폰 스코어 전환 시그널
+        	SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
         }
-        if(!rfunction.getbool()){
+        if(option[2]==0)
+        	score.timePass();
+        if(!rfunction.getbool()){//폰에서 종료시 종료
         	SceneMgr.switchScene(new MainScene(rfunction, sfunction));
         }
-        else
-        	n--;
     	batch.begin();
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Score : "+String.valueOf(score.getScore()), 0, 720);
-        if(n<300)
+        if(score.getScore()>option[4]){
+        	bfont.draw(batch, "1st Score!!", 800, 720);
+        }
+        for(int i=0;i<4;i++){
+        	if(score.getScore()<option[4+i]&&score.getScore()>option[5+i]){
+        		bfont.draw(batch, String.valueOf(i+1)+"th Score : "+String.valueOf(option[4+i]),
+        				800, 720);
+        		bfont.draw(batch, "last : "+String.valueOf(option[4+i]-score.getScore()), 800, 640);
+        	}
+        }
+        if(score.getScore()<option[8]){
+        	bfont.draw(batch, "5th Score : "+String.valueOf(option[8]),
+    				800, 720);
+    		bfont.draw(batch, "last : "+String.valueOf(option[8]-score.getScore()), 800, 640);
+        }
+        if((score.getLife()<300&&option[2]==0)||score.getLife()<2)
         	bfont.setColor(Color.RED);
-        bfont.draw(batch, String.valueOf(n/30), 600, 720);
+        if(option[2]==0)
+        	bfont.draw(batch, String.valueOf(score.getLife()/30), 600, 720);
+        else
+        	bfont.draw(batch, "last ball : "+String.valueOf(score.getLife()-1), 450, 720);
         if(score.showScore()){
         	bfont.setColor(Color.RED);
         	bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+
-        	String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option[0]))), 0, 600);
-        	if(!score.isStuck()){
+        	String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option[0])*(1+0.1*option[2]))), 0, 640);
+        	if(!score.isStuck()&&option[1]!=1){
         		bfont.setColor(Color.GREEN);
-        		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 480);
+        		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 560);
         	}
         }
+        if(score.showAScore()){
+        	bfont.setColor(Color.BLUE);
+        	bfont.draw(batch, " Accuacy bonus : "+String.valueOf(score.getAscore()), 0, 480);
+        }
         batch.end();
-        posXIntp.update(0.03f);
-        posYIntp.update(0.03f);
-        thetaIntp.update(0.03f);
-        racketItem.getTransform().modify().set(new Vector3(-2, 
-                                                           posYIntp.getState(),
-                                                           posXIntp.getState()),
-                                               new Quaternion(new Vector3(0,0,1), 180f + thetaIntp.getState()),
-                                               new Vector3(0.03f*(1.5f-0.5f*option[0]),
-                                            		   0.03f*(1.5f-0.5f*option[0]),
-                                            		   0.03f*(1.5f-0.5f*option[0])));
+        BtRigidBodyComp bodyComp = racketItem.as(BtRigidBodyComp.class);
+        Vector3 racketTr = racketItem.getTransform().getTranslation(new Vector3());
+
+        Quaternion racketOri = new Quaternion();
+        bodyComp.getRigidBody().getWorldTransform().getRotation(racketOri, true);
+
+        posXIntp.setState(racketTr.z);
+        posYIntp.setState(racketTr.y);
+        
+        float destTheta;
+        /*
+        if (rawTheta < 45) {
+            destTheta = 60;
+        } else
+            destTheta = 120;
+            */
+        destTheta = (90 + (70 - rawTheta) * 0.8f) ;
+        
+        float scale;
+        Vector3 axis = new Vector3();
+        
+        float theta = new Quaternion(racketOri).conjugate()
+                      .mul(new Quaternion(new Vector3(0, 0, -1), destTheta))
+                      .getAxisAngle(axis);
+        axis.x = 0;
+        axis.y = 0;
+        axis = axis.nor();
+        if (theta > 180) {
+            theta -= 360;
+        }
+
+        if (theta <= 10 && theta >= -10) {
+            scale = 0;
+        } else if (theta > 0) {
+            scale = RACKET_SPEED;
+        } else
+            scale = -RACKET_SPEED;
+
+        bodyComp.activate();
+        bodyComp.setLinearVelocity(new Vector3(0, posYIntp.getVelocity(), posXIntp.getVelocity()));
+        bodyComp.setAngularVelocity(axis.scl(scale));
     }
 
     @Override
     public void firstPreparation() {
     	bfont= new BitmapFont();
     	batch = new SpriteBatch();
-        bfont.setColor(Color.WHITE);
-        bfont.scale(3f);
+        bfont.setColor(Color.WHITE); bfont.scale(3f);
         bottom = new Texture("bottom.png");
         back = new Texture("back.png");
         top = new Texture("top.png");
@@ -438,7 +554,7 @@ public class GameScene extends Scene {
         ballTex = new Texture("ball.jpg");
         wallSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
         racketSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
-        boxModelbo = new ModelBuilder().createBox(4, .2f, 6, 
+        boxModelbo = new ModelBuilder().createBox(6, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(bottom))),
@@ -448,26 +564,27 @@ public class GameScene extends Scene {
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(back))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
-        boxModelt = new ModelBuilder().createBox(4, .2f, 6, 
+        boxModelt = new ModelBuilder().createBox(6, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(top))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
-        boxModels = new ModelBuilder().createBox(4, 4, .2f, 
+        boxModels = new ModelBuilder().createBox(6, 4, .2f, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(side))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
-        boxModels2 = new ModelBuilder().createBox(4, 4, .2f, 
+        boxModels2 = new ModelBuilder().createBox(6, 4, .2f, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(side2))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         ballModel = new ModelBuilder().createSphere(.3f, .3f, .3f, 10, 10, 
                 new Material(ColorAttribute.createDiffuse(0.5f, 0.5f, 0.5f, 1f),
-                             ColorAttribute.createSpecular(.95f, .95f, .55f, 1f),
-                             ColorAttribute.createAmbient(.1f, .2f, .1f, 1f)),
-                Usage.Position | Usage.Normal); 
+                             ColorAttribute.createSpecular(.25f, .25f, .25f, 1f),
+                             ColorAttribute.createAmbient(.1f, .2f, .1f, 1f),
+                             TextureAttribute.createDiffuse(new TextureRegion(ballTex))),
+                Usage.Position | Usage.Normal | Usage.TextureCoordinates); 
     }
 
     @Override

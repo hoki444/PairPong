@@ -256,8 +256,6 @@ public class QPairSenderFunction implements SenderFunction {
 			// get an IPeerContext
             IPeerContext peerContext = IPeerContext.Stub.asInterface(service);
             try {
-            	if(finfo.whatsend!=null)
-            		Log.e("sending", finfo.whatsend);
                 IPeerIntent i = peerContext.newPeerIntent();
 
                 i.setComponent(finfo.activityname);

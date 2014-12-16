@@ -17,7 +17,6 @@ public class ScoreScene extends Scene {
 	@Override
 	public void firstPreparation() {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
@@ -26,8 +25,8 @@ public class ScoreScene extends Scene {
 		if(!rfunction.getbool())
 			sfunction.sendint(score);
 		else
-			sfunction.sendint(7);
-		if(rfunction.getint()==1){
+			sfunction.sendint(7);//스코어화면 전환요청
+		if(rfunction.getint()==1){//스코어 전송완료신호
             SceneMgr.switchScene(new MainScene(rfunction, sfunction));
 		}
 	}

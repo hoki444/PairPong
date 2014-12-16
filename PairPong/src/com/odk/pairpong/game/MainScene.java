@@ -9,7 +9,7 @@ public class MainScene extends Scene {
     private SenderFunction sfunction;
 	public MainScene(ReceiverFunction rfunction, SenderFunction sfunction){
 		super();
-		option=new int[1];
+		option=new int[9];
 		this.rfunction = rfunction;
 		this.sfunction = sfunction;
 		this.sfunction.setpackage("com.odk.pairpongsender");
