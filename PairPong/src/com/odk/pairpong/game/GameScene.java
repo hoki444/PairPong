@@ -22,9 +22,8 @@ import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
 import com.algy.schedcore.middleend.bullet.CollisionFilter;
-import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
@@ -39,6 +38,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btCompoundShape;
@@ -218,15 +218,17 @@ class RacketCollision extends CollisionComp {
     private Json json = new Json();
     private SenderFunction sfunction;
     private Score score;
+    private EffectController effectController;
     int combo=0;
-    public RacketCollision (SenderFunction sfunction, Score score) {
+    public RacketCollision (SenderFunction sfunction, Score score, EffectController effectController) {
         this.sfunction = sfunction;
         this.score=score;
+        this.effectController = effectController;
     }
 
     @Override
     public IComp duplicate() {
-        return new RacketCollision(sfunction, score);
+        return new RacketCollision(sfunction, score, effectController);
     }
 
     @Override
@@ -246,6 +248,9 @@ class RacketCollision extends CollisionComp {
 
     @Override
     public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
+        Vector3 position = new Vector3();
+        info.iterator().next().otherPosition(position);
+        effectController.invokeHit(position);
     }
 }
 
@@ -377,7 +382,15 @@ public class GameScene extends Scene {
        
        
         racketItem.add(new AssetModelComp("racket.obj"));
-        racketItem.add(new RacketCollision(sfunction, score));
+        racketItem.add(new RacketCollision(sfunction, score,
+                new EffectController() {
+                    @Override
+                    public void invokeHit(Vector3 position) {
+                        Vector3 screen = core().server(CameraServer.class).getCamera().project(position);
+                        hitEffect.setPosition(new Vector2(screen.x, screen.y), new Vector2(screen.x, screen.y + 30));
+                        hitEffect.rewind();
+                    }
+        }));
         racketItem.setName("racket");
 
         lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
@@ -420,10 +433,14 @@ public class GameScene extends Scene {
 	}
 
 	private Model boxModelbo, boxModelba, boxModels, boxModels2, boxModelt, ballModel;
-    private Texture tex, bottom, top, side, side2, back, ballTex;
+    private Texture bottom, top, side, side2, back, ballTex;
+    private Texture hitTex;
+    private TextureRegion hitTexReg;
+    private HUDSpriteEffect hitEffect;
+    
     Score score;
 	BitmapFont bfont;
-	Batch batch;
+	SpriteBatch batch;
     private Json json = new Json();
     private String lastUUID = "";
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
@@ -457,12 +474,12 @@ public class GameScene extends Scene {
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
         if(score.getLife()==0){
-        	sfunction.sendint(7);//½º¸¶Æ®Æù ½ºÄÚ¾î ÀüÈ¯ ½Ã±×³Î
+        	sfunction.sendint(7);//ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¾ï¿½ ï¿½ï¿½È¯ ï¿½Ã±×³ï¿½
         	SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
         }
         if(option.gamemode==0)
         	score.timePass();
-        if(!rfunction.getbool()){//Æù¿¡¼­ Á¾·á½Ã Á¾·á
+        if(!rfunction.getbool()){//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         	SceneMgr.switchScene(new MainScene(rfunction, sfunction));
         }
     	batch.begin();
@@ -501,6 +518,13 @@ public class GameScene extends Scene {
         if(score.showAScore()){
         	bfont.setColor(Color.BLUE);
         	bfont.draw(batch, " Accuacy bonus : "+String.valueOf(score.getAscore()), 0, 480);
+        }
+
+        // HUD sprites
+        if (hitEffect.isRunning()) {
+            hitEffect.render(batch);
+            hitEffect.advance(Gdx.graphics.getDeltaTime());
+        } else {
         }
         batch.end();
         BtRigidBodyComp bodyComp = racketItem.as(BtRigidBodyComp.class);
@@ -544,6 +568,8 @@ public class GameScene extends Scene {
         bodyComp.activate();
         bodyComp.setLinearVelocity(new Vector3(0, posYIntp.getVelocity(), posXIntp.getVelocity()));
         bodyComp.setAngularVelocity(axis.scl(scale));
+        
+        
     }
 
     @Override
@@ -557,6 +583,14 @@ public class GameScene extends Scene {
         side = new Texture("side.png");
         side2 = new Texture("side2.png");
         ballTex = new Texture("ball.jpg");
+        hitTex  = new Texture("Effect_hit.png");
+        hitTexReg = new TextureRegion(hitTex);
+        
+        hitEffect = new HUDSpriteEffect(hitTexReg, 0.5f, new Vector2())
+                    .setScale(0.2f, 0.2f)
+                    .setAlpha(1.f, 0f);
+
+
         wallSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
         racketSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
         boxModelbo = new ModelBuilder().createBox(6, .2f, 6, 
@@ -599,6 +633,18 @@ public class GameScene extends Scene {
         boxModelbo.dispose();
         boxModelba.dispose();
         boxModels.dispose();
+        boxModels2.dispose();
+        boxModelt.dispose();
+        ballModel.dispose();
+
+        bottom.dispose();
+        top.dispose();
+        side.dispose();
+        side2.dispose();
+        back.dispose();
+        ballTex.dispose();
+        hitTex.dispose();
+
         if (wallSound != null)
             wallSound.dispose();
         if (racketSound != null)
