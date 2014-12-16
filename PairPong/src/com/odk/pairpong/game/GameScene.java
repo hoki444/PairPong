@@ -22,6 +22,8 @@ import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
 import com.algy.schedcore.middleend.bullet.CollisionFilter;
+import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
@@ -151,30 +153,66 @@ class Score{
 	}
 }
 
-class VibCollision extends CollisionComp {
+class RacketCollision extends CollisionComp {
     private Json json = new Json();
     private SenderFunction sfunction;
     private Score score;
     int combo=0;
-    public VibCollision (SenderFunction sfunction, Score score) {
+    public RacketCollision (SenderFunction sfunction, Score score) {
         this.sfunction = sfunction;
         this.score=score;
     }
 
     @Override
     public IComp duplicate() {
-        return new VibCollision(sfunction,score);
+        return new RacketCollision(sfunction, score);
     }
 
     @Override
     public void beginCollision(GameItem other) {
         sfunction.sendstring(json.toJson(new ReceiverInfo(80)));
-        if(!score.isStuck()){
-        	score.addCombo();
-        	combo=score.getCombo();
-        	score.addScore((2*combo-1)*100);
-        	score.setStuck();
-        	score.setStartSpeed(other.as(BtRigidBodyComp.class).getLinearVelocity().len());
+        
+        if (other.getName().equals("ball")) {
+            if(!score.isStuck()){
+                score.addCombo();
+                combo=score.getCombo();
+                score.addScore((2*combo-1)*100);
+                score.setStuck();
+                score.setStartSpeed(other.as(BtRigidBodyComp.class).getLinearVelocity().len());
+            }
+        }
+    }
+
+    @Override
+    public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
+    }
+}
+
+class BallCollision extends CollisionComp {
+    public Sound wallSound;
+    public Sound racketSound;
+    
+    public BallCollision (Sound wallSound, Sound racketSound) {
+        this.wallSound = wallSound;
+        this.racketSound = racketSound;
+    }
+
+    @Override
+    public IComp duplicate() {
+        return new BallCollision(wallSound, racketSound);
+    }
+
+    @Override
+    public void beginCollision(GameItem other) {
+        if ("racket".equals(other.getName())) {
+            if (racketSound != null) {
+                racketSound.play();
+            }
+        } else {
+            // wishing something collided with me must be wall...
+            if (wallSound != null) {
+                wallSound.play();
+            }
         }
     }
 
@@ -182,7 +220,9 @@ class VibCollision extends CollisionComp {
     public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
     }
     
+    
 }
+
 
 public class GameScene extends Scene {
     public static short GROUP_WALL = 1;
@@ -195,6 +235,9 @@ public class GameScene extends Scene {
 
     private ReceiverFunction rfunction;
     private SenderFunction sfunction;
+    
+    private Sound wallSound;
+    private Sound racketSound;
 	public GameScene (ReceiverFunction rfunction, SenderFunction sfunction, int[] o) {
 		super();
 		option=o;
@@ -254,6 +297,7 @@ public class GameScene extends Scene {
         wallItem.add(new ModelComp(boxModels));
         wallItem2.add(new ModelComp(boxModels2));
         ballItem = new GameItem(new Transform(0, 0.2f, 0));
+        ballItem.add(new BallCollision(wallSound, racketSound));
         ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.15f), 1, 
                                                  new CollisionFilter(GROUP_BALL, 
                                                                      (short)(GROUP_WALL | GROUP_RACKET)))
@@ -265,7 +309,7 @@ public class GameScene extends Scene {
        
        
         racketItem.add(new AssetModelComp("racket.obj"));
-        racketItem.add(new VibCollision(sfunction, score));
+        racketItem.add(new RacketCollision(sfunction, score));
         racketItem.setName("racket");
 
         lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
@@ -291,59 +335,6 @@ public class GameScene extends Scene {
         coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 2, 0)),
                 		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
         coreProxy.reserveItem(removerItem);
-//        coreProxy.reserveItem(new GameItem(new SimpleCameraControllerComp()));
-        coreProxy.reserveItem(new GameItem(new InputComp() {
-            @Override
-            public IComp duplicate() {
-                return null;
-            }
-            
-            @Override
-            public boolean touchUp(int arg0, int arg1, int arg2, int arg3) {
-                return false;
-            }
-            
-            @Override
-            public boolean touchDragged(int arg0, int arg1, int arg2) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
-                SceneMgr.switchScene(new GameScene(rfunction, sfunction,option));
-                return false;
-            }
-            
-            @Override
-            public boolean scrolled(int arg0) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean mouseMoved(int arg0, int arg1) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean keyUp(int arg0) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean keyTyped(char arg0) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean keyDown(int arg0) {
-                return false;
-            }
-        }));
         Done ();
 	}
 
@@ -369,7 +360,6 @@ public class GameScene extends Scene {
     private String lastUUID = "";
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
-    private StateInterpolater thetaIntp = new StateInterpolater(1, 90, 0, 900);
     
     @Override
     public void postRender() {
@@ -380,7 +370,6 @@ public class GameScene extends Scene {
             if (newInfo != null && !newInfo.uuid.equals(lastUUID)) {
                 posXIntp.setDestState((newInfo.posX - 0.5f) * 6);
                 posYIntp.setDestState(newInfo.posY * 4 + 0.2f);
-                thetaIntp.setDestState(newInfo.theta * 1.5f);
                 lastUUID = newInfo.uuid;
             }
         }
@@ -446,6 +435,9 @@ public class GameScene extends Scene {
         top = new Texture("top.png");
         side = new Texture("side.png");
         side2 = new Texture("side2.png");
+        ballTex = new Texture("ball.jpg");
+        wallSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
+        racketSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
         boxModelbo = new ModelBuilder().createBox(4, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
@@ -485,6 +477,10 @@ public class GameScene extends Scene {
         boxModelbo.dispose();
         boxModelba.dispose();
         boxModels.dispose();
+        if (wallSound != null)
+            wallSound.dispose();
+        if (racketSound != null)
+            racketSound.dispose();
         Done ();
     }
 

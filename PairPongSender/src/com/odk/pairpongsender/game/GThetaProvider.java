@@ -24,8 +24,7 @@ public class GThetaProvider {
     }
 
     private float getCur() {
-        float x, y, z, l;
-        x = Gdx.input.getAccelerometerX();
+        float x, y, z, l; x = Gdx.input.getAccelerometerX();
         y = Gdx.input.getAccelerometerY();
         z = Gdx.input.getAccelerometerZ();
         l = (float)Math.sqrt(x * x + y * y + z * z);

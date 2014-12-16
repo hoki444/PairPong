@@ -6,6 +6,7 @@ import java.util.Iterator;
 import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseSchedServer;
 import com.algy.schedcore.SchedTime;
+import com.algy.schedcore.SchedcoreRuntimeError;
 import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.bullet.CollisionComp.CollisionInfo;
@@ -134,37 +135,47 @@ public class BtPhysicsWorld extends BaseSchedServer {
     private class PhysicsContactListner extends ContactListener {
         @Override
         public void onContactStarted(btCollisionObject colObj0,
-                btCollisionObject colObj1) {
-            int userVal0 = colObj0.getUserValue();
-            int userVal1 = colObj1.getUserValue();
-            if (collBitmap.has(userVal0) && collBitmap.has(userVal1)) {
-                GameItem item0, item1;
-                item0 = collBitmap.get(userVal0);
-                item1 = collBitmap.get(userVal1);
-                
-                if (item0.has(CollisionComp.class))
-                    item0.as(CollisionComp.class).beginCollision(item1);
-                if (item1.has(CollisionComp.class))
-                    item1.as(CollisionComp.class).beginCollision(item0);
+                                     btCollisionObject colObj1) {
+            try {
+                int userVal0 = colObj0.getUserValue();
+                int userVal1 = colObj1.getUserValue();
+                if (collBitmap.has(userVal0) && collBitmap.has(userVal1)) {
+                    GameItem item0, item1;
+                    item0 = collBitmap.get(userVal0);
+                    item1 = collBitmap.get(userVal1);
+                    
+                    if (item0.has(CollisionComp.class))
+                        item0.as(CollisionComp.class).beginCollision(item1);
+                    if (item1.has(CollisionComp.class))
+                        item1.as(CollisionComp.class).beginCollision(item0);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new SchedcoreRuntimeError(e);
             }
         }
 
         @Override
         public void onContactEnded(btPersistentManifold manifold) {
-            int userVal0 = manifold.getBody0().getUserValue();
-            int userVal1 = manifold.getBody1().getUserValue();
-            
-            if (collBitmap.has(userVal0) && collBitmap.has(userVal1)) {
-                GameItem item0, item1;
-                item0 = collBitmap.get(userVal0);
-                item1 = collBitmap.get(userVal1);
+            try {
+                int userVal0 = manifold.getBody0().getUserValue();
+                int userVal1 = manifold.getBody1().getUserValue();
                 
-                if (item0.has(CollisionComp.class)) {
-                    item0.as(CollisionComp.class).endCollision(item1, new CollisionIterable(manifold, true));
+                if (collBitmap.has(userVal0) && collBitmap.has(userVal1)) {
+                    GameItem item0, item1;
+                    item0 = collBitmap.get(userVal0);
+                    item1 = collBitmap.get(userVal1);
+                    
+                    if (item0.has(CollisionComp.class)) {
+                        item0.as(CollisionComp.class).endCollision(item1, new CollisionIterable(manifold, true));
+                    }
+                    if (item1.has(CollisionComp.class)) {
+                        item1.as(CollisionComp.class).endCollision(item0, new CollisionIterable(manifold, false));
+                    }
                 }
-                if (item1.has(CollisionComp.class)) {
-                    item1.as(CollisionComp.class).endCollision(item0, new CollisionIterable(manifold, false));
-                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new SchedcoreRuntimeError(e);
             }
         }
     }
