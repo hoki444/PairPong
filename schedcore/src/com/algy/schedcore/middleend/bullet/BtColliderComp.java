@@ -20,4 +20,6 @@ public abstract class BtColliderComp extends BaseComp {
     public abstract btCollisionShape getShape();
     public abstract Matrix4 getTransform ();
     public abstract void forceMove (Matrix4 mat);
+    
+    public abstract void onAddedToWorld();
 }
