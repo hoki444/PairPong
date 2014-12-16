@@ -74,7 +74,7 @@ public class Transform extends BaseComp {
     protected void onDetached() { }
 
     public Quaternion getRotation(Quaternion rotation) {
-        return this.mat.getRotation(rotation);
+        return this.mat.getRotation(rotation, true);
     }
 
     public Vector3 getScale(Vector3 scale) {

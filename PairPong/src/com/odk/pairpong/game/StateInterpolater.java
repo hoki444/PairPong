@@ -14,8 +14,9 @@ public class StateInterpolater {
         this.xclampmin = xclampmin;
     }
     
-    public void forceState(float state) { 
-        this.state = this.destState = state;
+    
+    public void setState(float state) {
+        this.state = state;
     }
     
     public void setDestState (float destState ) {
@@ -25,8 +26,17 @@ public class StateInterpolater {
     public float getState() {
         return state;
     }
+    
+    public float getDestState() {
+        return destState;
+    }
+
 
     public void update (float dt) {
+        state += getVelocity() * dt;
+    }
+    
+    public float getVelocity() {
         float v;
         if (state > destState) {
             v = -smoothstep(xclampmin, xclampmax, state - destState, vmin, vmax);
@@ -34,7 +44,7 @@ public class StateInterpolater {
             v = smoothstep(xclampmin, xclampmax, destState - state, vmin, vmax);
         } else
             v = 0;
-        state += v * dt;
+        return v;
     }
 
     public static float smoothstep(float xedge0, float xedge1, float x, float vmin, float vmax)

@@ -293,8 +293,9 @@ public class BtPhysicsWorld extends BaseSchedServer {
             }
         }
 
-        public void add(BtDetectorComp comp, CollisionFilter collFilter) {
+        public void add(BtDetectorComp comp) {
             btCollisionObject collObj = comp.getCollObj();
+            CollisionFilter collFilter = comp.getCollisionFilter();
             if (simulatingWorld) {
                 collObj.obtain();
                 Operation op = new Operation();
@@ -303,9 +304,9 @@ public class BtPhysicsWorld extends BaseSchedServer {
                 op.filter = collFilter;
                 addition.add(op);
             } else {
-                if (collFilter != null)
+                if (collFilter != null) {
                     world.addCollisionObject(collObj, collFilter.group, collFilter.mask);
-                else
+                } else
                     world.addCollisionObject(collObj);
                 comp.onAddedToWorld();
             }
@@ -349,7 +350,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
             } else if (ccomp instanceof BtDetectorComp) {
                 btCollisionObject collObject = ((BtDetectorComp)comp).getCollObj();
                 collObject.setUserValue(collId);
-                updater.add(((BtDetectorComp)comp), null); //TODO
+                updater.add(((BtDetectorComp)comp)); //TODO
             }
         } 
     }

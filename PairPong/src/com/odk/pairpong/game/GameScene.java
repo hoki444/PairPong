@@ -6,15 +6,14 @@ import java.util.Random;
 import com.algy.schedcore.IComp;
 import com.algy.schedcore.frontend.ItemReservable;
 import com.algy.schedcore.frontend.Scene;
-import com.algy.schedcore.frontend.SceneMgr;
 import com.algy.schedcore.middleend.AssetModelComp;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.DirectionalLightComp;
 import com.algy.schedcore.middleend.EnvServer;
 import com.algy.schedcore.middleend.GameItem;
-import com.algy.schedcore.middleend.InputComp;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.PointLightComp;
+import com.algy.schedcore.middleend.SimpleCameraControllerComp;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.bullet.BtDebugDrawerComp;
 import com.algy.schedcore.middleend.bullet.BtDetectorComp;
@@ -22,6 +21,7 @@ import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
 import com.algy.schedcore.middleend.bullet.CollisionFilter;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
@@ -188,6 +188,7 @@ public class GameScene extends Scene {
     public static short GROUP_WALL = 1;
     public static short GROUP_BALL = 2;
     public static short GROUP_RACKET = 4;
+    public static short GROUP_DETECTOR = 8;
 
 	GameItem ballItem;
 	GameItem racketItem ;
@@ -211,13 +212,12 @@ public class GameScene extends Scene {
 				 wallItem = new GameItem(),
                  lightItem = new GameItem(),
                  pointlightItem = new GameItem(new Transform(new Vector3(0, 1, 0)),
-                		 						new PointLightComp(20).setColor(1, 1, 1, 1)),
+                		 						new PointLightComp(10).setColor(1, 1, 1, 1)),
                  removerItem = new GameItem();
 
         boardItembo.as(Transform.class).modify().setTranslation(0, 0, 0);
         boardItembo.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(2.f, .1f, 3.f)), 
-                                  new CollisionFilter(GROUP_WALL, GROUP_BALL))
+                      .staticBody(new btBoxShape(new Vector3(2.f, .1f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
         GameItem boardItemt = boardItembo.duplicate(new Vector3(0, 4.0f, 0));
@@ -233,11 +233,11 @@ public class GameScene extends Scene {
         racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f, .03f, .03f), new Quaternion()),
         		new btBoxShape(new Vector3(.9f, .03f, .03f)));
 
-        racketItem = new GameItem(new Transform(new Vector3(0, 2, 0),
-			 new Quaternion(),
+        racketItem = new GameItem(new Transform(new Vector3(-2, 2.2f, 0),
+			 new Quaternion(new Vector3(0, 0, -1), 90),
 			 new Vector3(0.03f*(1.5f-0.5f*option[0]), 0.03f*(1.5f-0.5f*option[0]), 0.03f*(1.5f-0.5f*option[0]))));
         racketItem.add(BtRigidBodyComp
-                      .kinematicBody(racketCollShape, new CollisionFilter(GROUP_RACKET, GROUP_BALL))
+                      .dynamicBody(racketCollShape, 1000, new CollisionFilter(GROUP_RACKET, GROUP_BALL))
                       .setFriction(0.1f)
                       .activate()
                       .setRestitution(1.f)
@@ -246,8 +246,7 @@ public class GameScene extends Scene {
         
         wallItem.as(Transform.class).modify().setTranslation(0, 2.0f, 3.1f);
         wallItem.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(2.f, 2.f, .1f)),
-                                  new CollisionFilter(GROUP_WALL, GROUP_BALL))
+                      .staticBody(new btBoxShape(new Vector3(2.f, 2.f, .1f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
         GameItem wallItem2 = wallItem.duplicate(new Vector3(0, 2.0f, -3.1f));
@@ -256,7 +255,7 @@ public class GameScene extends Scene {
         ballItem = new GameItem(new Transform(0, 0.2f, 0));
         ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.15f), 1, 
                                                  new CollisionFilter(GROUP_BALL, 
-                                                                     (short)(GROUP_WALL | GROUP_RACKET)))
+                                                                     (short)(GROUP_DETECTOR | GROUP_WALL | GROUP_RACKET)))
                      .setAngularVelocity(new Vector3(0, 0, -10))
                      .setLinearVelocity(new Vector3(2, 1, 2))
                      .setRestitution(0.98f));
@@ -276,7 +275,7 @@ public class GameScene extends Scene {
        
         removerItem.as(Transform.class).modify().setTranslation(0, -10f, 0);
 
-        removerItem.add(new BtDetectorComp(new btBoxShape(new Vector3(50.f, 1f, 50.f))));
+        removerItem.add(new BtDetectorComp(new btBoxShape(new Vector3(50.f, 1f, 50.f)), new CollisionFilter(GROUP_DETECTOR, (short)-1)));
         removerItem.add(new MyCollision(ballItem,score));
         coreProxy.reserveItem(boardItembo);
         coreProxy.reserveItem(boardItemba);
@@ -291,59 +290,7 @@ public class GameScene extends Scene {
         coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 2, 0)),
                 		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
         coreProxy.reserveItem(removerItem);
-//        coreProxy.reserveItem(new GameItem(new SimpleCameraControllerComp()));
-        coreProxy.reserveItem(new GameItem(new InputComp() {
-            @Override
-            public IComp duplicate() {
-                return null;
-            }
-            
-            @Override
-            public boolean touchUp(int arg0, int arg1, int arg2, int arg3) {
-                return false;
-            }
-            
-            @Override
-            public boolean touchDragged(int arg0, int arg1, int arg2) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean touchDown(int arg0, int arg1, int arg2, int arg3) {
-                SceneMgr.switchScene(new GameScene(rfunction, sfunction,option));
-                return false;
-            }
-            
-            @Override
-            public boolean scrolled(int arg0) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean mouseMoved(int arg0, int arg1) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean keyUp(int arg0) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean keyTyped(char arg0) {
-                // TODO Auto-generated method stub
-                return false;
-            }
-            
-            @Override
-            public boolean keyDown(int arg0) {
-                return false;
-            }
-        }));
+        coreProxy.reserveItem(new GameItem(new SimpleCameraControllerComp()));
         Done ();
 	}
 
@@ -360,7 +307,7 @@ public class GameScene extends Scene {
 	}
 
 	private Model boxModelbo, boxModelba, boxModels, boxModels2, boxModelt, ballModel;
-    private Texture tex, bottom, top, side, side2, back;
+    private Texture tex, bottom, top, side, side2, back, ballTex;
     Score score;
 	BitmapFont bfont;
 	Batch batch;
@@ -369,8 +316,18 @@ public class GameScene extends Scene {
     private String lastUUID = "";
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
-    private StateInterpolater thetaIntp = new StateInterpolater(1, 90, 0, 900);
+    private StateInterpolater posDepthIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     
+    {
+        posXIntp.setState(0f);
+        posYIntp.setState(2.2f);
+        posYIntp.setDestState(2.2f);
+        posDepthIntp.setState(-2);
+        posDepthIntp.setDestState(-2);
+    }
+    
+    float rawTheta = 0;
+    static final int RACKET_SPEED = 10;
     @Override
     public void postRender() {
     	Random random = new Random();
@@ -380,7 +337,7 @@ public class GameScene extends Scene {
             if (newInfo != null && !newInfo.uuid.equals(lastUUID)) {
                 posXIntp.setDestState((newInfo.posX - 0.5f) * 6);
                 posYIntp.setDestState(newInfo.posY * 4 + 0.2f);
-                thetaIntp.setDestState(newInfo.theta * 1.5f);
+                rawTheta = newInfo.theta;
                 lastUUID = newInfo.uuid;
             }
         }
@@ -396,21 +353,20 @@ public class GameScene extends Scene {
         if(score.reduceStuck()){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
-        if(n==0 || !rfunction.getbool()){
+        if(n==0){
             /*
         	sfunction.sendint(7);
             SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
             */
         }
         if(!rfunction.getbool()){
-        	SceneMgr.switchScene(new MainScene(rfunction, sfunction));
+        	// SceneMgr.switchScene(new MainScene(rfunction, sfunction));
         }
         else
         	n--;
     	batch.begin();
     	bfont.setColor(Color.WHITE);
-        bfont.draw(batch, "Score : "+String.valueOf(score.getScore()), 0, 720);
-        if(n<300)
+        bfont.draw(batch, "Score : "+String.valueOf(score.getScore()), 0, 720); if(n<300)
         	bfont.setColor(Color.RED);
         bfont.draw(batch, String.valueOf(n/30), 600, 720);
         if(score.showScore()){
@@ -422,30 +378,62 @@ public class GameScene extends Scene {
         		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 480);
         	}
         }
+
         batch.end();
-        posXIntp.update(0.03f);
-        posYIntp.update(0.03f);
-        thetaIntp.update(0.03f);
-        racketItem.getTransform().modify().set(new Vector3(-2, 
-                                                           posYIntp.getState(),
-                                                           posXIntp.getState()),
-                                               new Quaternion(new Vector3(0,0,1), 180f + thetaIntp.getState()),
-                                               new Vector3(0.03f*(1.5f-0.5f*option[0]),
-                                            		   0.03f*(1.5f-0.5f*option[0]),
-                                            		   0.03f*(1.5f-0.5f*option[0])));
+        BtRigidBodyComp bodyComp = racketItem.as(BtRigidBodyComp.class);
+        Vector3 racketTr = racketItem.getTransform().getTranslation(new Vector3());
+
+        Quaternion racketOri = new Quaternion();
+        bodyComp.getRigidBody().getWorldTransform().getRotation(racketOri, true);
+
+        posXIntp.setState(racketTr.z);
+        posYIntp.setState(racketTr.y);
+        
+        float destTheta;
+        /*
+        if (rawTheta < 45) {
+            destTheta = 60;
+        } else
+            destTheta = 120;
+            */
+        destTheta = (90 + (70 - rawTheta) * 0.8f) ;
+        
+        float scale;
+        Vector3 axis = new Vector3();
+        
+        float theta = new Quaternion(racketOri).conjugate()
+                      .mul(new Quaternion(new Vector3(0, 0, -1), destTheta))
+                      .getAxisAngle(axis);
+        axis.x = 0;
+        axis.y = 0;
+        axis = axis.nor();
+        if (theta > 180) {
+            theta -= 360;
+        }
+
+        if (theta <= 10 && theta >= -10) {
+            scale = 0;
+        } else if (theta > 0) {
+            scale = RACKET_SPEED;
+        } else
+            scale = -RACKET_SPEED;
+
+        bodyComp.activate();
+        bodyComp.setLinearVelocity(new Vector3(0, posYIntp.getVelocity(), posXIntp.getVelocity()));
+        bodyComp.setAngularVelocity(axis.scl(scale));
     }
 
     @Override
     public void firstPreparation() {
     	bfont= new BitmapFont();
     	batch = new SpriteBatch();
-        bfont.setColor(Color.WHITE);
-        bfont.scale(3f);
+        bfont.setColor(Color.WHITE); bfont.scale(3f);
         bottom = new Texture("bottom.png");
         back = new Texture("back.png");
         top = new Texture("top.png");
         side = new Texture("side.png");
         side2 = new Texture("side2.png");
+        ballTex = new Texture("ball.jpg");
         boxModelbo = new ModelBuilder().createBox(4, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
@@ -473,9 +461,10 @@ public class GameScene extends Scene {
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         ballModel = new ModelBuilder().createSphere(.3f, .3f, .3f, 10, 10, 
                 new Material(ColorAttribute.createDiffuse(0.5f, 0.5f, 0.5f, 1f),
-                             ColorAttribute.createSpecular(.95f, .95f, .55f, 1f),
-                             ColorAttribute.createAmbient(.1f, .2f, .1f, 1f)),
-                Usage.Position | Usage.Normal); 
+                             ColorAttribute.createSpecular(.25f, .25f, .25f, 1f),
+                             ColorAttribute.createAmbient(.1f, .2f, .1f, 1f),
+                             TextureAttribute.createDiffuse(new TextureRegion(ballTex))),
+                Usage.Position | Usage.Normal | Usage.TextureCoordinates); 
     }
 
     @Override
