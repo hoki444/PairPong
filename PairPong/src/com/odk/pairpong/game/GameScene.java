@@ -64,7 +64,7 @@ class MyCollision extends CollisionComp {
 		core().removeItem(other);
 		GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
 		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
-				new Vector3(2, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
+				new Vector3(3, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
 		newBall.setName("ball");
 		core().addItem(newBall);
 		score.resetCombo();
@@ -278,13 +278,13 @@ public class GameScene extends Scene {
                 		 						new PointLightComp(10).setColor(1, 1, 1, 1)),
                  removerItem = new GameItem();
 
-        boardItembo.as(Transform.class).modify().setTranslation(0, 0, 0);
+        boardItembo.as(Transform.class).modify().setTranslation(1f, 0, 0);
         boardItembo.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(2.f, .1f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
+                      .staticBody(new btBoxShape(new Vector3(3.f, .1f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
-        GameItem boardItemt = boardItembo.duplicate(new Vector3(0, 4.0f, 0));
-        GameItem boardItemba = boardItembo.duplicate(new Vector3(2.1f, 2.0f, 0),
+        GameItem boardItemt = boardItembo.duplicate(new Vector3(1f, 4.0f, 0));
+        GameItem boardItemba = boardItembo.duplicate(new Vector3(4.1f, 2.0f, 0),
         		   new Quaternion(new Vector3(0,0,1), 90));
         boardItembo.add(new ModelComp(boxModelbo));
         boardItemba.add(new ModelComp(boxModelba));
@@ -308,12 +308,12 @@ public class GameScene extends Scene {
                       .forceGravity(new Vector3()));
         racketItem.setName("racket");
         
-        wallItem.as(Transform.class).modify().setTranslation(0, 2.0f, 3.1f);
+        wallItem.as(Transform.class).modify().setTranslation(1f, 2.0f, 3.1f);
         wallItem.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(2.f, 2.f, .1f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
+                      .staticBody(new btBoxShape(new Vector3(3.f, 2.f, .1f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(0.1f)
                       .setRestitution(0.98f));
-        GameItem wallItem2 = wallItem.duplicate(new Vector3(0, 2.0f, -3.1f));
+        GameItem wallItem2 = wallItem.duplicate(new Vector3(1f, 2.0f, -3.1f));
         wallItem.add(new ModelComp(boxModels));
         wallItem2.add(new ModelComp(boxModels2));
         ballItem = new GameItem(new Transform(0, 0.2f, 0));
@@ -321,7 +321,7 @@ public class GameScene extends Scene {
                                                  new CollisionFilter(GROUP_BALL, 
                                                                      (short)(GROUP_DETECTOR | GROUP_WALL | GROUP_RACKET)))
                      .setAngularVelocity(new Vector3(0, 0, -10))
-                     .setLinearVelocity(new Vector3(2, 1, 2))
+                     .setLinearVelocity(new Vector3(3, 1, 2))
                      .setRestitution(0.98f));
         ballItem.add(new ModelComp(ballModel));
         ballItem.setName("ball");
@@ -380,7 +380,6 @@ public class GameScene extends Scene {
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posDepthIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
-    
     {
         posXIntp.setState(0f);
         posYIntp.setState(2.2f);
@@ -388,7 +387,6 @@ public class GameScene extends Scene {
         posDepthIntp.setState(-2);
         posDepthIntp.setDestState(-2);
     }
-    
     float rawTheta = 0;
     static final int RACKET_SPEED = 10;
     @Override
@@ -408,7 +406,7 @@ public class GameScene extends Scene {
         	core.removeItem(core.getItemWithName("ball"));
         	GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
     		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
-    				new Vector3(2, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
+    				new Vector3(3, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
     		newBall.setName("ball");
     		core().addItem(newBall);
     		score.resetCombo();
@@ -417,8 +415,10 @@ public class GameScene extends Scene {
         if(score.reduceStuck()&&option[1]!=1){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
-        if(score.getLife()==0)
+        if(score.getLife()==0){
         	sfunction.sendint(7);//스마트폰 스코어 전환 시그널
+        	SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
+        }
         if(option[2]==0)
         	score.timePass();
         if(!rfunction.getbool()){//폰에서 종료시 종료
@@ -516,7 +516,7 @@ public class GameScene extends Scene {
         side = new Texture("side.png");
         side2 = new Texture("side2.png");
         ballTex = new Texture("ball.jpg");
-        boxModelbo = new ModelBuilder().createBox(4, .2f, 6, 
+        boxModelbo = new ModelBuilder().createBox(6, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(bottom))),
@@ -526,17 +526,17 @@ public class GameScene extends Scene {
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(back))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
-        boxModelt = new ModelBuilder().createBox(4, .2f, 6, 
+        boxModelt = new ModelBuilder().createBox(6, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(top))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
-        boxModels = new ModelBuilder().createBox(4, 4, .2f, 
+        boxModels = new ModelBuilder().createBox(6, 4, .2f, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(side))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
-        boxModels2 = new ModelBuilder().createBox(4, 4, .2f, 
+        boxModels2 = new ModelBuilder().createBox(6, 4, .2f, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(side2))),
