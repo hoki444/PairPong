@@ -23,6 +23,7 @@ import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
 import com.algy.schedcore.middleend.bullet.CollisionFilter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
@@ -43,6 +44,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btCompoundShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.utils.Json;
 
 class MyCollision extends CollisionComp {
@@ -117,7 +119,7 @@ class Score{
 	private int life;
 	private Option option;
 	Score(Option o){
-		life=1800;
+		life=1900;
 		option = o;
 		score=0;
 		vscore=0;
@@ -289,7 +291,6 @@ class BallCollision extends CollisionComp {
     
 }
 
-
 public class GameScene extends Scene {
     public static short GROUP_WALL = 1;
     public static short GROUP_BALL = 2;
@@ -305,6 +306,7 @@ public class GameScene extends Scene {
     
     private Sound wallSound;
     private Sound racketSound;
+    private Music bgroundSound;
 	public GameScene (ReceiverFunction rfunction, SenderFunction sfunction, Option o) {
 		super();
 		option=o;
@@ -322,6 +324,9 @@ public class GameScene extends Scene {
 	public void reserveItem(Scene scene, ItemReservable coreProxy) {
     	float Frictions=0.05f;
     	float Restitutions=0.98f;
+    	if (bgroundSound != null) {   		
+    		bgroundSound.play();
+        }
     	GameItem boardItembo = new GameItem(),
     			 debugdrawItem = new GameItem(new BtDebugDrawerComp()),
 				 wallItem = new GameItem(),
@@ -361,6 +366,7 @@ public class GameScene extends Scene {
                       .forceGravity(new Vector3()));
         racketItem.setName("racket");
         
+        
         wallItem.as(Transform.class).modify().setTranslation(1f, 2.0f, 3.1f);
         wallItem.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(3.f, 2.f, .1f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
@@ -379,7 +385,11 @@ public class GameScene extends Scene {
                      .setRestitution(0.9f));
         ballItem.add(new ModelComp(ballModel));
         ballItem.setName("ball");
-       
+
+        // Tunneling-proof 
+        btRigidBody ballBody = ballItem.as(BtRigidBodyComp.class).getRigidBody();
+        ballBody.setCcdMotionThreshold(1e-4f);
+        ballBody.setCcdSweptSphereRadius(0.5f);
        
         racketItem.add(new AssetModelComp("racket.obj"));
         racketItem.add(new RacketCollision(sfunction, score,
@@ -447,6 +457,7 @@ public class GameScene extends Scene {
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     float rawTheta = 0;
     static final int RACKET_SPEED = 5;
+    int time=0;
     @Override
     public void postRender() {
     	Random random = new Random();
@@ -458,6 +469,13 @@ public class GameScene extends Scene {
                 posYIntp.setDestState(newInfo.posY * 4 + 0.2f);
                 rawTheta = newInfo.theta;
                 lastUUID = newInfo.uuid;
+            }
+        }
+        time++;
+        if(time>1800){
+        	time=0;
+        	if (bgroundSound != null) {   		
+        		bgroundSound.play();
             }
         }
         if(score.needRegen()){
@@ -474,12 +492,12 @@ public class GameScene extends Scene {
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
         if(score.getLife()==0){
-        	sfunction.sendint(7);//����Ʈ�� ���ھ� ��ȯ �ñ׳�
+        	sfunction.sendint(7);//占쏙옙占쏙옙트占쏙옙 占쏙옙占쌘억옙 占쏙옙환 占시그놂옙
         	SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
         }
         if(option.gamemode==0)
         	score.timePass();
-        if(!rfunction.getbool()){//������ ����� ����
+        if(!rfunction.getbool()){//占쏙옙占쏙옙占쏙옙 占쏙옙占쏙옙占� 占쏙옙占쏙옙
         	SceneMgr.switchScene(new MainScene(rfunction, sfunction));
         }
     	batch.begin();
@@ -495,10 +513,10 @@ public class GameScene extends Scene {
         		bfont.draw(batch, "last : "+String.valueOf(option.highscores[i]-score.getScore()), 800, 640);
         	}
         }
-        if(score.getScore()<option.highscores[5]){
-        	bfont.draw(batch, "5th Score : "+String.valueOf(option.highscores[5]),
+        if(score.getScore()<option.highscores[4]){
+        	bfont.draw(batch, "5th Score : "+String.valueOf(option.highscores[4]),
     				800, 720);
-    		bfont.draw(batch, "last : "+String.valueOf(option.highscores[5]-score.getScore()), 800, 640);
+    		bfont.draw(batch, "last : "+String.valueOf(option.highscores[4]-score.getScore()), 800, 640);
         }
         if((score.getLife()<300&&option.gamemode==0)||score.getLife()<2)
         	bfont.setColor(Color.RED);
@@ -593,6 +611,7 @@ public class GameScene extends Scene {
 
         wallSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
         racketSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
+        bgroundSound = Gdx.audio.newMusic(Gdx.files.internal("bgm.mp3"));
         boxModelbo = new ModelBuilder().createBox(6, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
@@ -648,7 +667,9 @@ public class GameScene extends Scene {
         if (wallSound != null)
             wallSound.dispose();
         if (racketSound != null)
-            racketSound.dispose();
+        	racketSound.dispose();
+        if (bgroundSound != null)
+        	bgroundSound.dispose();
         Done ();
     }
 
