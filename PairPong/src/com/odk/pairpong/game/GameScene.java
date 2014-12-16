@@ -324,7 +324,7 @@ public class GameScene extends Scene {
 	public void reserveItem(Scene scene, ItemReservable coreProxy) {
     	float Frictions=0.05f;
     	float Restitutions=0.98f;
-    	if (bgroundSound != null) {   		
+    	if (bgroundSound != null) {
     		bgroundSound.play();
         }
     	GameItem boardItembo = new GameItem(),
@@ -465,8 +465,8 @@ public class GameScene extends Scene {
         if (infoString != null && !infoString.equals("")) {
             SenderInfo newInfo = json.fromJson(SenderInfo.class, infoString);
             if (newInfo != null && !newInfo.uuid.equals(lastUUID)) {
-                posXIntp.setDestState((newInfo.posX - 0.5f) * 6);
-                posYIntp.setDestState(newInfo.posY * 4 + 0.2f);
+                posXIntp.setDestState((newInfo.posX - 0.5f) * 6.3f);
+                posYIntp.setDestState(newInfo.posY * 4.2f);
                 rawTheta = newInfo.theta;
                 lastUUID = newInfo.uuid;
             }
@@ -474,7 +474,8 @@ public class GameScene extends Scene {
         time++;
         if(time>1800){
         	time=0;
-        	if (bgroundSound != null) {   		
+        	if (bgroundSound != null) {
+        		bgroundSound.stop();
         		bgroundSound.play();
             }
         }
