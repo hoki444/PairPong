@@ -25,7 +25,7 @@ public class HighScore {
 		canvas.drawText("Name", x*7/12, y*3/12, pnt);
 		canvas.drawText("Date", x*9/12, y*3/12, pnt);
 		for(int n=0;n<5;n++){
-			canvas.drawText(String.valueOf(n), x/12, y*(4+n)/12, pnt);
+			canvas.drawText(String.valueOf(n+1), x/12, y*(4+n)/12, pnt);
 			canvas.drawText(String.valueOf(scorelist.scores[n].score), x*3/12, y*(4+n)/12, pnt);
 			canvas.drawText(scorelist.scores[n].option, x*5/12, y*(4+n)/12, pnt);
 			canvas.drawText(scorelist.scores[n].name, x*7/12, y*(4+n)/12, pnt);

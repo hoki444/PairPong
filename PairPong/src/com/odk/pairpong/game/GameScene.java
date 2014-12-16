@@ -66,7 +66,7 @@ class MyCollision extends CollisionComp {
 		core().removeItem(other);
 		GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
 		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
-				new Vector3(3, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
+				new Vector3(6, 2, random.nextFloat()*3-1.5f));
 		newBall.setName("ball");
 		core().addItem(newBall);
 		score.resetCombo();
@@ -115,8 +115,8 @@ class Score{
 	private int vscore;
 	private int ascore;
 	private int life;
-	private int[] option;
-	Score(int[] o){
+	private Option option;
+	Score(Option o){
 		life=1800;
 		option = o;
 		score=0;
@@ -131,7 +131,7 @@ class Score{
 		life--;
 	}
 	public void setLife(int l){
-		if(option[2]!=0)
+		if(option.gamemode!=0)
 			life=l;
 	}
 	public int getLife(){
@@ -149,7 +149,7 @@ class Score{
 		regentime=0;
 	}
 	public void addScore(int p){
-		score+=p*(0.5+0.5*option[0])*(1+0.1*option[2]);
+		score+=p*(0.5+0.5*option.racketsize)*(1+0.1*option.gamemode);
 	}
 	public int getScore(){
 		return score;
@@ -192,12 +192,14 @@ class Score{
 		return ascoretime!=0;
 	}
 	public void addVScore(float endspeed){
-		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option[0])*(1-0.2*option[1])*(1+0.1*option[2]));
+		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option.racketsize)
+				*(1-0.2*option.scoremode)*(1+0.1*option.gamemode));
 		score+=vscore;
 	}
 	public void addAScore(float hity){
-		if(option[1]!=0){
-			ascore=(int) ((200-(1.33-hity)*(1.33-hity)*122)*(0.5+0.5*option[0])*(1.4-0.4*option[1])*(1+0.1*option[2]));
+		if(option.scoremode!=0){
+			ascore=(int) ((200-(1.33-hity)*(1.33-hity)*122)*(0.5+0.5*option.racketsize)
+					*(1.4-0.4*option.scoremode)*(1+0.1*option.gamemode));
 			if(ascore>0){
 				score+=ascore;
 				ascoretime=30;
@@ -291,28 +293,30 @@ public class GameScene extends Scene {
 
 	GameItem ballItem;
 	GameItem racketItem ;
-	int[] option;
+	Option option;
 
     private ReceiverFunction rfunction;
     private SenderFunction sfunction;
     
     private Sound wallSound;
     private Sound racketSound;
-	public GameScene (ReceiverFunction rfunction, SenderFunction sfunction, int[] o) {
+	public GameScene (ReceiverFunction rfunction, SenderFunction sfunction, Option o) {
 		super();
 		option=o;
 		score= new Score(option);
 		this.rfunction = rfunction;
 		this.sfunction = sfunction;
 		this.sfunction.setpackage("com.odk.pairpongsender");
-		if(option[2]==1)
+		if(option.gamemode==1)
 			score.setLife(5);
-		if(option[2]==2)
+		if(option.gamemode==2)
 			score.setLife(1);
 	}
 
     @Override
-	public void reserveItem(Scene scene, ItemReservable coreProxy) { 
+	public void reserveItem(Scene scene, ItemReservable coreProxy) {
+    	float Frictions=0.05f;
+    	float Restitutions=0.98f;
     	GameItem boardItembo = new GameItem(),
     			 debugdrawItem = new GameItem(new BtDebugDrawerComp()),
 				 wallItem = new GameItem(),
@@ -324,8 +328,8 @@ public class GameScene extends Scene {
         boardItembo.as(Transform.class).modify().setTranslation(1f, 0, 0);
         boardItembo.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(3.f, .1f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
-                      .setFriction(0.1f)
-                      .setRestitution(0.98f));
+                      .setFriction(Frictions)
+                      .setRestitution(Restitutions));
         GameItem boardItemt = boardItembo.duplicate(new Vector3(1f, 4.0f, 0));
         GameItem boardItemba = boardItembo.duplicate(new Vector3(4.1f, 2.0f, 0),
         		   new Quaternion(new Vector3(0,0,1), 90));
@@ -336,26 +340,27 @@ public class GameScene extends Scene {
        
         btCompoundShape racketCollShape = new btCompoundShape();
         racketCollShape.addChildShape(new Matrix4().set(new Vector3(-.75f, .03f, .03f), new Quaternion()),
-        		new btBoxShape(new Vector3(.48f, .03f, .42f)));
+        		new btBoxShape(new Vector3(.48f, .1f, .42f)));
         racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f, .03f, .03f), new Quaternion()),
-        		new btBoxShape(new Vector3(.9f, .03f, .03f)));
+        		new btBoxShape(new Vector3(.9f, .1f, .1f)));
 
         racketItem = new GameItem(new Transform(new Vector3(-2, 2.2f, 0),
 			 new Quaternion(new Vector3(0, 0, -1), 90),
-			 new Vector3(0.03f*(1.5f-0.5f*option[0]), 0.03f*(1.5f-0.5f*option[0]), 0.03f*(1.5f-0.5f*option[0]))));
+			 new Vector3(0.03f*(1.5f-0.5f*option.racketsize), 0.03f*(1.5f-0.5f*option.racketsize),
+					 0.03f*(1.5f-0.5f*option.racketsize))));
         racketItem.add(BtRigidBodyComp
                       .dynamicBody(racketCollShape, 1000, new CollisionFilter(GROUP_RACKET, GROUP_BALL))
-                      .setFriction(0.1f)
+                      .setFriction(Frictions)
                       .activate()
-                      .setRestitution(1.f)
+                      .setRestitution(Restitutions)
                       .forceGravity(new Vector3()));
         racketItem.setName("racket");
         
         wallItem.as(Transform.class).modify().setTranslation(1f, 2.0f, 3.1f);
         wallItem.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(3.f, 2.f, .1f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
-                      .setFriction(0.1f)
-                      .setRestitution(0.98f));
+                      .setFriction(Frictions)
+                      .setRestitution(Restitutions));
         GameItem wallItem2 = wallItem.duplicate(new Vector3(1f, 2.0f, -3.1f));
         wallItem.add(new ModelComp(boxModels));
         wallItem2.add(new ModelComp(boxModels2));
@@ -365,8 +370,8 @@ public class GameScene extends Scene {
                                                  new CollisionFilter(GROUP_BALL, 
                                                                      (short)(GROUP_DETECTOR | GROUP_WALL | GROUP_RACKET)))
                      .setAngularVelocity(new Vector3(0, 0, -10))
-                     .setLinearVelocity(new Vector3(3, 1, 2))
-                     .setRestitution(0.98f));
+                     .setLinearVelocity(new Vector3(6, 2, 1))
+                     .setRestitution(0.9f));
         ballItem.add(new ModelComp(ballModel));
         ballItem.setName("ball");
        
@@ -424,7 +429,7 @@ public class GameScene extends Scene {
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     float rawTheta = 0;
-    static final int RACKET_SPEED = 10;
+    static final int RACKET_SPEED = 5;
     @Override
     public void postRender() {
     	Random random = new Random();
@@ -442,20 +447,20 @@ public class GameScene extends Scene {
         	core.removeItem(core.getItemWithName("ball"));
         	GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
     		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
-    				new Vector3(3, random.nextFloat()*3-1.5f, random.nextFloat()*6-3f));
+    				new Vector3(6, 2, random.nextFloat()*3-1.5f));
     		newBall.setName("ball");
     		core().addItem(newBall);
     		score.resetCombo();
         	score.setLife(score.getLife()-1);
         }
-        if(score.reduceStuck()&&option[1]!=1){
+        if(score.reduceStuck()&&option.scoremode!=1){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
         if(score.getLife()==0){
         	sfunction.sendint(7);//스마트폰 스코어 전환 시그널
         	SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
         }
-        if(option[2]==0)
+        if(option.gamemode==0)
         	score.timePass();
         if(!rfunction.getbool()){//폰에서 종료시 종료
         	SceneMgr.switchScene(new MainScene(rfunction, sfunction));
@@ -463,32 +468,32 @@ public class GameScene extends Scene {
     	batch.begin();
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Score : "+String.valueOf(score.getScore()), 0, 720);
-        if(score.getScore()>option[4]){
+        if(score.getScore()>option.highscores[0]){
         	bfont.draw(batch, "1st Score!!", 800, 720);
         }
         for(int i=0;i<4;i++){
-        	if(score.getScore()<option[4+i]&&score.getScore()>option[5+i]){
-        		bfont.draw(batch, String.valueOf(i+1)+"th Score : "+String.valueOf(option[4+i]),
+        	if(score.getScore()<option.highscores[i]&&score.getScore()>option.highscores[i+1]){
+        		bfont.draw(batch, String.valueOf(i+1)+"th Score : "+String.valueOf(option.highscores[i]),
         				800, 720);
-        		bfont.draw(batch, "last : "+String.valueOf(option[4+i]-score.getScore()), 800, 640);
+        		bfont.draw(batch, "last : "+String.valueOf(option.highscores[i]-score.getScore()), 800, 640);
         	}
         }
-        if(score.getScore()<option[8]){
-        	bfont.draw(batch, "5th Score : "+String.valueOf(option[8]),
+        if(score.getScore()<option.highscores[5]){
+        	bfont.draw(batch, "5th Score : "+String.valueOf(option.highscores[5]),
     				800, 720);
-    		bfont.draw(batch, "last : "+String.valueOf(option[8]-score.getScore()), 800, 640);
+    		bfont.draw(batch, "last : "+String.valueOf(option.highscores[5]-score.getScore()), 800, 640);
         }
-        if((score.getLife()<300&&option[2]==0)||score.getLife()<2)
+        if((score.getLife()<300&&option.gamemode==0)||score.getLife()<2)
         	bfont.setColor(Color.RED);
-        if(option[2]==0)
+        if(option.gamemode==0)
         	bfont.draw(batch, String.valueOf(score.getLife()/30), 600, 720);
         else
         	bfont.draw(batch, "last ball : "+String.valueOf(score.getLife()-1), 450, 720);
         if(score.showScore()){
         	bfont.setColor(Color.RED);
         	bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+
-        	String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option[0])*(1+0.1*option[2]))), 0, 640);
-        	if(!score.isStuck()&&option[1]!=1){
+        	String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option.racketsize)*(1+0.1*option.gamemode))), 0, 640);
+        	if(!score.isStuck()&&option.scoremode!=1){
         		bfont.setColor(Color.GREEN);
         		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 560);
         	}
