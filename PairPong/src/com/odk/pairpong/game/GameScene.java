@@ -119,7 +119,7 @@ class Score{
 	private int life;
 	private Option option;
 	Score(Option o){
-		life=1900;
+		life=1950;
 		option = o;
 		score=0;
 		vscore=0;
@@ -389,7 +389,7 @@ public class GameScene extends Scene {
         // Tunneling-proof 
         btRigidBody ballBody = ballItem.as(BtRigidBodyComp.class).getRigidBody();
         ballBody.setCcdMotionThreshold(1e-4f);
-        ballBody.setCcdSweptSphereRadius(0.5f);
+        ballBody.setCcdSweptSphereRadius(2f);
        
         racketItem.add(new AssetModelComp("racket.obj"));
         racketItem.add(new RacketCollision(sfunction, score,
