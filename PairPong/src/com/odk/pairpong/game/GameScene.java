@@ -382,7 +382,8 @@ public class GameScene extends Scene {
                                                                      (short)(GROUP_DETECTOR | GROUP_WALL | GROUP_RACKET)))
                      .setAngularVelocity(new Vector3(0, 0, -10))
                      .setLinearVelocity(new Vector3(6, 2, 1))
-                     .setRestitution(0.9f));
+                     .setRestitution(0.9f)
+                     .setLinearDamping(0f));
         ballItem.add(new ModelComp(ballModel));
         ballItem.setName("ball");
 

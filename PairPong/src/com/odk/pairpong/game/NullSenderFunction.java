@@ -123,5 +123,11 @@ public class NullSenderFunction implements SenderFunction {
 		// TODO Auto-generated method stub
 
 	}
+	
+	@Override
+	public void startservice(String sString) {
+		// TODO Auto-generated method stub
+
+	}
 
 }

@@ -49,6 +49,12 @@ public class QPairSenderFunction implements SenderFunction {
 		finfo.functionkind="startactivity";
 		callService();
 	}
+	@Override
+	public void startservice(String servicename){
+		finfo.activityname=packageName+"/"+packageName+"."+servicename;
+		finfo.functionkind="startservice";
+		callService();
+	}
 	/* (non-Javadoc)
 	 * @see com.odk.pairpongsender.SenderFunction#sendboolarray(boolean[])
 	 */
@@ -304,8 +310,10 @@ public class QPairSenderFunction implements SenderFunction {
                 callback.setAction(CALLBACK_ACTION);
                 if(finfo.functionkind.equals("startactivity"))
                 	peerContext.startActivityOnPeer(i, callback, null);
-                else
+                else if(finfo.functionkind.equals("senddata"))
                 	peerContext.sendBroadcastOnPeer(i, callback, null);
+                else
+                	peerContext.startServiceOnPeer(i, callback, null);
             } catch (RemoteException e) {
             }
 

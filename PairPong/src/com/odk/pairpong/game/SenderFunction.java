@@ -44,4 +44,6 @@ public interface SenderFunction {
 
 	public abstract void sendstring(String sString);
 
+	public abstract void startservice(String servicename);
+
 }
