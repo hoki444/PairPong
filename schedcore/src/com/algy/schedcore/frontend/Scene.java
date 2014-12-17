@@ -261,17 +261,19 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
             thread.start();
         }
         public synchronized void stop () {
-            stop = true;
-            thread.interrupt();
-            /*
-            // this stub cause deadlock :(
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            */
-            thread = null;
+        	if (!stop) {
+	            stop = true;
+	            thread.interrupt();
+	            /*
+	            // this stub cause deadlock :(
+	            try {
+	                thread.join();
+	            } catch (InterruptedException e) {
+	                e.printStackTrace();
+	            }
+	            */
+	            thread = null;
+        	}
         }
     }
     private Updater updater = new Updater();

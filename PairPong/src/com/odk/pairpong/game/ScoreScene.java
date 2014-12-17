@@ -2,11 +2,16 @@ package com.odk.pairpong.game;
 
 import com.algy.schedcore.frontend.Scene;
 import com.algy.schedcore.frontend.SceneMgr;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class ScoreScene extends Scene {
 	private ReceiverFunction rfunction;
     private SenderFunction sfunction;
     private int score;
+	BitmapFont bfont;
+	SpriteBatch batch;
 	public ScoreScene(ReceiverFunction rfunction, SenderFunction sfunction, int score){
 		super();
 		this.rfunction = rfunction;
@@ -17,11 +22,18 @@ public class ScoreScene extends Scene {
 	@Override
 	public void firstPreparation() {
 		// TODO Auto-generated method stub
+    	bfont= new BitmapFont();
+    	batch = new SpriteBatch();
+        bfont.setColor(Color.WHITE); bfont.scale(3f);
 	}
 
 	@Override
 	public void postRender() {
 		// TODO Auto-generated method stub
+		batch.begin();
+    	bfont.setColor(Color.WHITE);
+        bfont.draw(batch, "Sending Score......", 400, 400);
+        batch.end();
 		if(!rfunction.getbool())
 			sfunction.sendint(score);
 		else
@@ -48,5 +60,13 @@ public class ScoreScene extends Scene {
 		// TODO Auto-generated method stub
 
 	}
+	@Override
+	public void tearDown(){
+    	batch.dispose();
+        bfont.dispose();
+        
+        Done();
+	}
+
 
 }

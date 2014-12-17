@@ -473,7 +473,7 @@ public class GameScene extends Scene {
             }
         }
         time++;
-        if(time>1800){
+        if(time>1900){
         	time=0;
         	if (bgroundSound != null) {
         		bgroundSound.stop();
