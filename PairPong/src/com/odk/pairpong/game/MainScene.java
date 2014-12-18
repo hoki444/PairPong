@@ -12,11 +12,13 @@ public class MainScene extends Scene {
 	SpriteBatch batch;
 	private ReceiverFunction rfunction;
     private SenderFunction sfunction;
-	public MainScene(ReceiverFunction rfunction, SenderFunction sfunction){
+    private ServiceFunction service;
+	public MainScene(ReceiverFunction rfunction, SenderFunction sfunction, ServiceFunction service){
 		super();
 		option=new Option();
 		this.rfunction = rfunction;
 		this.sfunction = sfunction;
+		this.service = service;
 		this.sfunction.setpackage("com.odk.pairpongsender");
 	}
 	@Override
@@ -36,8 +38,8 @@ public class MainScene extends Scene {
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Start Game in the Smartphone App", 200, 400);
         batch.end();
-		if(rfunction.getbool()){
-            SceneMgr.switchScene(new GameScene(rfunction, sfunction, option));
+		if(service.isstartstate()){
+            SceneMgr.switchScene(new GameScene(rfunction, sfunction, option, service));
 		}
 	}
 

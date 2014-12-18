@@ -303,16 +303,18 @@ public class GameScene extends Scene {
 
     private ReceiverFunction rfunction;
     private SenderFunction sfunction;
+    private ServiceFunction service;
     
     private Sound wallSound;
     private Sound racketSound;
     private Music bgroundSound;
-	public GameScene (ReceiverFunction rfunction, SenderFunction sfunction, Option o) {
+	public GameScene (ReceiverFunction rfunction, SenderFunction sfunction, Option o, ServiceFunction service) {
 		super();
 		option=o;
 		score= new Score(option);
 		this.rfunction = rfunction;
 		this.sfunction = sfunction;
+		this.service = service;
 		this.sfunction.setpackage("com.odk.pairpongsender");
 		if(option.gamemode==1)
 			score.setLife(5);
@@ -349,10 +351,14 @@ public class GameScene extends Scene {
         boardItemt.add(new ModelComp(boxModelt));
        
         btCompoundShape racketCollShape = new btCompoundShape();
-        racketCollShape.addChildShape(new Matrix4().set(new Vector3(-.75f, .03f, .03f), new Quaternion()),
-        		new btBoxShape(new Vector3(.48f, .1f, .42f)));
-        racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f, .03f, .03f), new Quaternion()),
-        		new btBoxShape(new Vector3(.9f, .1f, .1f)));
+        racketCollShape.addChildShape(new Matrix4().set(new Vector3(-.75f*(1.5f-0.5f*option.racketsize), 
+        		.03f*(1.5f-0.5f*option.racketsize), .03f*(1.5f-0.5f*option.racketsize)), new Quaternion()),
+        		new btBoxShape(new Vector3(.48f*(1.5f-0.5f*option.racketsize), .1f*(1.5f-0.5f*option.racketsize), 
+        				.42f*(1.5f-0.5f*option.racketsize))));
+        racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f*(1.5f-0.5f*option.racketsize),
+        		.03f*(1.5f-0.5f*option.racketsize), .03f*(1.5f-0.5f*option.racketsize)), new Quaternion()),
+        		new btBoxShape(new Vector3(.9f*(1.5f-0.5f*option.racketsize), .1f*(1.5f-0.5f*option.racketsize),
+        				.1f*(1.5f-0.5f*option.racketsize))));
 
         racketItem = new GameItem(new Transform(new Vector3(-2, 2.2f, 0),
 			 new Quaternion(new Vector3(0, 0, -1), 90),
@@ -499,12 +505,12 @@ public class GameScene extends Scene {
         }
         if(score.getLife()==0){
         	sfunction.sendint(7);//占쏙옙占쏙옙트占쏙옙 占쏙옙占쌘억옙 占쏙옙환 占시그놂옙
-        	SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore()));
+        	SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore(),service));
         }
         if(option.gamemode==0)
         	score.timePass();
-        if(!rfunction.getbool()){//占쏙옙占쏙옙占쏙옙 占쏙옙占쏙옙占� 占쏙옙占쏙옙
-        	SceneMgr.switchScene(new MainScene(rfunction, sfunction));
+        if(!service.isstartstate()){//占쏙옙占쏙옙占쏙옙 占쏙옙占쏙옙占� 占쏙옙占쏙옙
+        	SceneMgr.switchScene(new MainScene(rfunction, sfunction,service));
         }
     	batch.begin();
     	bfont.setColor(Color.WHITE);

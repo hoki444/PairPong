@@ -9,13 +9,15 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 public class ScoreScene extends Scene {
 	private ReceiverFunction rfunction;
     private SenderFunction sfunction;
+    private ServiceFunction service;
     private int score;
 	BitmapFont bfont;
 	SpriteBatch batch;
-	public ScoreScene(ReceiverFunction rfunction, SenderFunction sfunction, int score){
+	public ScoreScene(ReceiverFunction rfunction, SenderFunction sfunction, int score, ServiceFunction service){
 		super();
 		this.rfunction = rfunction;
 		this.sfunction = sfunction;
+		this.service = service;
 		this.score=score;
 		this.sfunction.setpackage("com.odk.pairpongsender");
 	}
@@ -34,12 +36,12 @@ public class ScoreScene extends Scene {
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Sending Score......", 400, 400);
         batch.end();
-		if(!rfunction.getbool())
+		if(!service.isstartstate())
 			sfunction.sendint(score);
 		else
 			sfunction.sendint(7);//스코어화면 전환요청
 		if(rfunction.getint()==1){//스코어 전송완료신호
-            SceneMgr.switchScene(new MainScene(rfunction, sfunction));
+            SceneMgr.switchScene(new MainScene(rfunction, sfunction, service));
 		}
 	}
 

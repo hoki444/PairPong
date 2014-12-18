@@ -11,13 +11,14 @@ import com.odk.pairpong.game.GameScene;
 
 public class PairPongBoardActivity extends AndroidApplication {
 	QPairSenderFunction sfunction;
+	public static boolean isstarting=false;
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		sfunction = new QPairSenderFunction(this);
 		sfunction.setpackage("com.odk.pairpongsender");
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        initialize(new SceneMgr(new MainScene(new QPairReceiverFunction(), sfunction)));
+        initialize(new SceneMgr(new MainScene(new QPairReceiverFunction(), sfunction, new PhoneServiceFunction())));
     }
 
     @Override

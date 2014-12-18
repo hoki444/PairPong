@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
     private void startGame() {
         // bind QPair Service
     	Intent intent = new Intent(this, ControllerActivity.class);
-    	sfunction.sendbool(true);
+    	sfunction.startservice("StartService");
     	startActivity(intent);
     }
     public void quitNow() {
@@ -186,13 +186,14 @@ public class MainActivity extends Activity {
 					if(tickAfterLoad > 25)
 						sfunction.sendintarray(options);
 					else if (tickAfterLoad > 15) {
-					    sfunction.sendbool(false);
+						sfunction.startservice("EndService");
 					}
 				} else {
 					if(mode == ModeType.DestinedToPlay) {
 						mode = ModeType.Play;
 						startGame();
-					} else if(mode == ModeType.Exit)
+					}
+					else if(mode == ModeType.Exit)
 						myactivity.quitNow();
 					else if (mode == ModeType.Play && shutdown){
 						shutdown = false;
@@ -201,7 +202,7 @@ public class MainActivity extends Activity {
 					}
 					else if (mode == ModeType.Score) {
 						if ((score=rfunction.getint())==7)//���ھ� �Է��� ������ �ʾҴ°�
-							sfunction.sendbool(false);//���ھ� �Է� ��û
+					    	sfunction.startservice("EndService");//���ھ� �Է� ��û
 						else
 							sfunction.sendint(1);//���� ȭ������ ������
 					}

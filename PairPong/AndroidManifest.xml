@@ -23,6 +23,10 @@
         </activity>
         <receiver android:name=".ReceiveBroadcastReceiver"
             android:exported="true" />
+        <service android:name=".StartService"
+            android:exported="true" />
+        <service android:name=".EndService"
+            android:exported="true" />
     </application>
 
 </manifest>

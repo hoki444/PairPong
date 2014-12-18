@@ -5,7 +5,7 @@ public class Option {
 	int scoremode;
 	int gamemode;
 	int[] highscores;
-	Option(){
+	public Option(){
 		highscores=new int[5];
 	}
 	public void setData(int[] data){

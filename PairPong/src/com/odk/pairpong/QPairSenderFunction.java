@@ -265,7 +265,7 @@ public class QPairSenderFunction implements SenderFunction {
                 IPeerIntent i = peerContext.newPeerIntent();
 
                 i.setComponent(finfo.activityname);
-                if(finfo.functionkind!="startactivity"){
+                if(finfo.functionkind=="senddata"){
                 	i.putStringExtra("datakind", finfo.whatsend);
                     if(finfo.whatsend.equals("boolarray"))
                 		i.putBooleanArrayExtra("boolarray", finfo.sendingboolarray);

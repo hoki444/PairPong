@@ -1,5 +1,7 @@
 package com.odk.pairpongsender;
 
+import com.odk.pairpongsender.MainActivity.ModeType;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -24,23 +26,23 @@ public class MainScreen {
 		canvas.drawText("High Score", x/2-textsize*2.27f, y*89/120, pnt);
 		canvas.drawText("Exit", x/2-textsize*1f, y*109/120, pnt);
 	}
-	public String TouchEvent(MotionEvent event, int x, int y) {
+	public ModeType TouchEvent(MotionEvent event, int x, int y) {
 		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN){
 			if(event.getY()>y/3&&event.getY()<y*9/20){
-				return "play";
+				return ModeType.DestinedToPlay;
 			}
 			if(event.getY()>y/2&&event.getY()<y*37/60){
-				return "option";
+				return ModeType.Option;
 			}
 			if(event.getY()>y*2/3&&event.getY()<y*47/60){
-				return "highscore";
+				return ModeType.Play.Highscore;
 			}
 			if(event.getY()>y*5/6&&event.getY()<y*19/20){
-				return "exit";
+				return ModeType.Exit;
 			}
-			return "main";
+			return ModeType.Main;
 		}
-		return "main";
+		return ModeType.Main;
 	}
 
 }
