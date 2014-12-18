@@ -207,6 +207,8 @@ class Score{
 				ascoretime=30;
 			}
 		}
+		if(isStuck())
+			stucktime=1;
 	}
 	public int getVscore(){
 		return vscore;
@@ -538,8 +540,9 @@ public class GameScene extends Scene {
         	bfont.draw(batch, "last ball : "+String.valueOf(score.getLife()-1), 450, 720);
         if(score.showScore()){
         	bfont.setColor(Color.RED);
-        	bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+
-        	String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option.racketsize)*(1+0.1*option.gamemode))), 0, 640);
+        	if(score.getCombo()!=0)
+        		bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+
+        				String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option.racketsize)*(1+0.1*option.gamemode))), 0, 640);
         	if(!score.isStuck()&&option.scoremode!=1){
         		bfont.setColor(Color.GREEN);
         		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 560);
