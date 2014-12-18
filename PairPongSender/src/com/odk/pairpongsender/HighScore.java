@@ -5,6 +5,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.view.MotionEvent;
 
+import com.odk.pairpongsender.MainActivity.ModeType;
+
 public class HighScore {
 	int textsize;
 	ScoreList scorelist;
@@ -36,14 +38,14 @@ public class HighScore {
 		pnt.setColor(Color.WHITE);
 		canvas.drawText("Exit", x/2-textsize*1f, y*109/120, pnt);
 	}
-	public String TouchEvent(MotionEvent event, int x, int y) {
+	public ModeType TouchEvent(MotionEvent event, int x, int y) {
 		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN){
 			if(event.getY()>y*5/6&&event.getY()<y*19/20){
-				return "main";
+				return ModeType.Main;
 			}
-			return "highscore";
+			return ModeType.Highscore;
 		}
-		return "highscore";
+		return ModeType.Highscore;
 	}
 
 }

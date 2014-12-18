@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
 	String[] soptions = new String[5];
 	ScoreList slist;
 	SenderFunction sfunction= new QPairSenderFunction(this);
-	ReceiverFunction rfunction= new QPairReceiverFunction();
+	ReceiverFunction rfunction= new QPairReceiverFunction(); 
 	MainActivity myactivity;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,25 +52,25 @@ public class MainActivity extends Activity {
     	slist = new ScoreList(scores,names,dates,soptions);
     	myactivity=this;
         super.onCreate(savedInstanceState);
-        View vw=new MyView(this);
+        View vw = new MyView(this);
 		setContentView(vw);
     	sfunction.setpackage("com.odk.pairpong");
     }
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 	    if(keyCode==KeyEvent.KEYCODE_BACK) {
-	    	myDestroy();
+	    	quitNow();
 	    }
 	    return true;
 	}
-    public void Startgame() {
+    private void startGame() {
         // bind QPair Service
     	Intent intent = new Intent(this, ControllerActivity.class);
     	sfunction.sendbool(true);
     	startActivity(intent);
     }
-    public void myDestroy(){
+    public void quitNow() {
 		super.onDestroy();
-		System.exit(0);
+		finish();
 	}
     public void savePref(){
     	Editor editor = pref.edit();
@@ -96,8 +96,11 @@ public class MainActivity extends Activity {
         editor.commit();
     }
     
+    public static enum ModeType {
+        Main, Option, Highscore, Score, DestinedToPlay, Play, Exit
+    }
     class MyView extends View{
-    	String mode;
+    	ModeType mode;
     	Point dsize;
     	Display display;
     	Resources res = getResources();
@@ -107,12 +110,12 @@ public class MainActivity extends Activity {
     	Recoder recoder;
     	HighScore highscore;
     	int score;
-    	int loading;
+    	int tickAfterLoad;
 		public MyView(Context context) {
 			super(context);
 			score=0;
-			loading=0;
-			mode="main";
+			tickAfterLoad=0;
+			mode= ModeType.Main; 
 			dsize = new Point(0,0);
 			mscreen = new MainScreen();
 			recoder = new Recoder(slist);
@@ -124,40 +127,47 @@ public class MainActivity extends Activity {
 			
 		}
 		public void onDraw(Canvas canvas){
-		
 			canvas.drawColor(Color.LTGRAY);
-			if(mode.equals("main"))
+			switch (mode) {
+			case Main:
 				mscreen.Draw(canvas, Pnt, dsize.x, dsize.y);
-			if(mode.equals("option"))
+				break;
+			case Option:
 				option.Draw(canvas, Pnt, dsize.x, dsize.y, res);
-			if(mode.equals("highscore"))
+			    break;
+			case Highscore:
 				highscore.Draw(canvas, Pnt, dsize.x, dsize.y);
-			if(mode.equals("score"))
+			    break;
+			case Score:
 				recoder.Draw(canvas, Pnt, dsize.x, dsize.y,score);
-				
+			    break;
+			    
+			}
 		}
+
 		public boolean onTouchEvent(MotionEvent event)
 		{
-			if(loading==35){
+			if(tickAfterLoad==35){
 				if(event.getAction()==MotionEvent.ACTION_DOWN||event.getAction()==MotionEvent.ACTION_MOVE){
-					String pastmode=mode;
-					if(mode.equals("main"))
-						mode=mscreen.TouchEvent(event, dsize.x, dsize.y);
-					if(mode.equals("option")){
+					ModeType oldMode = mode;
+					if(mode == ModeType.Main)
+						mode = mscreen.TouchEvent(event, dsize.x, dsize.y);
+					if(mode == ModeType.Option) {
 						mode=option.TouchEvent(event, dsize.x, dsize.y);
-						if(mode.equals("main")){
+						if(mode == ModeType.Main) {
 							savePref();
 						}
 					}
-					if(mode.equals("highscore"))
-						mode=highscore.TouchEvent(event, dsize.x, dsize.y);
-					if(mode.equals("score")){
+					if(mode == ModeType.Highscore)
+						mode = highscore.TouchEvent(event, dsize.x, dsize.y);
+					if(mode == ModeType.Score) {
 						mode=recoder.TouchEvent(event, dsize.x, dsize.y);
-						if(mode.equals("main"))
+						if(mode == ModeType.Main)
 							savePref();
 					}
-					if(!pastmode.equals(mode))
-						loading=15;
+
+					if(oldMode != mode)
+						tickAfterLoad=15;
 					return true;
 				}
 			}
@@ -166,38 +176,37 @@ public class MainActivity extends Activity {
 		Handler mHandler = new Handler(){
 			public void handleMessage(Message msg){
 				invalidate();
-				if(loading<35){
-					loading++;
-					if(rfunction.getint()==7){//½ºÄÚ¾îÈ­¸é ÀüÈ¯Á¶°Ç
-						mode="score";
+				if (tickAfterLoad<35){
+					tickAfterLoad++;
+					if (rfunction.getint()==7){//ï¿½ï¿½ï¿½Ú¾ï¿½È­ï¿½ï¿½ ï¿½ï¿½È¯ï¿½ï¿½ï¿½ï¿½
+						mode = ModeType.Score;
 					}
-					if(loading==10 && rfunction.getint()!=7)
+					if(tickAfterLoad == 10 && rfunction.getint() != 7)
 				    	sfunction.startreceiver("PairPongBoardActivity");
-					if(loading>25)
+					if(tickAfterLoad > 25)
 						sfunction.sendintarray(options);
-					else if(loading>15)
-						sfunction.sendbool(false);//ÅÂºí¸´¿¡¼­ °ÔÀÓ ½ÇÇàÁßÀÌ¸é Á¾·á
-				}
-				else{
-					if(mode.equals("play")){
-						mode="playing";
-						myactivity.Startgame();
+					else if (tickAfterLoad > 15) {
+					    sfunction.sendbool(false);
 					}
-					else if(mode.equals("exit"))
-						myactivity.myDestroy();
-					else if(mode.equals("playing")&&shutdown){
-						shutdown=false;
-						mode="main";
-						loading=15;
+				} else {
+					if(mode == ModeType.DestinedToPlay) {
+						mode = ModeType.Play;
+						startGame();
+					} else if(mode == ModeType.Exit)
+						myactivity.quitNow();
+					else if (mode == ModeType.Play && shutdown){
+						shutdown = false;
+						mode = ModeType.Main;
+						tickAfterLoad=15;
 					}
-					else if(mode.equals("score")){
-						if((score=rfunction.getint())==7)//½ºÄÚ¾î ÀÔ·ÂÀÌ ³¡³ªÁö ¾Ê¾Ò´Â°¡
-							sfunction.sendbool(false);//½ºÄÚ¾î ÀÔ·Â ¿äÃ»
+					else if (mode == ModeType.Score) {
+						if ((score=rfunction.getint())==7)//ï¿½ï¿½ï¿½Ú¾ï¿½ ï¿½Ô·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¾Ò´Â°ï¿½
+							sfunction.sendbool(false);//ï¿½ï¿½ï¿½Ú¾ï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½Ã»
 						else
-							sfunction.sendint(1);//¸ÞÀÎ È­¸éÀ¸·Î º¸³»±â
+							sfunction.sendint(1);//ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					}
 				}
-				mHandler.sendEmptyMessageDelayed(0, 33);
+				this.sendEmptyMessageDelayed(0, 33);
 			}
 		};
     }

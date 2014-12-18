@@ -19,16 +19,18 @@ public class ControllerActivity extends AndroidApplication {
         sfunction.setpackage("com.odk.pairpong");
         initialize(new MainGame(sfunction, rfunction, this));
     }
+
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 	    if(keyCode==KeyEvent.KEYCODE_BACK) {
-	    	myDestroy();
+	    	quitNow();
 	    }
 	    return true;
 	}
-	public void myDestroy(){
+
+	public void quitNow() {
 		MainActivity.shutdown=true;
 		super.onDestroy();
-		System.exit(0);
+		finish();
 	}
 }

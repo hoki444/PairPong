@@ -65,4 +65,7 @@ public class ReceiveBroadcastReceiver extends BroadcastReceiver {
     	else if(intent.getStringExtra("datakind").equals("string"))
     		stringvalue = intent.getStringExtra("string");
     }
+    
+    public static void refresh ()  {
+    }
 }

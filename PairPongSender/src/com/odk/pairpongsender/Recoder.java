@@ -3,6 +3,8 @@ package com.odk.pairpongsender;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.odk.pairpongsender.MainActivity.ModeType;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -106,7 +108,7 @@ public class Recoder {
 		if(nowpointer<7)
 			nowpointer++;
 	}
-	public String TouchEvent(MotionEvent event, int x, int y) {
+	public ModeType TouchEvent(MotionEvent event, int x, int y) {
 		if(event.getX()>x/11&&event.getAction()==MotionEvent.ACTION_DOWN &&
 				loading>=60 && !showscore){
 			if(event.getY()>y*5/12&&event.getY()<y*9/12){
@@ -121,7 +123,7 @@ public class Recoder {
 					for(int n=0;n<8;n++)
 						names[n]=' ';
 					nowpointer=0;
-					return "main";
+					return ModeType.Main;
 				}
 				else{
 					name=String.valueOf(names);
@@ -133,9 +135,9 @@ public class Recoder {
 					loading=30;
 				}
 			}
-			return "score";
+			return ModeType.Score;
 		}
-		return "score";
+		return ModeType.Score;
 	}
 
 }

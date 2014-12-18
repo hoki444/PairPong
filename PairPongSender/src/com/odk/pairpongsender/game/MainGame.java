@@ -55,17 +55,17 @@ public class MainGame extends ApplicationAdapter {
     private ReceiverFunction rfunction;
     private SpriteBatch spriteBatch;
     private GThetaProvider gThetaProvider = new GThetaProvider();
-    private ControllerActivity nowactivity;
+    private ControllerActivity ownerActivity;
     
     private int width, height;
     
     private Thread senderThread;
     private SenderRunnable senderRunnable;
 
-    public MainGame (SenderFunction sfunction, ReceiverFunction rfunction, ControllerActivity nowactivity) {
+    public MainGame (SenderFunction sfunction, ReceiverFunction rfunction, ControllerActivity ownerActivity) {
         this.sfunction = sfunction;
         this.rfunction = rfunction;
-        this.nowactivity = nowactivity;
+        this.ownerActivity = ownerActivity;
     }
 
     @Override
@@ -116,14 +116,11 @@ public class MainGame extends ApplicationAdapter {
 
         float theta = gThetaProvider.obtainTheta();
 
-        boolean isTouched = false;
         // Input Polling
         if(loading<15){
         	loading++;
-            sfunction.sendint(0);//½ºÄÚ¾î ÀÔ·Â ¿Ï·áÁ¶°Ç ÇØÁ¦
-        }
-        else if (Gdx.input.isTouched()) {
-            isTouched = true;
+            sfunction.sendint(0);//ï¿½ï¿½ï¿½Ú¾ï¿½ ï¿½Ô·ï¿½ ï¿½Ï·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        } else if (Gdx.input.isTouched()) {
             posX = Gdx.input.getX() / (float)width;
             posY = 1 - Gdx.input.getY() / (float)height;
             if(posX<0.055f)
@@ -146,8 +143,8 @@ public class MainGame extends ApplicationAdapter {
             }
         }
 
-        if (rfunction.getint()==7||rfunction.getint()==1){//7Àº ½ºÄÚ¾î È­¸éÀ¸·Î, 1Àº ¸ÞÀÎ È­¸éÀ¸·Î ³Ñ¾î°©´Ï´Ù.
-        	nowactivity.myDestroy();
+        if (rfunction.getint()==7 || rfunction.getint()==1){//7ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¾ï¿½ È­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, 1ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¾î°©ï¿½Ï´ï¿½.
+        	ownerActivity.quitNow();
         }
         // render by sprite batch
         spriteBatch.begin();

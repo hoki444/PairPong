@@ -39,5 +39,7 @@ public interface ReceiverFunction {
 	public abstract ArrayList<String> getstringarraylist();
 
 	public abstract String getstring();
+	
+	public abstract void refresh();
 
 }

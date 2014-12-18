@@ -132,4 +132,8 @@ public class QPairReceiverFunction implements ReceiverFunction {
 	public String getstring(){
 		return ReceiveBroadcastReceiver.stringvalue;
 	}
+	
+	public void refresh () {
+	    ReceiveBroadcastReceiver.refresh();
+	}
 }

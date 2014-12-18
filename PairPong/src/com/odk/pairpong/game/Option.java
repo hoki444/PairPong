@@ -8,7 +8,7 @@ public class Option {
 	Option(){
 		highscores=new int[5];
 	}
-	public void Getdata(int[] data){
+	public void setData(int[] data){
 		if(data!=null && data.length>8){
 			racketsize=data[0];
 			scoremode=data[1];

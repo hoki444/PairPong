@@ -111,4 +111,10 @@ public class NullReceiverFunction implements ReceiverFunction {
 		return null;
 	}
 
+    @Override
+    public void refresh() {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

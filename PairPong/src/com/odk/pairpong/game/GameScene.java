@@ -365,6 +365,10 @@ public class GameScene extends Scene {
                       .setRestitution(Restitutions)
                       .forceGravity(new Vector3()));
         racketItem.setName("racket");
+        // Tunneling-proof 
+        btRigidBody racketBody = racketItem.as(BtRigidBodyComp.class).getRigidBody();
+        racketBody.setCcdMotionThreshold(1e-6f);
+        racketBody.setCcdSweptSphereRadius(4f);
         
         
         wallItem.as(Transform.class).modify().setTranslation(1f, 2.0f, 3.1f);
@@ -389,8 +393,8 @@ public class GameScene extends Scene {
 
         // Tunneling-proof 
         btRigidBody ballBody = ballItem.as(BtRigidBodyComp.class).getRigidBody();
-        ballBody.setCcdMotionThreshold(1e-4f);
-        ballBody.setCcdSweptSphereRadius(2f);
+        ballBody.setCcdMotionThreshold(1e-6f);
+        ballBody.setCcdSweptSphereRadius(4f);
        
         racketItem.add(new AssetModelComp("racket.obj"));
         racketItem.add(new RacketCollision(sfunction, score,
@@ -563,7 +567,7 @@ public class GameScene extends Scene {
         } else
             destTheta = 120;
             */
-        destTheta = (90 + (70 - rawTheta) * 0.8f) ;
+        destTheta = (90 + (90 - rawTheta) * 0.8f) ;
         
         float scale;
         Vector3 axis = new Vector3();
@@ -594,6 +598,8 @@ public class GameScene extends Scene {
 
     @Override
     public void firstPreparation() {
+        rfunction.refresh();
+        
     	bfont= new BitmapFont();
     	batch = new SpriteBatch();
         bfont.setColor(Color.WHITE); bfont.scale(3f);

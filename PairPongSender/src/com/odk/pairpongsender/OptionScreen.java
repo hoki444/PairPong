@@ -1,5 +1,7 @@
 package com.odk.pairpongsender;
 
+import com.odk.pairpongsender.MainActivity.ModeType;
+
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.*;
@@ -44,7 +46,7 @@ public class OptionScreen {
 		pnt.setColor(Color.WHITE);
 		canvas.drawText("Exit", x/2-textsize*1f, y*109/120, pnt);
 	}
-	public String TouchEvent(MotionEvent event, int x, int y) {
+	public ModeType TouchEvent(MotionEvent event, int x, int y) {
 		for(int l=0;l<3;l++){
 			if(event.getY()>y*(16+10*l)/60&&event.getY()<y*(21+10*l)/60&&event.getAction()==MotionEvent.ACTION_DOWN){
 				for(int n=0;n<3;n++){
@@ -56,10 +58,10 @@ public class OptionScreen {
 		}
 		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN){
 			if(event.getY()>y*5/6&&event.getY()<y*19/20){
-				return "main";
+				return ModeType.Main;
 			}
-			return "option";
+			return ModeType.Option;
 		}
-		return "option";
+		return ModeType.Option;
 	}
 }

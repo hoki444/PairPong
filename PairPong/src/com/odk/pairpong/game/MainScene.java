@@ -31,7 +31,7 @@ public class MainScene extends Scene {
 	@Override
 	public void postRender() {
 		// TODO Auto-generated method stub
-		option.Getdata(rfunction.getintarray());
+		option.setData(rfunction.getintarray());
 		batch.begin();
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Start Game in the Smartphone App", 200, 400);

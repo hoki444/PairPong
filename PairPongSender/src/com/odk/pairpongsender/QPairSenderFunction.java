@@ -253,12 +253,22 @@ public class QPairSenderFunction implements SenderFunction {
 		finfo.whatsend="string";
 		callService();
 	}
+	
+	static long lastTime = -1;
 	 // ServiceConnection
     private class MyServiceConnection implements ServiceConnection {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            
+            long totalst, totaled;
+            long curTime = System.currentTimeMillis();
+            if (lastTime == -1) {
+                lastTime = curTime;
+            } else {
+                System.out.println("DELTA " + (curTime - lastTime) + " ms");
+                lastTime = curTime;
+            }
+
 			// get an IPeerContext
             IPeerContext peerContext = IPeerContext.Stub.asInterface(service);
             try {
@@ -310,15 +320,16 @@ public class QPairSenderFunction implements SenderFunction {
                 callback.setAction(CALLBACK_ACTION);
                 if(finfo.functionkind.equals("startactivity"))
                 	peerContext.startActivityOnPeer(i, callback, null);
-                else if(finfo.functionkind.equals("senddata"))
+                else if(finfo.functionkind.equals("senddata")) {
                 	peerContext.sendBroadcastOnPeer(i, callback, null);
-                else
+                } else
                 	peerContext.startServiceOnPeer(i, callback, null);
             } catch (RemoteException e) {
             }
 
             // unbindService for each connection
             myActivity.unbindService(this);
+            
         }
 
         @Override
