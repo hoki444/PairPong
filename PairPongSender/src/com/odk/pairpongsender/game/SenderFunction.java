@@ -46,4 +46,7 @@ public interface SenderFunction {
 
 	public abstract void startservice(String servicename);
 
+	public abstract void startserviceWithFile(String servicename, String sendpath,
+			String recivepath);
+
 }

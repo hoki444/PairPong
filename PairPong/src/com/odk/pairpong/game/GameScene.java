@@ -341,7 +341,7 @@ public class GameScene extends Scene {
 
         boardItembo.as(Transform.class).modify().setTranslation(1f, 0, 0);
         boardItembo.add(BtRigidBodyComp
-                      .staticBody(new btBoxShape(new Vector3(3.f, .1f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
+                      .staticBody(new btBoxShape(new Vector3(3.f, .2f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(Frictions)
                       .setRestitution(Restitutions));
         GameItem boardItemt = boardItembo.duplicate(new Vector3(1f, 4.0f, 0));

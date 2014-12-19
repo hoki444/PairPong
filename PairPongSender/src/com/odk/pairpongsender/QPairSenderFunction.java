@@ -30,7 +30,7 @@ public class QPairSenderFunction implements SenderFunction {
 		final Intent intent = new Intent(QPairConstants.ACTION_SERVICE);
 
         // Bind to the QPair service
-        boolean bindResult = myActivity.bindService(intent, new MyServiceConnection(), 0);
+        myActivity.bindService(intent, new MyServiceConnection(), 0);
 
 	}
 	/* (non-Javadoc)
@@ -53,6 +53,14 @@ public class QPairSenderFunction implements SenderFunction {
 	public void startservice(String servicename){
 		finfo.activityname=packageName+"/"+packageName+"."+servicename;
 		finfo.functionkind="startservice";
+		callService();
+	}
+	@Override
+	public void startserviceWithFile(String servicename, String sendpath, String receivepath){
+		finfo.activityname=packageName+"/"+packageName+"."+servicename;
+		finfo.sendpath=sendpath;
+		finfo.receivepath=receivepath;
+		finfo.functionkind="startservicewithfile";
 		callService();
 	}
 	/* (non-Javadoc)
@@ -314,16 +322,21 @@ public class QPairSenderFunction implements SenderFunction {
                 	else if(finfo.whatsend.equals("string"))
                 		i.putStringExtra("string", finfo.sendingstring);
                 }
+                if(finfo.functionkind.equals("startservicewithfile"))
+                	i.setData(finfo.sendpath);
+                	
                 IPeerIntent callback = peerContext.newPeerIntent();
                 
                 // set callback action
                 callback.setAction(CALLBACK_ACTION);
                 if(finfo.functionkind.equals("startactivity"))
                 	peerContext.startActivityOnPeer(i, callback, null);
-                else if(finfo.functionkind.equals("senddata")) {
+                else if(finfo.functionkind.equals("senddata"))
                 	peerContext.sendBroadcastOnPeer(i, callback, null);
-                } else
+                else if(finfo.functionkind.equals("startservice"))
                 	peerContext.startServiceOnPeer(i, callback, null);
+                else
+                	peerContext.startServiceOnPeerWithFile(i, finfo.receivepath, callback, null);
             } catch (RemoteException e) {
             }
 
@@ -345,6 +358,8 @@ public class QPairSenderFunction implements SenderFunction {
         }
     };
     private class functioninfo{
+    	String sendpath;
+    	String receivepath;
     	String functionkind;
         boolean[] sendingboolarray;
         boolean sendingbool;

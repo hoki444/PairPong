@@ -30,7 +30,7 @@ public class QPairSenderFunction implements SenderFunction {
 		final Intent intent = new Intent(QPairConstants.ACTION_SERVICE);
 
         // Bind to the QPair service
-        boolean bindResult = myActivity.bindService(intent, new MyServiceConnection(), 0);
+        myActivity.bindService(intent, new MyServiceConnection(), 0);
 
 	}
 	/* (non-Javadoc)
@@ -53,6 +53,14 @@ public class QPairSenderFunction implements SenderFunction {
 	public void startservice(String servicename){
 		finfo.activityname=packageName+"/"+packageName+"."+servicename;
 		finfo.functionkind="startservice";
+		callService();
+	}
+	@Override
+	public void startserviceWithFile(String servicename, String sendpath, String receivepath){
+		finfo.activityname=packageName+"/"+packageName+"."+servicename;
+		finfo.sendpath=sendpath;
+		finfo.receivepath=receivepath;
+		finfo.functionkind="startservicewithfile";
 		callService();
 	}
 	/* (non-Javadoc)
@@ -253,12 +261,22 @@ public class QPairSenderFunction implements SenderFunction {
 		finfo.whatsend="string";
 		callService();
 	}
+	
+	static long lastTime = -1;
 	 // ServiceConnection
     private class MyServiceConnection implements ServiceConnection {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            
+            long totalst, totaled;
+            long curTime = System.currentTimeMillis();
+            if (lastTime == -1) {
+                lastTime = curTime;
+            } else {
+                System.out.println("DELTA " + (curTime - lastTime) + " ms");
+                lastTime = curTime;
+            }
+
 			// get an IPeerContext
             IPeerContext peerContext = IPeerContext.Stub.asInterface(service);
             try {
@@ -304,6 +322,9 @@ public class QPairSenderFunction implements SenderFunction {
                 	else if(finfo.whatsend.equals("string"))
                 		i.putStringExtra("string", finfo.sendingstring);
                 }
+                if(finfo.functionkind.equals("startservicewithfile"))
+                	i.setData(finfo.sendpath);
+                	
                 IPeerIntent callback = peerContext.newPeerIntent();
                 
                 // set callback action
@@ -312,13 +333,16 @@ public class QPairSenderFunction implements SenderFunction {
                 	peerContext.startActivityOnPeer(i, callback, null);
                 else if(finfo.functionkind.equals("senddata"))
                 	peerContext.sendBroadcastOnPeer(i, callback, null);
-                else
+                else if(finfo.functionkind.equals("startservice"))
                 	peerContext.startServiceOnPeer(i, callback, null);
+                else
+                	peerContext.startServiceOnPeerWithFile(i, finfo.receivepath, callback, null);
             } catch (RemoteException e) {
             }
 
             // unbindService for each connection
             myActivity.unbindService(this);
+            
         }
 
         @Override
@@ -334,6 +358,8 @@ public class QPairSenderFunction implements SenderFunction {
         }
     };
     private class functioninfo{
+    	String sendpath;
+    	String receivepath;
     	String functionkind;
         boolean[] sendingboolarray;
         boolean sendingbool;

@@ -12,7 +12,7 @@ public class NullSenderFunction implements SenderFunction {
 
 	@Override
 	public void startreceiver(String activityname) {
-		// TODO Auto-generated method stub
+		// TODO Auto-generated method stub555 +9
 
 	}
 
@@ -128,6 +128,13 @@ public class NullSenderFunction implements SenderFunction {
 	public void startservice(String sString) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void startserviceWithFile(String servicename, String sendpath,
+			String recivepath) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
