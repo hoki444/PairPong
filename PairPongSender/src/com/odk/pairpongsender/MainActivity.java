@@ -45,7 +45,7 @@ public class MainActivity extends Activity {
     		dates[n]=pref.getString("KEY_DATE"+String.valueOf(n), "12/04 15:51");
     		options[n+4]=scores[n];
     	}
-		options[0]=pref.getInt("KEY_OPTION1", 1);
+		options[0]=pref.getInt("KEY_OPTION1", 0);
 		options[1]=pref.getInt("KEY_OPTION2", 0);
 		options[2]=pref.getInt("KEY_OPTION3", 0);
 		options[3]=pref.getInt("KEY_OPTION4", 0);

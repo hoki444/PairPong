@@ -1,5 +1,7 @@
 package com.odk.pairpong.game;
 
+import android.util.Log;
+
 import com.algy.schedcore.frontend.Scene;
 import com.algy.schedcore.frontend.SceneMgr;
 import com.badlogic.gdx.graphics.Color;
@@ -36,10 +38,15 @@ public class ScoreScene extends Scene {
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Sending Score......", 400, 400);
         batch.end();
-		if(!service.isstartstate())
+        
+		if(!service.isstartstate()){
+			Log.e("send", "score");
 			sfunction.sendint(score);
-		else
+		}
+		else{
+			Log.e("send", "int");
 			sfunction.sendint(7);//스코어화면 전환요청
+		}
 		if(rfunction.getint()==1){//스코어 전송완료신호
             SceneMgr.switchScene(new MainScene(rfunction, sfunction, service));
 		}

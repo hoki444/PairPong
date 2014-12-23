@@ -340,13 +340,17 @@ public class GameScene extends Scene {
                  removerItem = new GameItem();
 
         boardItembo.as(Transform.class).modify().setTranslation(1f, 0, 0);
+        GameItem boardItemba = boardItembo.duplicate(new Vector3(4.1f, 2.0f, 0),
+     		   new Quaternion(new Vector3(0,0,1), 90));
         boardItembo.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(3.f, .2f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(Frictions)
-                      .setRestitution(Restitutions));
+                      .setRestitution(1f));
+        boardItemba.add(BtRigidBodyComp
+                .staticBody(new btBoxShape(new Vector3(3.f, .2f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
+                .setFriction(Frictions)
+                .setRestitution(0.7f));
         GameItem boardItemt = boardItembo.duplicate(new Vector3(1f, 4.0f, 0));
-        GameItem boardItemba = boardItembo.duplicate(new Vector3(4.1f, 2.0f, 0),
-        		   new Quaternion(new Vector3(0,0,1), 90));
         boardItembo.add(new ModelComp(boxModelbo));
         boardItemba.add(new ModelComp(boxModelba));
         boardItemba.add(new BackCollision(score));
@@ -383,7 +387,7 @@ public class GameScene extends Scene {
         wallItem.add(BtRigidBodyComp
                       .staticBody(new btBoxShape(new Vector3(3.f, 2.f, .1f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                       .setFriction(Frictions)
-                      .setRestitution(Restitutions));
+                      .setRestitution(1f));
         GameItem wallItem2 = wallItem.duplicate(new Vector3(1f, 2.0f, -3.1f));
         wallItem.add(new ModelComp(boxModels));
         wallItem2.add(new ModelComp(boxModels2));
@@ -433,13 +437,11 @@ public class GameScene extends Scene {
         coreProxy.reserveItem(wallItem2);
         coreProxy.reserveItem(lightItem);
         coreProxy.reserveItem(racketItem);
-        coreProxy.reserveItem(debugdrawItem);
         coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 1, 0)),
                 		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
         coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 2, 0)),
                 		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
         coreProxy.reserveItem(removerItem);
-        coreProxy.reserveItem(new GameItem(new SimpleCameraControllerComp()));
         Done ();
 	}
 

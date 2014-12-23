@@ -268,6 +268,7 @@ public class QPairSenderFunction implements SenderFunction {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+        	
             long totalst, totaled;
             long curTime = System.currentTimeMillis();
             if (lastTime == -1) {
@@ -283,7 +284,7 @@ public class QPairSenderFunction implements SenderFunction {
                 IPeerIntent i = peerContext.newPeerIntent();
 
                 i.setComponent(finfo.activityname);
-                if(finfo.functionkind=="senddata"){
+                if(finfo.functionkind.equals("senddata")){
                 	i.putStringExtra("datakind", finfo.whatsend);
                     if(finfo.whatsend.equals("boolarray"))
                 		i.putBooleanArrayExtra("boolarray", finfo.sendingboolarray);
