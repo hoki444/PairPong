@@ -5,29 +5,54 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.Json;
+import com.odk.pairpong.comm.CommConstants;
+import com.odk.pairpong.comm.CommRacketCollision;
+import com.odk.pairpong.comm.CommRacketMoveCmd;
+import com.odk.pairpong.comm.CommScore;
+import com.odk.pairpong.comm.general.CommFunction;
+import com.odk.pairpong.comm.general.MessageCallback;
+import com.odk.pairpong.comm.general.MessageListener;
 import com.odk.pairpongsender.ControllerActivity;
 
 class SenderRunnable implements Runnable {
     private Object obj;
     private boolean needToSend = false;
-    private SenderFunction sfunction;
+    private CommFunction commFun;
     private boolean stop = false;
-    private Json json = new Json();
     
-    public SenderRunnable (SenderFunction sfunction) {
-        this.sfunction = sfunction;
+    public SenderRunnable (CommFunction commFun) {
+        this.commFun = commFun;
     }
 
+    boolean responsed = false;
     @Override
     public void run () {
         while (!stop) {
-            if (needToSend) {
+            if (needToSend && obj != null) {
                 needToSend = false;
-                sfunction.sendstring(json.toJson(obj));
+                responsed = false;
+                commFun.sendMessage(CommConstants.TYPE_RACKET_MOVE_COMMAND, obj, 
+                    new MessageCallback() {
+                        @Override
+                        public void onSuccess() {
+                            responsed = true;
+                        }
+                        
+                        @Override
+                        public void onError(String reason) {
+                            responsed = true;
+                        }
+                });
+                while (!stop && !responsed) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        stop = true;
+                        break;
+                    }
+                }
                 obj = null;
             } 
-
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -41,9 +66,11 @@ class SenderRunnable implements Runnable {
     }
     
     public void pend(Object obj) {
-        synchronized (this) {
-            this.obj = obj;
-            needToSend = true;
+        if (obj != null) {
+            synchronized (this) {
+                this.obj = obj;
+                needToSend = true;
+            }
         }
     }
 }
@@ -51,8 +78,7 @@ class SenderRunnable implements Runnable {
 public class MainGame extends ApplicationAdapter {
     private Texture texBoard;
     private Texture texPoint;
-    private SenderFunction sfunction;
-    private ReceiverFunction rfunction;
+    private CommFunction commFun;
     private SpriteBatch spriteBatch;
     private GThetaProvider gThetaProvider = new GThetaProvider();
     private ControllerActivity ownerActivity;
@@ -61,10 +87,43 @@ public class MainGame extends ApplicationAdapter {
     
     private Thread senderThread;
     private SenderRunnable senderRunnable;
+    
+    private MessageListener<CommRacketCollision> racketCollListener = new MessageListener<CommRacketCollision>() {
+        @Override
+        public void onReceive(CommRacketCollision obj) {
+            Gdx.input.vibrate(obj.duration);
+        }
+        
+        @Override
+        public String getTypeName() {
+            return CommConstants.TYPE_RACKET_COLLISION;
+        }
+        
+        @Override
+        public Class<CommRacketCollision> getTypeClass() {
+            return CommRacketCollision.class;
+        }
+    };
+    
+    private MessageListener<CommScore> scoreListener = new MessageListener<CommScore>() {
+        @Override
+        public String getTypeName() {
+            return CommConstants.TYPE_SCORE;
+        }
 
-    public MainGame (SenderFunction sfunction, ReceiverFunction rfunction, ControllerActivity ownerActivity) {
-        this.sfunction = sfunction;
-        this.rfunction = rfunction;
+        @Override
+        public Class<CommScore> getTypeClass() {
+            return CommScore.class;
+        }
+
+        @Override
+        public void onReceive(CommScore obj) {
+            ownerActivity.quitWithScore(obj.score);
+        }
+    };
+
+    public MainGame (CommFunction commFun, ControllerActivity ownerActivity) {
+        this.commFun = commFun;
         this.ownerActivity = ownerActivity;
     }
 
@@ -73,10 +132,16 @@ public class MainGame extends ApplicationAdapter {
         texBoard = new Texture("board.png");
         texPoint = new Texture("point.png");
         spriteBatch = new SpriteBatch();
-        senderRunnable = new SenderRunnable(sfunction);
+        senderRunnable = new SenderRunnable(commFun);
         senderThread = new Thread(senderRunnable);
         senderThread.setDaemon(true);
         senderThread.start();
+        
+        /* register listeners */
+        commFun.registerListener(racketCollListener);
+        commFun.registerListener(scoreListener);
+        
+        
     }
 
     @Override
@@ -84,11 +149,15 @@ public class MainGame extends ApplicationAdapter {
         texBoard.dispose();
         texPoint.dispose();
         spriteBatch.dispose();
+
+        /* unregister listeners */
+        commFun.unregisterListener(racketCollListener);
+        commFun.unregisterListener(scoreListener);
     }
 
     @Override
     public void resume() {
-        senderRunnable = new SenderRunnable(sfunction);
+        senderRunnable = new SenderRunnable(commFun);
         senderThread = new Thread(senderRunnable);
         senderThread.start();
     }
@@ -102,9 +171,6 @@ public class MainGame extends ApplicationAdapter {
         }
     }
     
-    private String lastUUID = "";
-    private int loading=0;
-    private Json json = new Json();
     private float posX = 0.45f;
     private float posY = 0.45f;
     @Override
@@ -117,10 +183,7 @@ public class MainGame extends ApplicationAdapter {
         float theta = gThetaProvider.obtainTheta();
 
         // Input Polling
-        if(loading<15){
-        	loading++;
-            sfunction.sendint(0);//���ھ� �Է� �Ϸ����� ����
-        } else if (Gdx.input.isTouched()) {
+        if (Gdx.input.isTouched()) {
             posX = Gdx.input.getX() / (float)width;
             posY = 1 - Gdx.input.getY() / (float)height;
             if(posX<0.055f)
@@ -131,21 +194,9 @@ public class MainGame extends ApplicationAdapter {
                 posY=0.005f;
             if(posY>0.9f)
                 posY=0.9f;
-            senderRunnable.pend(new SenderInfo(posX, posY, theta));
+            senderRunnable.pend(new CommRacketMoveCmd(posX, posY, theta));
         }
         
-        String infoString = rfunction.getstring();
-        if (infoString != null && !infoString.equals("")) {
-            ReceiverInfo receiverInfo = json.fromJson(ReceiverInfo.class, infoString);
-            if (!receiverInfo.uuid.equals(lastUUID)) {
-                Gdx.input.vibrate(receiverInfo.duration);
-                lastUUID = receiverInfo.uuid;
-            }
-        }
-
-        if (rfunction.getint()==7 || rfunction.getint()==1){//7�� ���ھ� ȭ������, 1�� ���� ȭ������ �Ѿ�ϴ�.
-        	ownerActivity.quitNow();
-        }
         // render by sprite batch
         spriteBatch.begin();
         spriteBatch.draw(texBoard, 0, 0, width, height);
@@ -159,4 +210,5 @@ public class MainGame extends ApplicationAdapter {
         this.width = width;
         this.height = height;
     }
+    
 }

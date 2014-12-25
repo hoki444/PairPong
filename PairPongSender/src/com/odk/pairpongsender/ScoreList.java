@@ -22,7 +22,6 @@ public class ScoreList {
 	}
 	public void update(int rank, int score, String name, String date, String option){
 		for(int n=4;n>rank-1;n--){
-			
 			scores[n]=scores[n-1];
 		}
 		scores[rank-1]=new Score(score, name, date, option);
