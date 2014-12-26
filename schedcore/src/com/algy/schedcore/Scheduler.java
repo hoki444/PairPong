@@ -612,6 +612,7 @@ public final class Scheduler {
     }
 
     private void setToCurrentJob(JobInfo ji) {
+        ji.status = JobStatus.Running;
         ji.next = null;
         ji.prev = null;
         this.currentJob = ji;
