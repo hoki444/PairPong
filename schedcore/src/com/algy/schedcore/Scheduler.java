@@ -1,8 +1,6 @@
 package com.algy.schedcore;
 
 import java.util.ArrayList;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import com.algy.schedcore.Scheduler.JobStatus;
 import com.algy.schedcore.util.IntegerBitmap;
@@ -23,6 +21,22 @@ class TaskInfo {
     public Object returned = null;
 }
 
+class HeapNode {
+    public JobInfo content;
+    public HeapNode left = null, right = null, parent = null, linePrev = null, lineNext = null;
+    
+    public HeapNode (JobInfo content) {
+        this.content = content;
+    }
+    
+    public void clear() {
+        left = null; 
+        right = null; 
+        parent = null; 
+        linePrev = null;
+        lineNext = null;
+    }
+}
 
 class JobInfo {
     public JobStatus status;
@@ -44,6 +58,7 @@ class JobInfo {
         // informative fields for statistics
         this.pushedTime = pushedTime;
     }
+
     public TaskInfo ti;
     /*
      * fields that are valid when status is Pending or Running
@@ -55,6 +70,7 @@ class JobInfo {
      */
     public long futureReltime; 
     public long lastSuspendedTime;
+
     /* first execution? */
     public boolean first;
 
@@ -69,13 +85,20 @@ class JobInfo {
      */
     public JobInfo prev, next;
 
+    /*
+     * If this jobinfo is respresented as an element in binary heap, 
+     * these fields describes connected left child, right child and parent, respectively.
+     * 
+     * Only valid for "head node"
+     */
+    public HeapNode heapNode = new HeapNode(this);
 
     /*
      * informative fields for statistics
      */
     public long lastStartTime; 
     public long lastExecutionTime; 
-    public long ewmaExecutionTime; // alpha = 0.2
+    public long ewmaExecutionTime; // alpha = 0.5
     public long pushedTime;
     
     
@@ -88,14 +111,295 @@ class JobInfo {
     }
 }
 
+class BinheapQueue {
+    public int size = 0;
+    public HeapNode root = null;
+    public HeapNode rightmostLeaf = null;
+    public boolean isPendingQueue;
+    
+    public BinheapQueue (boolean isPendingQueue) {
+        this.isPendingQueue = isPendingQueue;
+    }
+
+    public boolean isEmpty () {
+        return root == null;
+    }
+    
+    public JobInfo peek () {
+        return root.content;
+    }
+    
+    public JobInfo shallowPop () {
+        if (root != null) {
+            JobInfo ji = root.content;
+            JobInfo ji_next = ji.next;
+            if (ji_next != null) {
+                if (ji_next.next != null)
+                    ji_next.next.prev = ji;
+                ji.next = ji_next.next;
+                ji_next.prev = null;
+                ji_next.next = null;
+                return ji_next;
+            } else {
+                return deepPop();
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public JobInfo deepPop () {
+        return remove(root.content);
+    }
+
+    public void push (JobInfo ji) {
+        HeapNode heapNode = ji.heapNode;
+        heapNode.clear();
+
+        if (size == 0) {
+            root = rightmostLeaf = heapNode;
+            size++;
+        } else { 
+            HeapNode anchor = null;
+            boolean appendToLeft = true;
+            boolean newLine = false;
+
+            if (rightmostLeaf.parent == null) {
+                newLine = true;
+                anchor = rightmostLeaf;
+            } else if (rightmostLeaf.parent.left == rightmostLeaf) {
+                appendToLeft = false;
+                anchor = rightmostLeaf.parent;
+            } else if (rightmostLeaf.parent.lineNext == null) {
+                newLine = true;
+                HeapNode p = root;
+                while (p.left != null) {
+                    p = p.left;
+                }
+                anchor = p;
+            } else {
+                anchor = rightmostLeaf.parent.lineNext;
+            }
+
+            if (appendToLeft) {
+                // append to left
+                anchor.left = heapNode;
+            } else {
+                // append to right
+                anchor.right = heapNode;
+            }
+            heapNode.parent = anchor;
+
+            if (newLine) {
+                rightmostLeaf.lineNext = null;
+                heapNode.linePrev = null; 
+            } else {
+                rightmostLeaf.lineNext = heapNode;
+                heapNode.linePrev = rightmostLeaf;
+            }
+            rightmostLeaf = heapNode;
+            size++;
+            upheap(heapNode);
+        }
+    }
+
+    public JobInfo remove(JobInfo ji) {
+        HeapNode heapNode = ji.heapNode;
+        if (size == 0) {
+            return null;
+        } 
+
+        if (rightmostLeaf == root) {
+            if (root == heapNode) {
+                JobInfo result = root.content;
+                root.clear();
+                root = rightmostLeaf = null;
+                size--;
+                return result;
+            } else
+                return null;
+        } 
+
+        swap(heapNode, rightmostLeaf);
+        if (rightmostLeaf.parent != null) {
+            if (rightmostLeaf.parent.left == rightmostLeaf)
+                rightmostLeaf.parent.left = null;
+            else
+                rightmostLeaf.parent.right = null;
+        }
+
+        HeapNode newRightmost;
+        if (rightmostLeaf.linePrev != null) {
+            rightmostLeaf.linePrev.lineNext = null;
+            newRightmost = rightmostLeaf.linePrev;
+        } else {
+            HeapNode p = root;
+            while (p.right != null)
+                p = p.right;
+            newRightmost = p;
+        }
+        JobInfo result = rightmostLeaf.content;
+        rightmostLeaf.clear();
+        rightmostLeaf = newRightmost;
+        size--;
+
+        if (newRightmost == null)
+            root = null;
+        else if (heapNode.parent != null && cmp(heapNode.parent, heapNode) > 0)
+            upheap(heapNode);
+        else
+            downheap(heapNode);
+        return result;
+    }
+    
+    private void upheap(HeapNode node) {
+        HeapNode deadEnd = node.parent;
+        boolean mergable = false;
+        while (deadEnd != null) {
+            int test = cmp(node, deadEnd);
+            if (test > 0) {
+                break;
+            } else if (test == 0) {
+                mergable = true;
+                break;
+            }
+            deadEnd = deadEnd.parent;
+        }
+
+        if (mergable) {
+            JobInfo ji = node.content;
+            JobInfo deadEndJi = deadEnd.content;
+            ji.prev = deadEndJi;
+            ji.next = deadEndJi.next;
+            if (deadEndJi.next != null)
+                deadEndJi.next.prev = ji;
+            deadEndJi.next = ji;
+            remove(ji);
+        } else {
+            while (node.parent != deadEnd) {
+                swap(node, node.parent);
+                node = node.parent;
+            }
+        }
+
+    }
+
+    private void downheap(HeapNode node) {
+        while (node.left != null) {
+            HeapNode cand = node;
+            if (cmp(cand, node.left) > 0)
+                cand = node.left;
+            if (node.right != null && cmp(cand, node.right) > 0)
+                cand = node.right;
+            if (node != cand) {
+                swap(node, cand);
+                node = cand;
+            } else
+                break;
+        }
+    }
+
+    private void swap(HeapNode lhs, HeapNode rhs) {
+        lhs.content.heapNode = rhs;
+        rhs.content.heapNode = lhs;
+
+        JobInfo tmp = lhs.content;
+        lhs.content = rhs.content;
+        rhs.content = tmp;
+    }
+    
+    private int cmp (HeapNode lhs, HeapNode rhs) {
+        long a, b;
+        if (isPendingQueue) { // EDF
+            a = lhs.content.curDeadline; 
+            b = rhs.content.curDeadline;
+        } else { // Early FutureReltime First
+            a = lhs.content.futureReltime;
+            b = rhs.content.futureReltime;
+        }
+
+        if (a < b)
+            return -1;
+        else if (a > b)
+            return 1;
+        else
+            return 0;
+    }
+    
+    public int count () {
+        Assert(_inv(root));
+        return _count(root);
+    }
+    
+    private boolean _inv (HeapNode heapNode) {
+        if (heapNode == null)
+            return true;
+        else if (_inv(heapNode.left) && _inv(heapNode.right)) {
+            return heapNode.parent == null || cmp(heapNode.parent, heapNode) <= 0;
+        } else
+            return false;
+    }
+    
+    private static int _count (HeapNode heapNode) {
+        int result = 0;
+        boolean hasChild = false;
+        
+        if (heapNode == null)
+            return 0;
+        
+        if (heapNode.left != null) {
+            result += _count(heapNode.left);
+            Assert(heapNode.left.parent == heapNode);
+            hasChild = true;
+                    
+        }
+        if (heapNode.right != null) {
+            result += _count(heapNode.right);
+            Assert(heapNode.right.parent == heapNode);
+            hasChild = true;
+        }
+        
+        if (heapNode.lineNext != null) {
+            Assert (heapNode.lineNext.linePrev == heapNode);
+        }
+        if (heapNode.linePrev != null) {
+            Assert (heapNode.linePrev.lineNext == heapNode);
+        }
+        
+        for (JobInfo ji = heapNode.content; ji != null; ji = ji.next) {
+            if (heapNode.content == ji)
+                Assert (ji.prev == null);
+            
+            if (ji.prev != null) {
+                Assert(ji.prev.next == ji);
+            }
+            if (ji.next != null) {
+                Assert(ji.next.prev == ji);
+            }
+            result++;
+        }
+        return result;
+    }
+    private static void Assert (boolean test) {
+        if (!test) {
+            throw new RuntimeException("Invariant BROKEN!");
+        }
+    }
+}
+
 @SuppressWarnings("unused")
 public final class Scheduler {
     public static enum JobStatus {
         Running, Pending, Waiting, Suspended
     }
-
-    private TreeMap<Long, JobInfo> pendings; 
-    private TreeMap<Long, JobInfo> waitings; // futureReltime -> JobInfo
+    
+    public static enum TaskType {
+        Periodic, Aperiodic
+    }
+    
+    private BinheapQueue pendings = new BinheapQueue(true);
+    private BinheapQueue waitings = new BinheapQueue(false); // futureReltime
+    
     private ArrayList<JobInfo> tblTask;
     
     private IntegerBitmap <JobInfo> infoBitmap;
@@ -104,8 +408,6 @@ public final class Scheduler {
     private long currentJobDeadline;
 
     public Scheduler() {
-        this.pendings = new TreeMap<Long, JobInfo>();
-        this.waitings = new TreeMap<Long, JobInfo>();
         this.infoBitmap = new IntegerBitmap<JobInfo>();
     }
 
@@ -178,6 +480,9 @@ public final class Scheduler {
     // Aspect from backend
     public Object runOnce(ITickGetter tickGetter) {
         // EDF(Earlist Deadline First) scheduling
+        
+        //long st, ed;
+        // st = System.nanoTime();
 
         long startTime = tickGetter.getTickCount();
         releaseJobs(startTime);
@@ -207,7 +512,12 @@ public final class Scheduler {
             schedTimeLocal.delta = period;
             // NOTE: this.currentJob can become null or other job 
             //       after schedule it (it means the current job is now rescheduled)
+//            long mst, med;
+//            mst = System.nanoTime();
             execJob.ti.task.schedule(schedTimeLocal);
+//            med = System.nanoTime();
+
+            // printQueueStat();
 
             long finishTime = tickGetter.getTickCount();
             long executionTime = finishTime - startTime;
@@ -218,28 +528,32 @@ public final class Scheduler {
             } else {
                 /*
                  * exponential weighted moving average for execution time.
-                 * alpha = 0.2
+                 * alpha = 0.5
                  * alpha * newExec + (1 - alpha) * oldExec
-                 *        1 * newExec + 4 * oldExec
+                 *        1 * newExec + 1 * oldExec
                  * =  ------------------------------------
-                 *                     5
+                 *                     2
                  */
                 long oldExecutionTime = execJob.ewmaExecutionTime;
-                execJob.ewmaExecutionTime = (4 * oldExecutionTime + executionTime) / 5;
+                execJob.ewmaExecutionTime = (oldExecutionTime + executionTime) / 2;
             }
             if (finishTime > execJob.curDeadline) {
-                /*
                 System.out.println("Task " + execJob.ti.taskId + " missed deadline. " + 
                                    (finishTime - execJob.curDeadline) +
                                    " avgExecTime. " + execJob.ewmaExecutionTime);
-                                   */
             }
             if (this.currentJob != null && this.currentJob == execJob) {
-                evictCurrentJob(execJob.curReltime + period);
+                evictCurrentJob(execJob.curReltime + period, finishTime);
             } else {
                 // In this case, the "current" job we knew is assumed to be already queued to "pendings", 
                 // evicted to "waitings", be suspended, or even be killed. So we don't care about it.
             }
+            /*
+            ed = System.nanoTime();
+            
+            System.out.println("Scheduling overhead: " + (ed - st - (med - mst)) / 1000.0 + " us");
+            */
+            
 
             return execJob.ti.returned;
         } else {
@@ -249,8 +563,12 @@ public final class Scheduler {
     }
 
     // Functions for internal usage
-    private void evictCurrentJob(long futureReltime) {
-        evictToWaitings(currentJob, futureReltime);
+    private void evictCurrentJob(long futureReltime, long finishTime) {
+        if (finishTime >= futureReltime) {
+            queueToPendings(currentJob, finishTime, futureReltime, futureReltime + currentJob.ti.period);
+        } else {
+            evictToWaitings(currentJob, futureReltime);
+        }
         currentJob = null;
     }
 
@@ -258,27 +576,12 @@ public final class Scheduler {
         /*
          * Release waiting jobs into "pendings", each expected release time of which is less or equal than current time,
          */
-        for (Entry<Long, JobInfo> entry : this.waitings.entrySet()) {
-            long futureReltime = entry.getKey();
-            if (futureReltime > current) {
+        while (!waitings.isEmpty()) {
+            if (waitings.peek().futureReltime <= current) {
+                JobInfo ji = waitings.shallowPop();
+                queueToPendings(ji, current, ji.futureReltime, ji.futureReltime + ji.ti.period);
+            } else
                 break;
-            }
-
-            JobInfo ji = entry.getValue(), next = null;
-            long period = ji.ti.period;
-
-
-            while (ji != null) {
-                assert ji.futureReltime == futureReltime;
-                assert ji.status == JobStatus.Waiting;
-
-                next = ji.next;
-                queueToPendings(ji, current, futureReltime, futureReltime + period);
-                ji = next;
-            }
-        }
-        while (!this.waitings.isEmpty() && this.waitings.firstKey() <= current) {
-            this.waitings.pollFirstEntry();
         }
     }
 
@@ -297,53 +600,15 @@ public final class Scheduler {
     }
 
     private int countWaitings() {
-        int count = 0;
-        for (Entry<Long, JobInfo> entrySet : this.waitings.entrySet()) {
-            for (JobInfo ji = entrySet.getValue(); ji != null; ji = ji.next) {
-                // invariant check
-                if (ji.prev != null)  {
-                    if (ji.prev.next != ji) throw new RuntimeException("LINK BROKEN!");
-                } else {
-                    if (ji != entrySet.getValue()) throw new RuntimeException("LINK BROKEN!");
-                }
-                count++;
-            }
-        }
-        return count;
+        return waitings.count();
     }
+
     private int countPendings() {
-        int count = 0;
-        for (Entry<Long, JobInfo> entrySet : this.pendings.entrySet()) {
-            for (JobInfo ji = entrySet.getValue(); ji != null; ji = ji.next) {
-                // invariant check
-                if (ji.prev != null)  {
-                    if (ji.prev.next != ji) throw new RuntimeException("LINK BROKEN!");
-                } else {
-                    if (ji != entrySet.getValue()) throw new RuntimeException("LINK BROKEN!");
-                }
-                count++;
-            }
-        }
-        return count;
+        return pendings.count();
     }
     
     private JobInfo scheduleFromPendings() {
-        if (!this.pendings.isEmpty()) {
-            Entry<Long, JobInfo> entry = this.pendings.firstEntry();
-            long key = entry.getKey();
-            JobInfo ji = entry.getValue();
-            if (ji.next != null) {
-                ji.next.prev = null;
-                this.pendings.put(key, ji.next);
-            } else {
-                this.pendings.remove(key);
-            }
-            ji.next = null;
-            
-            return ji;
-        } else {
-            return null;
-        }
+        return pendings.shallowPop();
     }
 
     private void setToCurrentJob(JobInfo ji) {
@@ -355,34 +620,17 @@ public final class Scheduler {
     }
 
     private void queueToPendings(JobInfo ji, long pushedTime, long curReltime, long curDeadline) {
-        //JobInfo pendingHead = this.pendings.get(ji.ti.period); // RM
-        JobInfo pendingHead = this.pendings.get(curDeadline);
         ji.status = JobStatus.Pending;
         ji.pushedTime = pushedTime;
         ji.curReltime = curReltime;
         ji.curDeadline = curDeadline;
-        if (pendingHead != null) {
-            ji.next = pendingHead;
-            pendingHead.prev = ji;
-        } else {
-            ji.next = null;
-        }
-        ji.prev = null;
-        this.pendings.put(curDeadline, ji);
+        pendings.push(ji);
     }
 
     private void evictToWaitings(JobInfo ji, long futureReltime) {
-        JobInfo waitingHead = this.waitings.get(futureReltime);
         ji.futureReltime = futureReltime;
         ji.status = JobStatus.Waiting;
-        if (waitingHead != null) {
-            ji.next = waitingHead;
-            waitingHead.prev = ji;
-        } else {
-            ji.next = null;
-        }
-        ji.prev = null;
-        this.waitings.put(futureReltime, ji);
+        waitings.push(ji);
     }
     
     private void suspendJob(JobInfo ji, long current) {
@@ -420,27 +668,29 @@ public final class Scheduler {
             if (oldJob.next != null)
                 oldJob.next.prev = oldJob.prev;
             oldJob.prev.next = oldJob.next;
+
+            oldJob.prev = null;
+            oldJob.next = null;
         } else {
             switch (oldJob.status) {
             case Pending:
+                pendings.remove(oldJob);
                 if (oldJob.next != null) {
                     oldJob.next.prev = null;
-                    this.pendings.put(oldJob.curDeadline, oldJob.next);
-                } else {
-                    this.pendings.remove(oldJob.curDeadline);
-                }
-
+                    pendings.push(oldJob.next);
+                    oldJob.next = null;
+                } 
                 break;
             case Running:
                 this.currentJob = null;
                 break;
             case Waiting:
+                waitings.remove(oldJob);
                 if (oldJob.next != null) {
                     oldJob.next.prev = null;
-                    this.waitings.put(oldJob.futureReltime, oldJob.next);
-                } else {
-                    this.waitings.remove(oldJob.futureReltime);
-                }
+                    waitings.push(oldJob.next);
+                    oldJob.next = null;
+                } 
                 break;
             case Suspended:
                 break;
