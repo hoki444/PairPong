@@ -78,13 +78,8 @@ class SenderRunnable implements Runnable {
 public class MainGame extends ApplicationAdapter {
     private Texture texBoard;
     private Texture texPoint;
-<<<<<<< HEAD
     private Texture texRacket;
-    private SenderFunction sfunction;
-    private ReceiverFunction rfunction;
-=======
     private CommFunction commFun;
->>>>>>> 3176ece3efc8d05febb1bdbf0cc04ae3611ccace
     private SpriteBatch spriteBatch;
     private GThetaProvider gThetaProvider = new GThetaProvider();
     private ControllerActivity ownerActivity;
@@ -190,11 +185,7 @@ public class MainGame extends ApplicationAdapter {
         float theta = gThetaProvider.obtainTheta();
 
         // Input Polling
-<<<<<<< HEAD
-        if(loading<15){
-        	loading++;
-            sfunction.sendint(0);//���ھ� �Է� �Ϸ����� ����
-        } else if (Gdx.input.isTouched()) {
+        if (Gdx.input.isTouched()) {
             posY = 1 - Gdx.input.getY() / (float)height;
         	if(posY<0.35f)
         		posX = Gdx.input.getX() / (float)width;
@@ -209,35 +200,8 @@ public class MainGame extends ApplicationAdapter {
             posY-=0.025f;
         if(posY<0.12f)
             posY=0.12f;
-        senderRunnable.pend(new SenderInfo(posX, posY, theta));
-        String infoString = rfunction.getstring();
-        if (infoString != null && !infoString.equals("")) {
-            ReceiverInfo receiverInfo = json.fromJson(ReceiverInfo.class, infoString);
-            if (!receiverInfo.uuid.equals(lastUUID)) {
-                Gdx.input.vibrate(receiverInfo.duration);
-                lastUUID = receiverInfo.uuid;
-            }
-        }
+        senderRunnable.pend(new CommRacketMoveCmd(posX, posY, theta));
 
-        if (rfunction.getint()==7 || rfunction.getint()==1){//7�� ���ھ� ȭ������, 1�� ���� ȭ������ �Ѿ�ϴ�.
-        	ownerActivity.quitNow();
-        }
-=======
-        if (Gdx.input.isTouched()) {
-            posX = Gdx.input.getX() / (float)width;
-            posY = 1 - Gdx.input.getY() / (float)height;
-            if(posX<0.055f)
-                posX = 0.055f;
-            if(posX>0.85f)
-                posX=0.85f;
-            if(posY<0.005f)
-                posY=0.005f;
-            if(posY>0.9f)
-                posY=0.9f;
-            senderRunnable.pend(new CommRacketMoveCmd(posX, posY, theta));
-        }
-        
->>>>>>> 3176ece3efc8d05febb1bdbf0cc04ae3611ccace
         // render by sprite batch
         spriteBatch.begin();
         spriteBatch.draw(texBoard, 0, 0, width, height);

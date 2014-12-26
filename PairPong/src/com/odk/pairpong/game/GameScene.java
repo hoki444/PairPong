@@ -481,9 +481,14 @@ public class GameScene extends Scene {
         @Override
         public void onReceive(CommRacketMoveCmd obj) {
             synchronized (lockRacketIntpt) {
-                posXIntp.setDestState((obj.posX - 0.5f) * 6.3f);
-                posYIntp.setDestState(obj.posY * 4.2f);
-                rawTheta = obj.theta;
+            	posXIntp.setDestState((obj.posX - 0.5f) * 8f);
+            	if(obj.posY>0.35)
+            		rawTheta = 0;
+            	else
+            		rawTheta = 90;
+            	//posXIntp.setDestState((obj.posX - 0.5f) * 6.3f);
+                //posYIntp.setDestState(obj.posY * 4.2f);
+                //rawTheta = obj.theta;
             }
         }
         
@@ -585,6 +590,7 @@ public class GameScene extends Scene {
         float destTheta;
         synchronized (lockRacketIntpt) {
             posXIntp.setState(racketTr.z);
+            posYIntp.setDestState(core.getItemWithName("ball").getTransform().getTranslation(new Vector3()).y-0.75f*(1.5f-0.5f*option.racketSize));
             posYIntp.setState(racketTr.y);
             destTheta = (90 + (90 - rawTheta) * 0.8f);
         }
