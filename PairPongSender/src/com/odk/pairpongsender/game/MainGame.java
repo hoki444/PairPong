@@ -51,6 +51,7 @@ class SenderRunnable implements Runnable {
 public class MainGame extends ApplicationAdapter {
     private Texture texBoard;
     private Texture texPoint;
+    private Texture texRacket;
     private SenderFunction sfunction;
     private ReceiverFunction rfunction;
     private SpriteBatch spriteBatch;
@@ -72,6 +73,7 @@ public class MainGame extends ApplicationAdapter {
     public void create() {
         texBoard = new Texture("board.png");
         texPoint = new Texture("point.png");
+        texRacket = new Texture("racket.png");
         spriteBatch = new SpriteBatch();
         senderRunnable = new SenderRunnable(sfunction);
         senderThread = new Thread(senderRunnable);
@@ -106,7 +108,7 @@ public class MainGame extends ApplicationAdapter {
     private int loading=0;
     private Json json = new Json();
     private float posX = 0.45f;
-    private float posY = 0.45f;
+    private float posY = 0.12f;
     @Override
     public void render() {
         Gdx.gl.glViewport(0, 0, width, height);
@@ -121,19 +123,21 @@ public class MainGame extends ApplicationAdapter {
         	loading++;
             sfunction.sendint(0);//���ھ� �Է� �Ϸ����� ����
         } else if (Gdx.input.isTouched()) {
-            posX = Gdx.input.getX() / (float)width;
             posY = 1 - Gdx.input.getY() / (float)height;
-            if(posX<0.055f)
-                posX = 0.055f;
-            if(posX>0.85f)
-                posX=0.85f;
-            if(posY<0.005f)
-                posY=0.005f;
-            if(posY>0.9f)
-                posY=0.9f;
-            senderRunnable.pend(new SenderInfo(posX, posY, theta));
+        	if(posY<0.35f)
+        		posX = Gdx.input.getX() / (float)width;
+            if(posX<0.17f)
+                posX = 0.17f;
+            if(posX>0.83f)
+                posX=0.83f;
+            if(posY>0.8f)
+                posY=0.8f;
         }
-        
+        if(posY>0.12f)
+            posY-=0.025f;
+        if(posY<0.12f)
+            posY=0.12f;
+        senderRunnable.pend(new SenderInfo(posX, posY, theta));
         String infoString = rfunction.getstring();
         if (infoString != null && !infoString.equals("")) {
             ReceiverInfo receiverInfo = json.fromJson(ReceiverInfo.class, infoString);
@@ -149,7 +153,8 @@ public class MainGame extends ApplicationAdapter {
         // render by sprite batch
         spriteBatch.begin();
         spriteBatch.draw(texBoard, 0, 0, width, height);
-        spriteBatch.draw(texPoint, (int)(posX * width - 100), (int)(posY * height - 100), 200, 200);
+        spriteBatch.draw(texRacket, width/10, (int)(posY * height - height/20), width*4/5, height/10);
+        spriteBatch.draw(texPoint, (int)(posX * width - width/20), (int)(posY * height - height/30), width/10, height/15);
         spriteBatch.end();
     }
 
