@@ -53,11 +53,6 @@ class SenderRunnable implements Runnable {
                 }
                 obj = null;
             } 
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                stop = true;
-            }
         }
     }
     
