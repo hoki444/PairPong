@@ -30,8 +30,6 @@
             android:screenOrientation="portrait"
    			android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
         </activity>
-        <receiver android:name=".ReceiveBroadcastReceiver"
-            android:exported="true" />
     </application>
 
 </manifest>

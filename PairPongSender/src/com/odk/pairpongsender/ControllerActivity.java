@@ -1,36 +1,50 @@
 package com.odk.pairpongsender;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.KeyEvent;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
+import com.odk.pairpong.comm.backend.QPairCommFunction;
 import com.odk.pairpongsender.game.MainGame;
-import com.odk.pairpongsender.game.ReceiverFunction;
-import com.odk.pairpongsender.game.SenderFunction;
 
 public class ControllerActivity extends AndroidApplication {
-	SenderFunction sfunction;
+	private QPairCommFunction commFun;
+
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sfunction = new QPairSenderFunction(this);
-		ReceiverFunction rfunction = new QPairReceiverFunction();
+        
+		commFun = new QPairCommFunction("com.odk.pairpong");
+		commFun.registerReceivers(this);
+		commFun.setContext(getApplicationContext());
 
-        sfunction.setpackage("com.odk.pairpong");
-        initialize(new MainGame(sfunction, rfunction, this));
+        initialize(new MainGame(commFun, this));
     }
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 	    if(keyCode==KeyEvent.KEYCODE_BACK) {
-	    	quitNow();
+	    	quit();
 	    }
 	    return true;
 	}
+	
+	public void quit () {
+	    setResult(RESULT_CANCELED);
+	    finish();
+	}
 
-	public void quitNow() {
-		MainActivity.shutdown=true;
-		super.onDestroy();
-		finish();
+	public void quitWithScore(int score) {
+	    Intent intent = new Intent();
+	    intent.putExtra("score", score);
+	    setResult(RESULT_OK, intent);
+	    finish();
+	}
+	
+	@Override
+	protected void onDestroy() {
+	    super.onDestroy();
+	    commFun.unregisterReceivers(this);
 	}
 }

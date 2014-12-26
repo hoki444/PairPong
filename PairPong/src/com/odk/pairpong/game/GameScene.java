@@ -14,7 +14,6 @@ import com.algy.schedcore.middleend.EnvServer;
 import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.PointLightComp;
-import com.algy.schedcore.middleend.SimpleCameraControllerComp;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.bullet.BtDebugDrawerComp;
 import com.algy.schedcore.middleend.bullet.BtDetectorComp;
@@ -28,7 +27,6 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
-import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -46,12 +44,18 @@ import com.badlogic.gdx.physics.bullet.collision.btCompoundShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.utils.Json;
+import com.odk.pairpong.comm.CommConstants;
+import com.odk.pairpong.comm.CommOption;
+import com.odk.pairpong.comm.CommRacketCollision;
+import com.odk.pairpong.comm.CommRacketMoveCmd;
+import com.odk.pairpong.comm.general.CommFunction;
+import com.odk.pairpong.comm.general.MessageListener;
 
 class MyCollision extends CollisionComp {
 	GameItem ballItem;
 	Score score;
 	Random random = new Random();
-	MyCollision(GameItem ballItem, Score score){
+	public MyCollision(GameItem ballItem, Score score){
 		super();
 		this.ballItem=ballItem;
 		this.score=score;
@@ -65,14 +69,14 @@ class MyCollision extends CollisionComp {
 	@Override 
 	public void beginCollision(GameItem other) {
 	    if ("ball".equals(other.getName())) {
-		core().removeItem(other);
-		GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
-		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
-				new Vector3(6, 2, random.nextFloat()*3-1.5f));
-		newBall.setName("ball");
-		core().addItem(newBall);
-		score.resetCombo();
-    	score.setLife(score.getLife()-1);
+            core().removeItem(other);
+            GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
+            newBall.as(BtRigidBodyComp.class).setLinearVelocity(
+                    new Vector3(6, 2, random.nextFloat()*3-1.5f));
+            newBall.setName("ball");
+            core().addItem(newBall);
+            score.resetCombo();
+            score.setLife(score.getLife()-1);
 	    }
 	}
 
@@ -117,23 +121,23 @@ class Score{
 	private int vscore;
 	private int ascore;
 	private int life;
-	private Option option;
-	Score(Option o){
-		life=1950;
+	private CommOption option;
+	public Score(CommOption o){
+		life = 1950;
 		option = o;
-		score=0;
-		vscore=0;
-		combo=0;
-		stucktime=0;
-		regentime=0;
-		startspeed=0;
-		scoretime=0;
+		score =0;
+		vscore = 0;
+		combo = 0;
+		stucktime = 0;
+		regentime = 0;
+		startspeed = 0;
+		scoretime = 0;
 	}
 	public void timePass(){
 		life--;
 	}
 	public void setLife(int l){
-		if(option.gamemode!=0)
+		if(option.gameMode!=0)
 			life=l;
 	}
 	public int getLife(){
@@ -151,7 +155,7 @@ class Score{
 		regentime=0;
 	}
 	public void addScore(int p){
-		score+=p*(0.5+0.5*option.racketsize)*(1+0.1*option.gamemode);
+		score+=p*(0.5+0.5*option.racketSize)*(1+0.1*option.gameMode);
 	}
 	public int getScore(){
 		return score;
@@ -194,14 +198,14 @@ class Score{
 		return ascoretime!=0;
 	}
 	public void addVScore(float endspeed){
-		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option.racketsize)
-				*(1-0.2*option.scoremode)*(1+0.1*option.gamemode));
+		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option.racketSize)
+				*(1-0.2*option.scoreMode)*(1+0.1*option.gameMode));
 		score+=vscore;
 	}
 	public void addAScore(float hity){
-		if(option.scoremode!=0){
-			ascore=(int) ((200-(1.33-hity)*(1.33-hity)*122)*(0.5+0.5*option.racketsize)
-					*(1.4-0.4*option.scoremode)*(1+0.1*option.gamemode));
+		if(option.scoreMode!=0){
+			ascore=(int) ((200-(1.33-hity)*(1.33-hity)*122)*(0.5+0.5*option.racketSize)
+					*(1.4-0.4*option.scoreMode)*(1+0.1*option.gameMode));
 			if(ascore>0){
 				score+=ascore;
 				ascoretime=30;
@@ -219,30 +223,29 @@ class Score{
 }
 
 class RacketCollision extends CollisionComp {
-    private Json json = new Json();
-    private SenderFunction sfunction;
+    private CommFunction commFun;
     private Score score;
     private EffectController effectController;
     int combo=0;
-    public RacketCollision (SenderFunction sfunction, Score score, EffectController effectController) {
-        this.sfunction = sfunction;
-        this.score=score;
+
+    public RacketCollision (CommFunction commFun, Score score, EffectController effectController) {
+        this.commFun = commFun;
+        this.score = score;
         this.effectController = effectController;
     }
 
     @Override
     public IComp duplicate() {
-        return new RacketCollision(sfunction, score, effectController);
+        return new RacketCollision(commFun, score, effectController);
     }
 
     @Override
     public void beginCollision(GameItem other) {
-        sfunction.sendstring(json.toJson(new ReceiverInfo(80)));
-        
+        commFun.sendMessage(CommConstants.TYPE_RACKET_COLLISION, new CommRacketCollision(80), null);
         if (other.getName().equals("ball")) {
-            if(!score.isStuck()){
+            if(!score.isStuck()) {
                 score.addCombo();
-                combo=score.getCombo();
+                combo = score.getCombo();
                 score.addScore((2*combo-1)*100);
                 score.setStuck();
                 score.setStartSpeed(other.as(BtRigidBodyComp.class).getLinearVelocity().len());
@@ -299,28 +302,27 @@ public class GameScene extends Scene {
     public static short GROUP_RACKET = 4;
     public static short GROUP_DETECTOR = 8;
 
-	GameItem ballItem;
-	GameItem racketItem ;
-	Option option;
+	private GameItem ballItem;
+	private GameItem racketItem;
+	private CommOption option;
 
-    private ReceiverFunction rfunction;
-    private SenderFunction sfunction;
-    private ServiceFunction service;
+    private CommFunction commFun;
     
     private Sound wallSound;
     private Sound racketSound;
     private Music bgroundSound;
-	public GameScene (ReceiverFunction rfunction, SenderFunction sfunction, Option o, ServiceFunction service) {
+    
+    private CeaseGameListener ceaseGameListener;
+
+	public GameScene (CommFunction commFun, CommOption o) {
 		super();
-		option=o;
-		score= new Score(option);
-		this.rfunction = rfunction;
-		this.sfunction = sfunction;
-		this.service = service;
-		this.sfunction.setpackage("com.odk.pairpongsender");
-		if(option.gamemode==1)
+		option = o;
+		score = new Score(option);
+		this.commFun = commFun;
+		
+		if(option.gameMode == 1)
 			score.setLife(5);
-		if(option.gamemode==2)
+		if(option.gameMode == 2)
 			score.setLife(1);
 	}
 
@@ -357,19 +359,19 @@ public class GameScene extends Scene {
         boardItemt.add(new ModelComp(boxModelt));
        
         btCompoundShape racketCollShape = new btCompoundShape();
-        racketCollShape.addChildShape(new Matrix4().set(new Vector3(-.75f*(1.5f-0.5f*option.racketsize), 
-        		.03f*(1.5f-0.5f*option.racketsize), .03f*(1.5f-0.5f*option.racketsize)), new Quaternion()),
-        		new btBoxShape(new Vector3(.48f*(1.5f-0.5f*option.racketsize), .1f*(1.5f-0.5f*option.racketsize), 
-        				.42f*(1.5f-0.5f*option.racketsize))));
-        racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f*(1.5f-0.5f*option.racketsize),
-        		.03f*(1.5f-0.5f*option.racketsize), .03f*(1.5f-0.5f*option.racketsize)), new Quaternion()),
-        		new btBoxShape(new Vector3(.9f*(1.5f-0.5f*option.racketsize), .1f*(1.5f-0.5f*option.racketsize),
-        				.1f*(1.5f-0.5f*option.racketsize))));
+        racketCollShape.addChildShape(new Matrix4().set(new Vector3(-.75f*(1.5f-0.5f*option.racketSize), 
+        		.03f*(1.5f-0.5f*option.racketSize), .03f*(1.5f-0.5f*option.racketSize)), new Quaternion()),
+        		new btBoxShape(new Vector3(.48f*(1.5f-0.5f*option.racketSize), .1f*(1.5f-0.5f*option.racketSize), 
+        				.42f*(1.5f-0.5f*option.racketSize))));
+        racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f*(1.5f-0.5f*option.racketSize),
+        		.03f*(1.5f-0.5f*option.racketSize), .03f*(1.5f-0.5f*option.racketSize)), new Quaternion()),
+        		new btBoxShape(new Vector3(.9f*(1.5f-0.5f*option.racketSize), .1f*(1.5f-0.5f*option.racketSize),
+        				.1f*(1.5f-0.5f*option.racketSize))));
 
         racketItem = new GameItem(new Transform(new Vector3(-2, 2.2f, 0),
 			 new Quaternion(new Vector3(0, 0, -1), 90),
-			 new Vector3(0.03f*(1.5f-0.5f*option.racketsize), 0.03f*(1.5f-0.5f*option.racketsize),
-					 0.03f*(1.5f-0.5f*option.racketsize))));
+			 new Vector3(0.03f*(1.5f-0.5f*option.racketSize), 0.03f*(1.5f-0.5f*option.racketSize),
+					 0.03f*(1.5f-0.5f*option.racketSize))));
         racketItem.add(BtRigidBodyComp
                       .dynamicBody(racketCollShape, 1000, new CollisionFilter(GROUP_RACKET, GROUP_BALL))
                       .setFriction(Frictions)
@@ -409,7 +411,7 @@ public class GameScene extends Scene {
         ballBody.setCcdSweptSphereRadius(4f);
        
         racketItem.add(new AssetModelComp("racket.obj"));
-        racketItem.add(new RacketCollision(sfunction, score,
+        racketItem.add(new RacketCollision(commFun, score,
                 new EffectController() {
                     @Override
                     public void invokeHit(Vector3 position) {
@@ -466,26 +468,39 @@ public class GameScene extends Scene {
     Score score;
 	BitmapFont bfont;
 	SpriteBatch batch;
-    private Json json = new Json();
-    private String lastUUID = "";
+
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     float rawTheta = 0;
     static final int RACKET_SPEED = 5;
     int time=0;
+    
+    
+    private Object lockRacketIntpt = new Object();
+    private MessageListener<CommRacketMoveCmd> racketMoveLisnr = new MessageListener<CommRacketMoveCmd>() {
+        @Override
+        public void onReceive(CommRacketMoveCmd obj) {
+            synchronized (lockRacketIntpt) {
+                posXIntp.setDestState((obj.posX - 0.5f) * 6.3f);
+                posYIntp.setDestState(obj.posY * 4.2f);
+                rawTheta = obj.theta;
+            }
+        }
+        
+        @Override
+        public String getTypeName() {
+            return CommConstants.TYPE_RACKET_MOVE_COMMAND;
+        }
+        
+        @Override
+        public Class<CommRacketMoveCmd> getTypeClass() {
+            return CommRacketMoveCmd.class;
+        }
+    };
+
     @Override
     public void postRender() {
     	Random random = new Random();
-        String infoString = rfunction.getstring();
-        if (infoString != null && !infoString.equals("")) {
-            SenderInfo newInfo = json.fromJson(SenderInfo.class, infoString);
-            if (newInfo != null && !newInfo.uuid.equals(lastUUID)) {
-                posXIntp.setDestState((newInfo.posX - 0.5f) * 6.3f);
-                posYIntp.setDestState(newInfo.posY * 4.2f);
-                rawTheta = newInfo.theta;
-                lastUUID = newInfo.uuid;
-            }
-        }
         time++;
         if(time>1900){
         	time=0;
@@ -504,39 +519,38 @@ public class GameScene extends Scene {
     		score.resetCombo();
         	score.setLife(score.getLife()-1);
         }
-        if(score.reduceStuck()&&option.scoremode!=1){
+        if(score.reduceStuck()&&option.scoreMode!=1){
         	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
         }
-        if(score.getLife()==0){
-        	sfunction.sendint(7);//占쏙옙占쏙옙트占쏙옙 占쏙옙占쌘억옙 占쏙옙환 占시그놂옙
-        	SceneMgr.switchScene(new ScoreScene(rfunction, sfunction,score.getScore(),service));
+
+        if(score.getLife() == 0) {
+        	SceneMgr.switchScene(new ScoreScene(commFun, score.getScore()));
         }
-        if(option.gamemode==0)
+
+        if(option.gameMode == 0)
         	score.timePass();
-        if(!service.isstartstate()){//占쏙옙占쏙옙占쏙옙 占쏙옙占쏙옙占� 占쏙옙占쏙옙
-        	SceneMgr.switchScene(new MainScene(rfunction, sfunction,service));
-        }
+
     	batch.begin();
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Score : "+String.valueOf(score.getScore()), 0, 720);
-        if(score.getScore()>option.highscores[0]){
+        if(score.getScore()>option.highScores[0]){
         	bfont.draw(batch, "1st Score!!", 800, 720);
         }
         for(int i=0;i<4;i++){
-        	if(score.getScore()<option.highscores[i]&&score.getScore()>option.highscores[i+1]){
-        		bfont.draw(batch, String.valueOf(i+1)+"th Score : "+String.valueOf(option.highscores[i]),
+        	if(score.getScore()<option.highScores[i]&&score.getScore()>option.highScores[i+1]){
+        		bfont.draw(batch, String.valueOf(i+1)+"th Score : "+String.valueOf(option.highScores[i]),
         				800, 720);
-        		bfont.draw(batch, "last : "+String.valueOf(option.highscores[i]-score.getScore()), 800, 640);
+        		bfont.draw(batch, "last : "+String.valueOf(option.highScores[i]-score.getScore()), 800, 640);
         	}
         }
-        if(score.getScore()<option.highscores[4]){
-        	bfont.draw(batch, "5th Score : "+String.valueOf(option.highscores[4]),
+        if(score.getScore()<option.highScores[4]){
+        	bfont.draw(batch, "5th Score : "+String.valueOf(option.highScores[4]),
     				800, 720);
-    		bfont.draw(batch, "last : "+String.valueOf(option.highscores[4]-score.getScore()), 800, 640);
+    		bfont.draw(batch, "last : "+String.valueOf(option.highScores[4]-score.getScore()), 800, 640);
         }
-        if((score.getLife()<300&&option.gamemode==0)||score.getLife()<2)
+        if((score.getLife()<300&&option.gameMode==0)||score.getLife()<2)
         	bfont.setColor(Color.RED);
-        if(option.gamemode==0)
+        if(option.gameMode==0)
         	bfont.draw(batch, String.valueOf(score.getLife()/30), 600, 720);
         else
         	bfont.draw(batch, "last ball : "+String.valueOf(score.getLife()-1), 450, 720);
@@ -544,8 +558,8 @@ public class GameScene extends Scene {
         	bfont.setColor(Color.RED);
         	if(score.getCombo()!=0)
         		bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+
-        				String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option.racketsize)*(1+0.1*option.gamemode))), 0, 640);
-        	if(!score.isStuck()&&option.scoremode!=1){
+        				String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option.racketSize)*(1+0.1*option.gameMode))), 0, 640);
+        	if(!score.isStuck()&&option.scoreMode!=1){
         		bfont.setColor(Color.GREEN);
         		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 560);
         	}
@@ -568,17 +582,12 @@ public class GameScene extends Scene {
         Quaternion racketOri = new Quaternion();
         bodyComp.getRigidBody().getWorldTransform().getRotation(racketOri, true);
 
-        posXIntp.setState(racketTr.z);
-        posYIntp.setState(racketTr.y);
-        
         float destTheta;
-        /*
-        if (rawTheta < 45) {
-            destTheta = 60;
-        } else
-            destTheta = 120;
-            */
-        destTheta = (90 + (90 - rawTheta) * 0.8f) ;
+        synchronized (lockRacketIntpt) {
+            posXIntp.setState(racketTr.z);
+            posYIntp.setState(racketTr.y);
+            destTheta = (90 + (90 - rawTheta) * 0.8f);
+        }
         
         float scale;
         Vector3 axis = new Vector3();
@@ -601,7 +610,9 @@ public class GameScene extends Scene {
             scale = -RACKET_SPEED;
 
         bodyComp.activate();
-        bodyComp.setLinearVelocity(new Vector3(0, posYIntp.getVelocity(), posXIntp.getVelocity()));
+        synchronized (lockRacketIntpt) {
+            bodyComp.setLinearVelocity(new Vector3(0, posYIntp.getVelocity(), posXIntp.getVelocity()));
+        }
         bodyComp.setAngularVelocity(axis.scl(scale));
         
         
@@ -609,7 +620,13 @@ public class GameScene extends Scene {
 
     @Override
     public void firstPreparation() {
-        rfunction.refresh();
+        /*
+         * Register listeners
+         */
+        ceaseGameListener = new CeaseGameListener(commFun);
+        commFun.registerListener(ceaseGameListener);
+        commFun.registerListener(racketMoveLisnr);
+
         
     	bfont= new BitmapFont();
     	batch = new SpriteBatch();
@@ -666,6 +683,13 @@ public class GameScene extends Scene {
 
     @Override
     public void tearDown() {
+        /*
+         * Unregister listeners
+         */
+        commFun.unregisterListener(ceaseGameListener);
+        commFun.unregisterListener(racketMoveLisnr);
+        
+        
     	batch.dispose();
         bfont.dispose();
         boxModelbo.dispose();
