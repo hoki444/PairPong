@@ -646,7 +646,7 @@ public class GameScene extends Scene {
     }
 
     @Override
-    public void firstPreparation() {
+    public void prepare() {
         /*
          * Register listeners
          */
@@ -708,9 +708,6 @@ public class GameScene extends Scene {
                              ColorAttribute.createAmbient(.1f, .2f, .1f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(ballTex))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates); 
-        
-        
-
     }
 
     @Override
@@ -747,7 +744,6 @@ public class GameScene extends Scene {
             bgroundSound.stop();
         	bgroundSound.dispose();
         }
-        Done ();
     }
 
     @Override

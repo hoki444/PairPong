@@ -294,7 +294,7 @@ public class IDLDevScene extends Scene {
 
 
     @Override
-    public void firstPreparation() {
+    public void prepare() {
         bitmapFont = new BitmapFont();
         bitmapFont.setScale(1.1f);
         spriteBatch = new SpriteBatch();

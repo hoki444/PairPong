@@ -1,19 +1,14 @@
 package com.algy.schedcore.frontend;
 
-import java.util.concurrent.Semaphore;
-
-import com.algy.schedcore.SchedcoreRuntimeError;
-import com.algy.schedcore.frontend.Scene.SceneState;
 import com.algy.schedcore.middleend.Eden;
 import com.algy.schedcore.middleend.asset.LazyAssetManager;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.physics.bullet.Bullet;
 
 public class SceneMgr extends ApplicationAdapter {
     private Scene currentScene = null;
-    private Scene nextScene;
+    Scene nextScene;
     private boolean endScene = false;
     public LazyAssetManager assetManager = new LazyAssetManager();
     public Eden eden = new Eden();
@@ -21,11 +16,6 @@ public class SceneMgr extends ApplicationAdapter {
     static boolean bulletInitialized = false;
     private static SceneMgr instance = null;
     
-    static synchronized void initBullet () {
-        Bullet.init(true);
-        bulletInitialized = true;
-    }
-
     public SceneMgr (Scene firstScene) {
         synchronized (SceneMgr.class) {
             instance = this;
@@ -90,44 +80,18 @@ public class SceneMgr extends ApplicationAdapter {
             return;
         }
 
-        switch (currentScene.getSceneState()) {
-        case Preparing:
-            currentScene.clearBuffers();
-            if (currentScene.first) {
-                currentScene.internalPreparation ();
-                currentScene.firstPreparation ();
-                currentScene.first = false;
+        
+        
+        if (!currentScene.advance(endScene)) {
+            if (nextScene != null) {
+                synchronized (SceneMgr.class) {
+                    if (nextScene != null) {
+                        endScene = false;
+                        nextScene.setManager(this);
+                        currentScene = nextScene;
+                    }
+                }
             }
-            currentScene.prepare();
-            break;
-        case InitResource:
-            currentScene.clearBuffers();
-            currentScene.doInitResource();
-            break;
-        case Running:
-            currentScene.internalPreRender();
-            if (!endScene) {
-                currentScene.renderControl.render();
-            } else {
-                currentScene.Done();
-                endScene = false;
-            }
-            break;
-        case TearingDown:
-            currentScene.clearBuffers();
-            currentScene.internalPreTeardown();
-            currentScene.tearDown();
-            break;
-        default:
-            break;
-        }
-        currentScene.syncSceneState();
-        if (currentScene.getSceneState() == SceneState.ChangingScene) {
-            currentScene.destroy();
-            if (nextScene != null)
-                nextScene.setManager(this);
-            currentScene = nextScene;
-            return;
         }
     }
 

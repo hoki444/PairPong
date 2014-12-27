@@ -13,7 +13,7 @@ public class IDLTestScene extends Scene {
     }
 
     @Override
-    public void firstPreparation() {
+    public void prepare() {
 
         ObjectDirectory<GameItem> dir = 
                 IDLLoader.loadItemDef(Gdx.files.internal("Defs").readString(), this).newItemDef;

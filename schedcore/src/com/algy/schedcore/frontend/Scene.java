@@ -1,7 +1,6 @@
 package com.algy.schedcore.frontend;
 
 import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
 
 import com.algy.schedcore.BaseCompServer;
 import com.algy.schedcore.Item;
@@ -9,7 +8,6 @@ import com.algy.schedcore.SchedTask;
 import com.algy.schedcore.SchedTime;
 import com.algy.schedcore.Scheduler;
 import com.algy.schedcore.Scheduler.Task;
-import com.algy.schedcore.TickGetter;
 import com.algy.schedcore.frontend.idl.IDLGameContext;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.Eden;
@@ -115,7 +113,7 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
      * Game Screen states
      */
     private SceneState state = SceneState.Preparing;
-    private SceneState nextState = SceneState.Preparing;
+    SceneState nextState = SceneState.Preparing;
 
     /*
      * States for resource initialization
@@ -129,6 +127,8 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     private ModelBatch modelBatch;
 
     private final Scheduler scheduler = Scheduler.MilliScheduler();
+    private SchedulerUpdater schedUpdater = new SchedulerUpdater(scheduler);
+
     protected final GameCore core = new GameCore(scheduler);
 
     protected SceneMgr manager;
@@ -184,8 +184,10 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         cameraServer.lookAt(new Vector3(0, 0, 0));
 
         if (config.useBulletPhysics) {
-            if (!SceneMgr.bulletInitialized) {
-                SceneMgr.initBullet();
+            synchronized (SceneMgr.class) {
+                if (!SceneMgr.bulletInitialized) {
+                    BtPhysicsWorld.initBullet();
+                }
             }
             worldServer = new BtPhysicsWorld(new Vector3(0, -9.8f, 0), 17);
         } else
@@ -208,15 +210,6 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
 
     private BtPhysicsWorld worldServer;
     
-    private Task renderTask = null;
-    void internalPreparation () {
-        this.modelBatch = new ModelBatch();
-        this.first = true;
-        
-        long period = config.itemRenderingPeriod;
-        renderTask = scheduler.addPeriodic(new RenderInvoker(), period, 0, null);
-        suspendRendering();
-    }
 
     protected void suspendRendering () {
         renderTask.suspend();
@@ -226,10 +219,10 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         renderTask.resume();
     }
     
-    private class RenderInvoker implements SchedTask {
+    private class RenderTask implements SchedTask {
         @Override
         public void onScheduled(SchedTime time) {
-            renderControl.requestSceneRender();
+            renderControl.requestAndWaitForRender();
         }
 
         @Override
@@ -241,85 +234,66 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         }
     }
     
-    private class Updater {
-        private boolean stop = false;
-        private Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                while (!stop)
-                    scheduler.runOnce();
-            }
-        };
-        private Thread thread;
+    private RenderControl renderControl;
+    private Task renderTask = null;
+    private void internalPreparation () {
+        this.modelBatch = new ModelBatch();
+        this.first = true;
         
-        public synchronized void start () {
-            stop = false;
-            thread = new Thread(runnable);
-            thread.start();
-        }
-        public synchronized void stop () {
-        	if (!stop) {
-	            stop = true;
-	            thread.interrupt();
-	            /*
-	            // this stub cause deadlock :(
-	            try {
-	                thread.join();
-	            } catch (InterruptedException e) {
-	                e.printStackTrace();
-	            }
-	            */
-	            thread = null;
-        	}
-        }
+        long period = config.itemRenderingPeriod;
+        renderTask = scheduler.addPeriodic(new RenderTask(), period, 0, null);
+        suspendRendering();
     }
-    private Updater updater = new Updater();
-    
-    class RenderControl {
-        private Semaphore startSem = new Semaphore(0);
-        private Semaphore endSem = new Semaphore(0);
-        public RenderControl () {
-        }
-        
-        public void render () {
-            try {
-                startSem.acquire();
-                clearBuffers();
-                Scene.this.render();
-                postRender();
-                endSem.release();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void requestSceneRender() {
-            try {
-                startSem.release();
-                endSem.acquire();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    RenderControl renderControl;
-
-    void internalPreRender () {
+    private void internalPreRender () {
         if (first) {
-            renderControl = new RenderControl();
+            renderControl = new RenderControl(this);
             resumeRendering();
-            updater.start();
+            schedUpdater.start();
             first = false;
         }
     }
     
-    void syncSceneState () {
+    boolean advance (boolean endScene) {
+        switch (getSceneState()) {
+        case Preparing:
+            clearBuffers();
+            if (first) {
+                internalPreparation ();
+                prepare ();
+                first = false;
+            }
+            nextState = SceneState.InitResource;
+            // NOTE: intended falling-through
+        case InitResource:
+            clearBuffers();
+            doInitResource();
+            break;
+        case Running:
+            internalPreRender();
+            if (!endScene) {
+                renderControl.renderScene();
+                break;
+            } else {
+                nextState = SceneState.TearingDown;
+                // NOTE: intended falling-through
+            }
+        case TearingDown:
+            clearBuffers();
+            internalPreTeardown();
+            tearDown();
+            destroy();
+            nextState = SceneState.ChangingScene;
+            break;
+        default:
+            break;
+        }
         if (state != nextState) {
-            this.state = nextState;
+            state = nextState;
             first = true;
         }
+        return state != SceneState.ChangingScene;
     }
-    
+
     public final void Done () {
         switch (state) {
         case Preparing:
@@ -437,18 +411,17 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     }
     
     void internalPreTeardown () {
-        updater.stop();
+        schedUpdater.stop();
         scheduler.killAll();
     }
 
-    public abstract void firstPreparation ();
+    public abstract void prepare ();
     public abstract void postRender ();
     public abstract void resize (int width, int height);
     public abstract void pause ();
     public abstract void resume ();
 
-    protected void prepare () { Done (); }
-    protected void tearDown () { Done (); }
+    protected void tearDown () { }
     @Override
     public void reserveItem (Scene scene, ItemReservable coreProxy) {
         Done ();

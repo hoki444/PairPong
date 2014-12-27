@@ -42,11 +42,10 @@ public class ScoreScene extends Scene {
 	}
 
 	@Override
-	public void firstPreparation() {
+	public void prepare() {
     	bfont= new BitmapFont();
     	batch = new SpriteBatch();
         bfont.setColor(Color.WHITE); bfont.scale(3f);
-
         sendScore();
 	}
 
@@ -77,8 +76,6 @@ public class ScoreScene extends Scene {
 	public void tearDown(){
     	batch.dispose();
         bfont.dispose();
-        
-        Done();
 	}
 
 
