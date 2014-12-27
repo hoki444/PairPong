@@ -100,7 +100,7 @@ class Biggle extends Dog {
 
 public class TestEntitySystem {
     public static void main(String ... args) {
-        ICore core = new Core(ITickGetter.systemTickGetter);
+        ICore core = new Core(Scheduler.MilliScheduler());
         Item<BaseComp, ICore> item = Item.MakeCompItem();
         item.add(new GoldenRetriever());
         item.add(new Harrier());

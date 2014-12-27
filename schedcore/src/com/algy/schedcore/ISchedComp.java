@@ -1,11 +1,13 @@
 package com.algy.schedcore;
 
-public interface ISchedComp extends ISchedTask {
+import com.algy.schedcore.Scheduler.Task;
+
+public interface ISchedComp extends SchedTask {
     // Aspect from scheduler
     long schedPeriod();
     long schedOffset();
     
     // Aspect from core
-    int taskId();
-    void setTaskId(int taskId);
+    Task getTask();
+    void setTask(Task task);
 }

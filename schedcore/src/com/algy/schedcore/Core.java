@@ -3,24 +3,24 @@ package com.algy.schedcore;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import com.algy.schedcore.Scheduler.Task;
 import com.algy.schedcore.util.ArrayLister;
 
 
 public class Core implements ICore {
     protected Item<BaseCompServer, ICore> serverItem;
     protected Scheduler scheduler;
-    protected ITickGetter tickGetter;
+    protected TickGetter tickGetter;
     
     private HashSet<Class<? extends BaseCompServer>> addedServerSig;
     private HashMap<Class<? extends BaseComp>, HashSet<Class<? extends BaseCompServer>>> hookMap;
 
 
-    public Core (ITickGetter tickGetter) {
+    public Core (Scheduler scheduler) { 
         this.serverItem = Item.MakeServerItem();
         this.serverItem.adhereTo(this);
 
-        this.scheduler = new Scheduler();
-        this.tickGetter = tickGetter;
+        this.scheduler = scheduler;
         
         this.addedServerSig = new HashSet<Class<? extends BaseCompServer>>();
         this.hookMap = new HashMap<Class<? extends BaseComp>, 
@@ -75,18 +75,10 @@ public class Core implements ICore {
     }
     
     
-    public boolean isSuspendedComp (BaseSchedComp comp) {
-        return scheduler.suspended(comp.taskId());
-    }
-    
-    public boolean suspendComp (BaseSchedComp comp) {
-        return scheduler.suspend(comp.taskId(), tickGetter);
-    }
-    
     public void suspendItem (Item<BaseComp, ICore> item) {
         for (BaseComp comp : item) {
             if (comp instanceof BaseSchedComp) {
-                suspendComp((BaseSchedComp)comp);
+                ((BaseSchedComp)comp).getTask().suspend();
             }
         }
     }
@@ -94,25 +86,13 @@ public class Core implements ICore {
     public void resumeItem (Item<BaseComp, ICore> item) {
         for (BaseComp comp : item) {
             if (comp instanceof BaseSchedComp) {
-                resumeComp((BaseSchedComp)comp);
+                ((BaseSchedComp)comp).getTask().resume();
             }
         }
     }
     
     public boolean resumeComp (BaseSchedComp comp) {
-        return scheduler.resume (comp.taskId(), tickGetter);
-    }
-    
-    public boolean isSuspendedServer (BaseSchedServer server) {
-        return scheduler.suspended(server.taskId());
-    }
-    
-    public boolean suspendServer (BaseSchedServer server) {
-        return scheduler.suspend(server.taskId(), tickGetter);
-    }
-    
-    public boolean resumeServer (BaseSchedServer server) {
-        return scheduler.resume (server.taskId(), tickGetter);
+        return comp.getTask().resume();
     }
     
     
@@ -161,7 +141,7 @@ public class Core implements ICore {
         return result;
     }
 
-    public Scheduler sched() {
+    public Scheduler scheduler() {
         return scheduler;
     }
 
@@ -196,23 +176,21 @@ public class Core implements ICore {
     
     // Internal Aspect
     private void regSchedComp(ISchedComp schedComp, boolean suspend) {
-        long current = tickGetter.getTickCount();
         long period = schedComp.schedPeriod();
         long offset = schedComp.schedOffset();
-        int taskId = this.scheduler.addPeriodic(current, schedComp, period, offset, null);
+        Task task = this.scheduler.addPeriodic(schedComp, period, offset, null);
+
         if (suspend)
-            this.scheduler.suspend(taskId, tickGetter);
+            task.suspend();
         
-        schedComp.setTaskId(taskId);
+        schedComp.setTask(task);
     }
 
     private void unregSchedComp(ISchedComp schedComp) {
-        int taskId = schedComp.taskId();
-        if (this.scheduler.has(taskId)) {
-            this.scheduler.kill(taskId);
-        } else 
-            throw new KeyError("taskId(" + taskId + ")");
-        schedComp.setTaskId(-1);
+        Task task = schedComp.getTask();
+        if (task.active())
+            task.kill();
+        schedComp.setTask(null);
     }
 
     @SuppressWarnings("unchecked")

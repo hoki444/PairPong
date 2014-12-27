@@ -15,5 +15,5 @@ public interface ICore {
 	
 	public <T extends BaseCompServer> boolean addServer(T server);
     public Iterable<BaseCompServer> removeServer(Class<? extends BaseCompServer> serverClass);
-	public Scheduler sched();
+	public Scheduler scheduler();
 }

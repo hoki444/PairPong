@@ -122,7 +122,7 @@ public class IDLDevScene extends Scene {
                         }
                         for (BaseCompServer server : core.servers()) {
                             if (server instanceof BaseSchedServer) {
-                                core.suspendServer((BaseSchedServer)server);
+                                ((BaseSchedServer)server).getTask().suspend();
                             }
                         }
                         setInfo("[Core Suspended]");
@@ -133,7 +133,7 @@ public class IDLDevScene extends Scene {
                         }
                         for (BaseCompServer server : core.servers()) {
                             if (server instanceof BaseSchedServer) {
-                                core.resumeServer((BaseSchedServer)server);
+                                ((BaseSchedServer)server).getTask().resume();
                             }
                         }
                         setInfo("[Core Resumed]");

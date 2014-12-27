@@ -1,6 +1,7 @@
 package com.odk.pairpong.comm.backend;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.UUID;
 
 import android.content.BroadcastReceiver;
@@ -9,6 +10,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.database.ContentObserver;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 
@@ -223,11 +228,90 @@ public class QPairCommFunction implements CommFunction, ContextSettable {
         }
     }
     
-    private static String peelPackageName (String className) {
-        int idx = className.lastIndexOf(".");
-        if (idx > 0) 
-            return className.substring(0, idx);
-        else
-            return "";
+    public static enum QPairState {
+        NotInstalled, Off, On, Connected, InternalError
+    }
+    
+    public static interface ConnectionListener {
+        public void onConnected ();
+        public void onDisconnected ();
+        
+    }
+    
+    private ContentObserver qpairObserver = new ContentObserver(new Handler()) {
+        @Override
+        public void onChange(boolean selfChange) {
+            if (queryQPairState() == QPairState.Connected) {
+                for (ConnectionListener lisnr : listeners) {
+                    lisnr.onConnected();
+                }
+            } else {
+                for (ConnectionListener lisnr : listeners) {
+                    lisnr.onDisconnected();
+                }
+            }
+        }
+    };
+
+    private HashSet<ConnectionListener> listeners = new HashSet<ConnectionListener>();
+    public synchronized void registerConnectionListener (ConnectionListener lisnr) {
+        if (listeners.isEmpty()) {
+            context
+            .getContentResolver()
+            .registerContentObserver(Uri.parse(QPairConstants.PROPERTY_SCHEME_AUTHORITY + "/local/qpair/is_connected"), 
+                                     false, 
+                                     qpairObserver);
+        }
+        listeners.add(lisnr);
+    }
+    
+    public synchronized boolean unregisterConnectionListener (ConnectionListener lisnr) {
+        boolean result = listeners.remove(lisnr);
+        if (listeners.isEmpty()) {
+            context.getContentResolver().unregisterContentObserver(qpairObserver);
+        }
+        return result;
+    }
+    
+    
+    public boolean isTablet () {
+        Uri devUri = Uri.parse(QPairConstants.PROPERTY_SCHEME_AUTHORITY + "/local/qpair/device_type");
+        Cursor cursor = context.getContentResolver().query(devUri, null, null, null, null);
+        
+        if (cursor != null) {
+            cursor.moveToFirst();
+            return "tablet".equals(cursor.getString(0));
+        } else 
+            return false;
+    }
+
+    public QPairState queryQPairState () {
+        Uri onUri = Uri.parse(QPairConstants.PROPERTY_SCHEME_AUTHORITY + "/local/qpair/is_on");
+        Uri connUri = Uri.parse(QPairConstants.PROPERTY_SCHEME_AUTHORITY + "/local/qpair/is_connected");
+        Cursor onCursor = context.getContentResolver().query(onUri, null, null, null, null);
+        Cursor connCursor = context.getContentResolver().query(connUri, null, null, null, null);
+        if (onCursor != null && connCursor != null) {
+            boolean isOn = false;
+            boolean isConnected = false;
+            if (onCursor.moveToFirst()) {
+                isOn = "true".equals(onCursor.getString(0));
+            } 
+            if (connCursor.moveToFirst()) {
+                isConnected = "true".equals(connCursor.getString(0));
+            }
+            if (isOn && isConnected)
+                return QPairState.Connected;
+            else if (isOn)
+                return QPairState.On;
+            else
+                return QPairState.Off;
+            
+        } else
+            return QPairState.NotInstalled;
+    }
+    
+    @Override
+    public boolean isConnected() {
+        return queryQPairState() == QPairState.Connected;
     }
 }

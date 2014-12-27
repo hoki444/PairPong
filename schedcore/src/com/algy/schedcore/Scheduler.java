@@ -1,44 +1,29 @@
 package com.algy.schedcore;
 
-import java.util.ArrayList;
-
 import com.algy.schedcore.Scheduler.JobStatus;
+import com.algy.schedcore.Scheduler.TaskType;
 import com.algy.schedcore.util.IntegerBitmap;
 
 class TaskInfo {
-    public TaskInfo(int taskId, ISchedTask task, long period, long firstReltime, Object returned) {
+    public TaskInfo(TaskType type, int taskId, SchedTask task, long period, long firstReltime, Object reprObj) {
         super();
+        this.type = type;
         this.taskId = taskId;
         this.task = task;
         this.period = period;
         this.firstReltime = firstReltime;
-        this.returned = returned;
+        this.reprObj = reprObj;
     }
+    public TaskType type;
     public int taskId;
-    public ISchedTask task;
-    public long period;
+    public SchedTask task;
+    public long period; // it means "relative deadline" in the case of aperidic task
     public long firstReltime;
-    public Object returned = null;
-}
-
-class HeapNode {
-    public JobInfo content;
-    public HeapNode left = null, right = null, parent = null, linePrev = null, lineNext = null;
-    
-    public HeapNode (JobInfo content) {
-        this.content = content;
-    }
-    
-    public void clear() {
-        left = null; 
-        right = null; 
-        parent = null; 
-        linePrev = null;
-        lineNext = null;
-    }
+    public Object reprObj = null;
 }
 
 class JobInfo {
+    public Scheduler.TaskImpl taskImpl;
     public JobStatus status;
     public JobInfo(JobStatus status, TaskInfo ti, long pushedTime,
             long curReltime, long curDeadline,
@@ -77,7 +62,7 @@ class JobInfo {
     /*
      * fields that are valid when status is Suspended or Sleeping
      */
-    public long suspendedTime; 
+    public long timeAtSuspension; 
     public JobStatus prevStatus;
 
     /*
@@ -102,12 +87,34 @@ class JobInfo {
     public long pushedTime;
     
     
+    /*
+     * only valid for aperiodic task
+     */
+    public boolean aperiodicDone = false;
+
     public static JobInfo firstWaitingJob(TaskInfo ti, long futureReltime) {
         return new JobInfo(JobStatus.Waiting, ti, -1, -1, -1, futureReltime, true, null, null);
     }
     
     public static JobInfo firstPendingJob(TaskInfo ti, long current) {
         return new JobInfo(JobStatus.Pending, ti, current, current, current + ti.period, -1, true, null, null);
+    }
+}
+
+class HeapNode {
+    public JobInfo content;
+    public HeapNode left = null, right = null, parent = null, linePrev = null, lineNext = null;
+    
+    public HeapNode (JobInfo content) {
+        this.content = content;
+    }
+    
+    public void clear() {
+        left = null; 
+        right = null; 
+        parent = null; 
+        linePrev = null;
+        lineNext = null;
     }
 }
 
@@ -392,31 +399,157 @@ public final class Scheduler {
     public static enum JobStatus {
         Running, Pending, Waiting, Suspended
     }
-    
     public static enum TaskType {
         Periodic, Aperiodic
     }
     
+    public static interface Task {
+        public int getTaskId();
+        public TaskType getTaskType();
+        public JobStatus getStatus();
+
+        public boolean active();
+        public boolean suspended();
+
+        public void kill();
+        public boolean suspend();
+        public boolean resume();
+        
+        public boolean aperiodicDone ();
+
+        public Object repr();
+    }
+    class TaskImpl implements Task {
+        public int taskImplId;
+        public JobInfo ji;
+        public boolean active = true;
+        public boolean aperiodicDoneCache = false;
+        public Object reprObjCache;
+        public TaskType typeCache;
+        public int periodCache;
+        
+        public void invalidate() {
+            aperiodicDoneCache = ji.aperiodicDone;
+            reprObjCache = ji.ti.reprObj;
+            typeCache = ji.ti.type;
+
+            active = false;
+            ji = null;
+        }
+
+        @Override
+        public int getTaskId() {
+            assertActiveStatus("getTaskId()");
+            return ji.ti.taskId;
+        }
+
+
+        @Override
+        public TaskType getTaskType() {
+            if (active)
+                return ji.ti.type;
+            else
+                return typeCache;
+        }
+
+        @Override
+        public JobStatus getStatus() {
+            assertActiveStatus("getStatus()");
+            return ji.status;
+        }
+
+        @Override
+        public boolean active() {
+            return active;
+        }
+
+        @Override
+        public void kill() {
+            assertActiveStatus("kill()");
+            Scheduler.this.kill(getTaskId());
+        }
+
+        @Override
+        public boolean suspended() {
+            assertActiveStatus("suspended()");
+            return Scheduler.this.suspended(getTaskId());
+        }
+
+        @Override
+        public boolean suspend() {
+            assertActiveStatus("suspend()");
+            return Scheduler.this.suspend(getTaskId());
+        }
+
+        @Override
+        public boolean resume() {
+            assertActiveStatus("resume()");
+            return Scheduler.this.resume(getTaskId());
+        }
+
+        @Override
+        public Object repr() {
+            if (active)
+                return ji.ti.reprObj;
+            else
+                return reprObjCache;
+        }
+
+        @Override
+        public boolean aperiodicDone() {
+            if (active)
+                return ji.aperiodicDone;
+            else
+                return aperiodicDoneCache;
+        }
+        
+        private void assertActiveStatus (String v) {
+            if (!active) {
+                throw new SchedcoreRuntimeError("Tried to execute " + v + ", but the corresponding task is inactive");
+            }
+        }
+    }
+
+    private TickGetter timer;
+    
     private BinheapQueue pendings = new BinheapQueue(true);
     private BinheapQueue waitings = new BinheapQueue(false); // futureReltime
     
-    private ArrayList<JobInfo> tblTask;
-    
     private IntegerBitmap <JobInfo> infoBitmap;
+    
+    
     private JobInfo currentJob;
     private long currentJobPeriod;
     private long currentJobDeadline;
-
-    public Scheduler() {
+    
+    public Scheduler(TickGetter timer) {
+        this.timer = timer;
         this.infoBitmap = new IntegerBitmap<JobInfo>();
     }
 
+    public static Scheduler MilliScheduler() {
+        return new Scheduler(TickGetter.systemTickGetter);
+    }
+    public static Scheduler NanoScheduler() {
+        return new Scheduler(TickGetter.systemNanoTickGetter);
+    }
+
     // Aspect from frontend
-    public int addPeriodic(long current, ISchedTask task, long period, long offset, Object returned) {
+    public Task addPeriodic(SchedTask task, long period, long offset, Object reprObj) {
+        return addTask(TaskType.Periodic, task, period, offset, reprObj);
+    }
+    
+
+    public Task addAperiodic(SchedTask task, long relDeadline, long offset, Object reprObj) {
+        return addTask(TaskType.Aperiodic, task, relDeadline, offset, reprObj);
+    }
+    
+    private Task addTask(TaskType type, SchedTask task, long period, long offset, Object reprObj) {
         TaskInfo ti;
         JobInfo ji;
-        
-        ti = new TaskInfo(-1, task, period, current + offset, returned);
+
+        long current = timer.getTickCount();
+        ti = new TaskInfo(type, -1, task, period, current + offset, reprObj);
         if (offset <= 0 && currentJobDeadline > current + period) { // EDF
             // pend it
             ji = JobInfo.firstPendingJob(ti, current);
@@ -425,11 +558,13 @@ public final class Scheduler {
             ji = JobInfo.firstWaitingJob(ti, current + offset);
             evictToWaitings(ji, current + offset);
         }
-        task.beginSchedule();
-        
         int id = infoBitmap.add(ji);
+        task.beginSchedule();
         ti.taskId = id;
-        return id;
+        
+        TaskImpl taskImpl = issueTaskImpl(ji);
+        ji.taskImpl = taskImpl;
+        return taskImpl;
     }
     
     public JobStatus status(int taskid) {
@@ -438,17 +573,17 @@ public final class Scheduler {
         return infoBitmap.get(taskid).status;
     }
     
-    public boolean suspend (int taskid, ITickGetter tickGetter) {
+    public boolean suspend (int taskid) {
         if (!has(taskid))
             return false;
-        suspendJob(infoBitmap.get(taskid), tickGetter.getTickCount());
+        suspendJob(infoBitmap.get(taskid), timer.getTickCount());
         return true;
     }
     
-    public boolean resume (int taskid, ITickGetter tickGetter) {
+    public boolean resume (int taskid) {
         if (!has(taskid))
             return false;
-        recoverFromSuspension(infoBitmap.get(taskid), tickGetter.getTickCount());
+        recoverFromSuspension(infoBitmap.get(taskid), timer.getTickCount());
         return true;
     }
     
@@ -457,6 +592,12 @@ public final class Scheduler {
             return false;
         return infoBitmap.get(taskid).status == JobStatus.Suspended;
     }
+    
+    public void killAll () {
+        for (JobInfo ji : infoBitmap) {
+            kill(ji.ti.taskId);
+        }
+    }
 
     public boolean kill(int taskId) {
         if (!infoBitmap.has(taskId)) 
@@ -464,6 +605,7 @@ public final class Scheduler {
 
         JobInfo oldJob = infoBitmap.remove(taskId); 
         removeFromQueue(oldJob);
+        invalidateTaskImpl(oldJob.taskImpl);
         oldJob.ti.task.endSchedule();
         
         return true;
@@ -478,13 +620,13 @@ public final class Scheduler {
     private static SchedTime schedTimeLocal = new SchedTime(0, 0, 0, true);
 
     // Aspect from backend
-    public Object runOnce(ITickGetter tickGetter) {
+    public Object runOnce() {
         // EDF(Earlist Deadline First) scheduling
         
         //long st, ed;
         // st = System.nanoTime();
 
-        long startTime = tickGetter.getTickCount();
+        long startTime = timer.getTickCount();
         releaseJobs(startTime);
         if (this.currentJob == null) {
             JobInfo ji = scheduleFromPendings();
@@ -507,19 +649,19 @@ public final class Scheduler {
 
             // This is for preventing garbage
             schedTimeLocal.first =  execJob.first;
-            schedTimeLocal.realDelta = realdelta;
+            schedTimeLocal.realDeltaTime = realdelta;
             schedTimeLocal.deadline = execJob.curDeadline;
-            schedTimeLocal.delta = period;
+            schedTimeLocal.deltaTime = period;
             // NOTE: this.currentJob can become null or other job 
             //       after schedule it (it means the current job is now rescheduled)
 //            long mst, med;
 //            mst = System.nanoTime();
-            execJob.ti.task.schedule(schedTimeLocal);
+            execJob.ti.task.onScheduled(schedTimeLocal);
 //            med = System.nanoTime();
 
             // printQueueStat();
 
-            long finishTime = tickGetter.getTickCount();
+            long finishTime = timer.getTickCount();
             long executionTime = finishTime - startTime;
             execJob.lastExecutionTime = executionTime;
             if (execJob.first) {
@@ -543,9 +685,10 @@ public final class Scheduler {
                                    " avgExecTime. " + execJob.ewmaExecutionTime);
             }
             if (this.currentJob != null && this.currentJob == execJob) {
-                evictCurrentJob(execJob.curReltime + period, finishTime);
+                evictJobAfterExec(execJob, execJob.curReltime + period, finishTime);
+                currentJob = null;
             } else {
-                // In this case, the "current" job we knew is assumed to be already queued to "pendings", 
+                // In this case, the "current" job we once knew is assumed to be already queued to "pendings", 
                 // evicted to "waitings", be suspended, or even be killed. So we don't care about it.
             }
             /*
@@ -555,7 +698,7 @@ public final class Scheduler {
             */
             
 
-            return execJob.ti.returned;
+            return execJob.ti.reprObj;
         } else {
             // IDLE
             return null;
@@ -563,13 +706,32 @@ public final class Scheduler {
     }
 
     // Functions for internal usage
-    private void evictCurrentJob(long futureReltime, long finishTime) {
-        if (finishTime >= futureReltime) {
-            queueToPendings(currentJob, finishTime, futureReltime, futureReltime + currentJob.ti.period);
-        } else {
-            evictToWaitings(currentJob, futureReltime);
+    private TaskImpl issueTaskImpl(JobInfo ji) {
+        TaskImpl task = new TaskImpl();
+        task.active = true;
+        task.ji = ji;
+        return task;
+    }
+    private void invalidateTaskImpl(TaskImpl taskImpl) {
+        taskImpl.invalidate();
+    }
+
+
+    private void evictJobAfterExec(JobInfo ji, long futureReltime, long finishTime) {
+        switch (ji.ti.type) {
+        case Periodic:
+            if (finishTime >= 0 && finishTime >= futureReltime) {
+                queueToPendings(ji, finishTime, futureReltime, futureReltime + ji.ti.period);
+            } else {
+                evictToWaitings(ji, futureReltime);
+            }
+            break;
+        case Aperiodic:
+            // FIXME: kill?
+            ji.aperiodicDone = true;
+            kill(ji.ti.taskId);
+            break;
         }
-        currentJob = null;
     }
 
     private void releaseJobs(long current) {
@@ -639,14 +801,14 @@ public final class Scheduler {
             return;
         removeFromQueue (ji);
         ji.prevStatus = ji.status;
-        ji.suspendedTime = current;
+        ji.timeAtSuspension = current;
         ji.status = JobStatus.Suspended;
     }
 
     private void recoverFromSuspension(JobInfo ji, long current) {
         if (ji.status != JobStatus.Suspended) 
             return;
-        long delta = current - ji.suspendedTime;
+        long delta = current - ji.timeAtSuspension;
         switch (ji.prevStatus) {
         case Pending:
             queueToPendings(ji, current, ji.curReltime + delta, ji.curDeadline + delta);
@@ -654,7 +816,7 @@ public final class Scheduler {
         case Running: // This scheduler don't preempt job for suspending it. 
                       // In other words, when try to suspend job which is running now, 
                       // scheduler don't suspend it in the middle of job and waits for end of job.
-            evictToWaitings(ji, ji.curReltime + ji.ti.period + delta);
+            evictJobAfterExec(ji, ji.curReltime + ji.ti.period + delta, -1);
             break;
         case Waiting:
             evictToWaitings(ji, ji.futureReltime + delta);

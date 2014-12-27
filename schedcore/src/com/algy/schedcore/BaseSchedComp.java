@@ -1,15 +1,15 @@
 package com.algy.schedcore;
 
 public abstract class BaseSchedComp extends BaseComp implements ISchedComp {
-    private int taskId;
+    private Scheduler.Task task = null;
 
     @Override
-    public int taskId() {
-        return taskId;
+    public Scheduler.Task getTask() {
+        return task;
     }
 
     @Override
-    public void setTaskId(int taskId) {
-        this.taskId = taskId;
+    public void setTask(Scheduler.Task task) {
+        this.task = task;
     }
 }

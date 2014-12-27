@@ -7,9 +7,9 @@ import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.BaseCompServer;
 import com.algy.schedcore.Core;
 import com.algy.schedcore.ICore;
-import com.algy.schedcore.ITickGetter;
 import com.algy.schedcore.Item;
 import com.algy.schedcore.NameConflictError;
+import com.algy.schedcore.Scheduler;
 
 public class GameCore extends Core implements Iterable<GameItem> {
     private HashMap<String, GameItem> itemNameMap = new HashMap<String, GameItem>();
@@ -18,8 +18,8 @@ public class GameCore extends Core implements Iterable<GameItem> {
     private GameItem headItem = null, 
                      tailItem = null;
 
-    public GameCore(ITickGetter tickGetter) {
-        super(tickGetter);
+    public GameCore(Scheduler scheduler) {
+        super(scheduler);
     }
 
 

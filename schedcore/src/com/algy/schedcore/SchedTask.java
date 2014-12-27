@@ -1,7 +1,7 @@
 package com.algy.schedcore;
 
-public interface ISchedTask {
-    void schedule(SchedTime time);
+public interface SchedTask {
+    void onScheduled(SchedTime time);
     void beginSchedule();
     void endSchedule();
 }

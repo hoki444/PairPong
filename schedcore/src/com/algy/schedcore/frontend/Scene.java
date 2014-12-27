@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 
 import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.ISchedTask;
-import com.algy.schedcore.ITickGetter;
 import com.algy.schedcore.Item;
+import com.algy.schedcore.SchedTask;
 import com.algy.schedcore.SchedTime;
+import com.algy.schedcore.Scheduler;
+import com.algy.schedcore.Scheduler.Task;
+import com.algy.schedcore.TickGetter;
 import com.algy.schedcore.frontend.idl.IDLGameContext;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.Eden;
@@ -126,8 +128,8 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
 
     private ModelBatch modelBatch;
 
-    private ITickGetter tickGetter = ITickGetter.systemTickGetter;
-    protected final GameCore core = new GameCore(ITickGetter.systemTickGetter);
+    private final Scheduler scheduler = Scheduler.MilliScheduler();
+    protected final GameCore core = new GameCore(scheduler);
 
     protected SceneMgr manager;
     protected SceneConfig config;
@@ -206,31 +208,27 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
 
     private BtPhysicsWorld worldServer;
     
-    private int renderTaskId = -1;
+    private Task renderTask = null;
     void internalPreparation () {
         this.modelBatch = new ModelBatch();
         this.first = true;
         
         long period = config.itemRenderingPeriod;
-        renderTaskId = core.sched().addPeriodic(tickGetter.getTickCount(), 
-                                 new RenderInvoker(), 
-                                 period, 
-                                 0, 
-                                 null);
+        renderTask = scheduler.addPeriodic(new RenderInvoker(), period, 0, null);
         suspendRendering();
     }
 
     protected void suspendRendering () {
-        core().sched().suspend(renderTaskId, tickGetter);
+        renderTask.suspend();
     }
 
     protected void resumeRendering () {
-        core().sched().resume(renderTaskId, tickGetter);
+        renderTask.resume();
     }
     
-    private class RenderInvoker implements ISchedTask {
+    private class RenderInvoker implements SchedTask {
         @Override
-        public void schedule(SchedTime time) {
+        public void onScheduled(SchedTime time) {
             renderControl.requestSceneRender();
         }
 
@@ -248,9 +246,8 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         private Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                while (!stop) {
-                    core.sched().runOnce(tickGetter);
-                }
+                while (!stop)
+                    scheduler.runOnce();
             }
         };
         private Thread thread;
@@ -441,6 +438,7 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     
     void internalPreTeardown () {
         updater.stop();
+        scheduler.killAll();
     }
 
     public abstract void firstPreparation ();
@@ -476,4 +474,17 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     public void endResourceInitialization (Scene scene) {
         Done ();
     }
+    
+    public Scheduler scheduler () {
+        return scheduler;
+    }
+    
+    public Task scheduleOnce (int delay, int relDeadline, SchedTask task) {
+        return scheduler.addAperiodic(task, relDeadline, delay, null);
+    }
+    
+    public Task schedule (int delay, int period, SchedTask task) {
+        return scheduler.addPeriodic(task, period, delay, null);
+    }
+
 }

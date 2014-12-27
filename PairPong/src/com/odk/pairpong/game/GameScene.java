@@ -4,6 +4,8 @@ package com.odk.pairpong.game;
 import java.util.Random;
 
 import com.algy.schedcore.IComp;
+import com.algy.schedcore.SchedTask;
+import com.algy.schedcore.SchedTime;
 import com.algy.schedcore.frontend.ItemReservable;
 import com.algy.schedcore.frontend.Scene;
 import com.algy.schedcore.frontend.SceneMgr;
@@ -43,7 +45,6 @@ import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btCompoundShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
-import com.badlogic.gdx.utils.Json;
 import com.odk.pairpong.comm.CommConstants;
 import com.odk.pairpong.comm.CommOption;
 import com.odk.pairpong.comm.CommRacketCollision;
@@ -330,9 +331,7 @@ public class GameScene extends Scene {
 	public void reserveItem(Scene scene, ItemReservable coreProxy) {
     	float Frictions=0.05f;
     	float Restitutions=0.98f;
-    	if (bgroundSound != null) {
-    		bgroundSound.play();
-        }
+
     	GameItem boardItembo = new GameItem(),
     			 debugdrawItem = new GameItem(new BtDebugDrawerComp()),
 				 wallItem = new GameItem(),
@@ -456,6 +455,99 @@ public class GameScene extends Scene {
                                        .lookAt(new Vector3(0, 2f, 0))
                                        .setUpVector(new Vector3(1, 0, 0))
                                        .setRange(1, 100);
+        bgroundSound.play();
+        /*
+         * schedule periodic jobs
+         */
+        schedule(0, 32, new SchedTask() {
+            Random random = new Random();
+            @Override
+            public void onScheduled(SchedTime time) {
+                if (score.needRegen()) {
+                    core.removeItem(core.getItemWithName("ball"));
+                    GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
+                    newBall.as(BtRigidBodyComp.class).setLinearVelocity(
+                            new Vector3(6, 2, random.nextFloat()*3-1.5f));
+                    newBall.setName("ball");
+                    core().addItem(newBall);
+                    score.resetCombo();
+                    score.setLife(score.getLife()-1);
+                }
+                
+                if(score.reduceStuck()&&option.scoreMode!=1) {
+                    score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
+                }
+
+                if(score.getLife() == 0) {
+                    SceneMgr.switchScene(new ScoreScene(commFun, score.getScore()));
+                }
+
+                if(option.gameMode == 0)
+                    score.timePass();
+            }
+            
+            @Override
+            public void endSchedule() {
+            }
+            
+            @Override
+            public void beginSchedule() {
+            }
+        });
+        
+        schedule(0, 32, new SchedTask() {
+            @Override
+            public void onScheduled(SchedTime time) {
+                BtRigidBodyComp bodyComp = racketItem.as(BtRigidBodyComp.class);
+                Vector3 racketTr = racketItem.getTransform().getTranslation(new Vector3());
+
+                Quaternion racketOri = new Quaternion();
+                bodyComp.getRigidBody().getWorldTransform().getRotation(racketOri, true);
+
+                float destTheta;
+                synchronized (lockRacketIntpt) {
+                    posXIntp.setState(racketTr.z);
+                    posYIntp.setDestState(core.getItemWithName("ball").getTransform().getTranslation(new Vector3()).y-0.75f*(1.5f-0.5f*option.racketSize));
+                    posYIntp.setState(racketTr.y);
+                    destTheta = (90 + (90 - rawTheta) * 0.8f);
+                }
+                
+                float scale;
+                Vector3 axis = new Vector3();
+                
+                float theta = new Quaternion(racketOri).conjugate()
+                              .mul(new Quaternion(new Vector3(0, 0, -1), destTheta))
+                              .getAxisAngle(axis);
+                axis.x = 0;
+                axis.y = 0;
+                axis = axis.nor();
+                if (theta > 180) {
+                    theta -= 360;
+                }
+
+                if (theta <= 10 && theta >= -10) {
+                    scale = 0;
+                } else if (theta > 0) {
+                    scale = RACKET_SPEED;
+                } else
+                    scale = -RACKET_SPEED;
+
+                bodyComp.activate();
+                synchronized (lockRacketIntpt) {
+                    bodyComp.setLinearVelocity(new Vector3(0, posYIntp.getVelocity(), posXIntp.getVelocity()));
+                }
+                bodyComp.setAngularVelocity(axis.scl(scale));
+            }
+            
+            @Override
+            public void endSchedule() {
+            }
+            
+            @Override
+            public void beginSchedule() {
+            }
+        });
+
         Done ();
 	}
 
@@ -473,7 +565,6 @@ public class GameScene extends Scene {
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     float rawTheta = 0;
     static final int RACKET_SPEED = 5;
-    int time=0;
     
     
     private Object lockRacketIntpt = new Object();
@@ -505,43 +596,13 @@ public class GameScene extends Scene {
 
     @Override
     public void postRender() {
-    	Random random = new Random();
-        time++;
-        if(time>1900){
-        	time=0;
-        	if (bgroundSound != null) {
-        		bgroundSound.stop();
-        		bgroundSound.play();
-            }
-        }
-        if(score.needRegen()){
-        	core.removeItem(core.getItemWithName("ball"));
-        	GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
-    		newBall.as(BtRigidBodyComp.class).setLinearVelocity(
-    				new Vector3(6, 2, random.nextFloat()*3-1.5f));
-    		newBall.setName("ball");
-    		core().addItem(newBall);
-    		score.resetCombo();
-        	score.setLife(score.getLife()-1);
-        }
-        if(score.reduceStuck()&&option.scoreMode!=1){
-        	score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
-        }
-
-        if(score.getLife() == 0) {
-        	SceneMgr.switchScene(new ScoreScene(commFun, score.getScore()));
-        }
-
-        if(option.gameMode == 0)
-        	score.timePass();
-
     	batch.begin();
     	bfont.setColor(Color.WHITE);
         bfont.draw(batch, "Score : "+String.valueOf(score.getScore()), 0, 720);
         if(score.getScore()>option.highScores[0]){
         	bfont.draw(batch, "1st Score!!", 800, 720);
         }
-        for(int i=0;i<4;i++){
+        for (int i=0;i<4;i++) {
         	if(score.getScore()<option.highScores[i]&&score.getScore()>option.highScores[i+1]){
         		bfont.draw(batch, String.valueOf(i+1)+"th Score : "+String.valueOf(option.highScores[i]),
         				800, 720);
@@ -553,13 +614,15 @@ public class GameScene extends Scene {
     				800, 720);
     		bfont.draw(batch, "last : "+String.valueOf(option.highScores[4]-score.getScore()), 800, 640);
         }
+
         if((score.getLife()<300&&option.gameMode==0)||score.getLife()<2)
         	bfont.setColor(Color.RED);
         if(option.gameMode==0)
         	bfont.draw(batch, String.valueOf(score.getLife()/30), 600, 720);
         else
         	bfont.draw(batch, "last ball : "+String.valueOf(score.getLife()-1), 450, 720);
-        if(score.showScore()){
+
+        if(score.showScore()) {
         	bfont.setColor(Color.RED);
         	if(score.getCombo()!=0)
         		bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+
@@ -578,50 +641,8 @@ public class GameScene extends Scene {
         if (hitEffect.isRunning()) {
             hitEffect.render(batch);
             hitEffect.advance(Gdx.graphics.getDeltaTime());
-        } else {
-        }
+        } 
         batch.end();
-        BtRigidBodyComp bodyComp = racketItem.as(BtRigidBodyComp.class);
-        Vector3 racketTr = racketItem.getTransform().getTranslation(new Vector3());
-
-        Quaternion racketOri = new Quaternion();
-        bodyComp.getRigidBody().getWorldTransform().getRotation(racketOri, true);
-
-        float destTheta;
-        synchronized (lockRacketIntpt) {
-            posXIntp.setState(racketTr.z);
-            posYIntp.setDestState(core.getItemWithName("ball").getTransform().getTranslation(new Vector3()).y-0.75f*(1.5f-0.5f*option.racketSize));
-            posYIntp.setState(racketTr.y);
-            destTheta = (90 + (90 - rawTheta) * 0.8f);
-        }
-        
-        float scale;
-        Vector3 axis = new Vector3();
-        
-        float theta = new Quaternion(racketOri).conjugate()
-                      .mul(new Quaternion(new Vector3(0, 0, -1), destTheta))
-                      .getAxisAngle(axis);
-        axis.x = 0;
-        axis.y = 0;
-        axis = axis.nor();
-        if (theta > 180) {
-            theta -= 360;
-        }
-
-        if (theta <= 10 && theta >= -10) {
-            scale = 0;
-        } else if (theta > 0) {
-            scale = RACKET_SPEED;
-        } else
-            scale = -RACKET_SPEED;
-
-        bodyComp.activate();
-        synchronized (lockRacketIntpt) {
-            bodyComp.setLinearVelocity(new Vector3(0, posYIntp.getVelocity(), posXIntp.getVelocity()));
-        }
-        bodyComp.setAngularVelocity(axis.scl(scale));
-        
-        
     }
 
     @Override
@@ -654,6 +675,8 @@ public class GameScene extends Scene {
         wallSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
         racketSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
         bgroundSound = Gdx.audio.newMusic(Gdx.files.internal("bgm.mp3"));
+        bgroundSound.setLooping(true);
+
         boxModelbo = new ModelBuilder().createBox(6, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
@@ -685,6 +708,9 @@ public class GameScene extends Scene {
                              ColorAttribute.createAmbient(.1f, .2f, .1f, 1f),
                              TextureAttribute.createDiffuse(new TextureRegion(ballTex))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates); 
+        
+        
+
     }
 
     @Override
@@ -717,8 +743,10 @@ public class GameScene extends Scene {
             wallSound.dispose();
         if (racketSound != null)
         	racketSound.dispose();
-        if (bgroundSound != null)
+        if (bgroundSound != null) {
+            bgroundSound.stop();
         	bgroundSound.dispose();
+        }
         Done ();
     }
 

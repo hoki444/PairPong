@@ -2,9 +2,10 @@ package com.algy.schedcore.middleend;
 
 import com.algy.schedcore.Core;
 import com.algy.schedcore.IComp;
-import com.algy.schedcore.ISchedTask;
-import com.algy.schedcore.ITickGetter;
+import com.algy.schedcore.SchedTask;
+import com.algy.schedcore.TickGetter;
 import com.algy.schedcore.SchedTime;
+import com.algy.schedcore.Scheduler;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
 import com.algy.schedcore.middleend.bullet.CollisionComp;
@@ -49,7 +50,7 @@ public class MyGame extends ApplicationAdapter {
         Bullet.init();
         modelBatch = new ModelBatch();
 
-        core = new Core(ITickGetter.systemTickGetter);
+        core = new Core(Scheduler.MilliScheduler());
         
         renderServer = new Render3DServer();
         cameraServer = new CameraServer(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), 67.f);
@@ -195,8 +196,7 @@ public class MyGame extends ApplicationAdapter {
                                                         0, 
                                                         0)));
 
-        core.sched().addPeriodic(System.currentTimeMillis(),
-                new RenderWork(), 20, 0, DRAW_SIG);
+        core.scheduler().addPeriodic( new RenderWork(), 20, 0, DRAW_SIG);
 
         Gdx.graphics.setContinuousRendering(true);
         Gdx.graphics.setVSync(true);
@@ -212,7 +212,7 @@ public class MyGame extends ApplicationAdapter {
         while (true) {
             Object ans;
             // long start = System.nanoTime();
-            ans = core.sched().runOnce(ITickGetter.systemTickGetter);
+            ans = core.scheduler().runOnce();
             // long end = System.nanoTime();
             
             if (ans == DRAW_SIG) break;
@@ -223,11 +223,11 @@ public class MyGame extends ApplicationAdapter {
     
     private static String DRAW_SIG = "Drawit";
 
-    class RenderWork implements ISchedTask {
+    class RenderWork implements SchedTask {
         Texture tex;
         public RenderWork () {
         }
-        public void schedule(SchedTime time) {
+        public void onScheduled(SchedTime time) {
         }
 
         public void beginSchedule() {

@@ -191,7 +191,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
     }
 
     @Override
-    public void schedule(SchedTime time) {
+    public void onScheduled(SchedTime time) {
         // Gather transforms to synchronize this component from Transform first.
         // XXX: IMPROVE ME
         for (GameItem gameItem : collBitmap) {
