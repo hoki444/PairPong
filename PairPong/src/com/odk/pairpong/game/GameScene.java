@@ -669,7 +669,7 @@ public class GameScene extends Scene {
         top = new Texture("top.png");
         side = new Texture("side.png");
         side2 = new Texture("side2.png");
-        ballTex = new Texture("ball.jpg");
+        ballTex = new Texture("ball.png");
         hitTex  = new Texture("Effect_hit.png");
         hitTexReg = new TextureRegion(hitTex);
         
