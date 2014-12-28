@@ -1,8 +1,8 @@
 package com.odk.pairpong.game;
 
 import com.algy.schedcore.frontend.SceneMgr;
-import com.odk.pairpong.comm.CommConstants;
-import com.odk.pairpong.comm.CommOption;
+import com.odk.pairpong.comm.game.CommConstants;
+import com.odk.pairpong.comm.game.CommOption;
 import com.odk.pairpong.comm.general.CommFunction;
 import com.odk.pairpong.comm.general.MessageListener;
 

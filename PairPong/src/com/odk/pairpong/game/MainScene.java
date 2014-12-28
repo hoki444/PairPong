@@ -6,7 +6,7 @@ import com.algy.schedcore.frontend.Scene;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.odk.pairpong.comm.PingListener;
+import com.odk.pairpong.comm.game.PingListener;
 import com.odk.pairpong.comm.general.CommFunction;
 
 public class MainScene extends Scene {

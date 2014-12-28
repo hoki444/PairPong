@@ -5,8 +5,8 @@ import com.algy.schedcore.frontend.SceneMgr;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.odk.pairpong.comm.CommConstants;
-import com.odk.pairpong.comm.CommScore;
+import com.odk.pairpong.comm.game.CommConstants;
+import com.odk.pairpong.comm.game.CommScore;
 import com.odk.pairpong.comm.general.CommFunction;
 import com.odk.pairpong.comm.general.MessageCallback;
 

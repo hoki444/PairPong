@@ -45,10 +45,10 @@ import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btCompoundShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
-import com.odk.pairpong.comm.CommConstants;
-import com.odk.pairpong.comm.CommOption;
-import com.odk.pairpong.comm.CommRacketCollision;
-import com.odk.pairpong.comm.CommRacketMoveCmd;
+import com.odk.pairpong.comm.game.CommConstants;
+import com.odk.pairpong.comm.game.CommOption;
+import com.odk.pairpong.comm.game.CommRacketCollision;
+import com.odk.pairpong.comm.game.CommRacketMoveCmd;
 import com.odk.pairpong.comm.general.CommFunction;
 import com.odk.pairpong.comm.general.MessageListener;
 

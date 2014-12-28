@@ -1,4 +1,4 @@
-package com.odk.pairpong.comm;
+package com.odk.pairpong.comm.game;
 
 public class CommOption {
 	public int racketSize;

@@ -1,4 +1,4 @@
-package com.odk.pairpong.comm;
+package com.odk.pairpong.comm.game;
 
 public class CommConstants {
     public static String TYPE_START_GAME = "startGame"; // Related to CommOption

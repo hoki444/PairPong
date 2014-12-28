@@ -18,9 +18,9 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.odk.pairpong.comm.CommConstants;
-import com.odk.pairpong.comm.CommOption;
 import com.odk.pairpong.comm.backend.QPairCommFunction;
+import com.odk.pairpong.comm.game.CommConstants;
+import com.odk.pairpong.comm.game.CommOption;
 import com.odk.pairpong.comm.general.MessageCallback;
 
 public class MainActivity extends Activity {

@@ -1,4 +1,4 @@
-package com.odk.pairpong.comm;
+package com.odk.pairpong.comm.game;
 
 import com.odk.pairpong.comm.general.CommFunction;
 import com.odk.pairpong.comm.general.MessageListener;
