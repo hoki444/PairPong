@@ -351,6 +351,12 @@ public class GameScene extends Scene {
                 .staticBody(new btBoxShape(new Vector3(3.f, .2f, 3.f)), new CollisionFilter(GROUP_WALL, GROUP_BALL))
                 .setFriction(Frictions)
                 .setRestitution(0.7f));
+
+        // Tunneling-proof 
+        btRigidBody backBody = boardItemba.as(BtRigidBodyComp.class).getRigidBody();
+        backBody.setCcdMotionThreshold(1e-6f);
+        backBody.setCcdSweptSphereRadius(4f);
+
         GameItem boardItemt = boardItembo.duplicate(new Vector3(1f, 4.0f, 0));
         boardItembo.add(new ModelComp(boxModelbo));
         boardItemba.add(new ModelComp(boxModelba));

@@ -34,7 +34,8 @@ public class SceneMgr extends ApplicationAdapter {
     }
 
     private void startScene (Scene startScene) {
-        startScene.setManager(this);
+        if (startScene != null)
+            startScene.setManager(this);
         this.currentScene = startScene;
     }
     
@@ -82,7 +83,16 @@ public class SceneMgr extends ApplicationAdapter {
 
         
         
-        if (!currentScene.advance(endScene)) {
+        boolean sceneReplacable = false;
+        if (currentScene != null) {
+            if (!currentScene.advance(endScene)) {
+                sceneReplacable = true;
+            }
+        } else {
+            sceneReplacable = true;
+        }
+
+        if (sceneReplacable) {
             if (nextScene != null) {
                 synchronized (SceneMgr.class) {
                     if (nextScene != null) {

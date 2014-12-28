@@ -109,6 +109,7 @@ public class QPairCommFunction implements CommFunction, ContextSettable {
                     peerIntent.setPackage(connArg.peerPackage);
                     componentName = connArg.peerPackage + "/" + connArg.peerActivity;
                     peerIntent.setComponent(componentName);
+                    peerIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     peerContext.startActivityOnPeer(peerIntent, callbackOnSuccess, callbackOnError);
                     break;
                 case Broadcast:
@@ -280,7 +281,9 @@ public class QPairCommFunction implements CommFunction, ContextSettable {
         
         if (cursor != null) {
             cursor.moveToFirst();
-            return "tablet".equals(cursor.getString(0));
+            boolean result = "tablet".equals(cursor.getString(0));
+            cursor.close();
+            return result;
         } else 
             return false;
     }
@@ -299,6 +302,8 @@ public class QPairCommFunction implements CommFunction, ContextSettable {
             if (connCursor.moveToFirst()) {
                 isConnected = "true".equals(connCursor.getString(0));
             }
+            onCursor.close();
+            connCursor.close();
             if (isOn && isConnected)
                 return QPairState.Connected;
             else if (isOn)

@@ -329,6 +329,7 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
 
     final void render () {
         Environment env;
+
         if (core.getServerItem().has(CameraServer.class)) {
             modelBatch.begin(core.server(CameraServer.class).getCamera());
             env = core.server(EnvServer.class).makeEnvironment();

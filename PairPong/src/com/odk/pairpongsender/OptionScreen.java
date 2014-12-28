@@ -1,5 +1,6 @@
 package com.odk.pairpongsender;
 
+import com.odk.pairpong.R;
 import com.odk.pairpongsender.MainActivity.ModeType;
 
 import android.content.res.Resources;

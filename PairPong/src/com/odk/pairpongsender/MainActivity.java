@@ -1,10 +1,5 @@
 package com.odk.pairpongsender;
 
-import com.odk.pairpong.comm.CommConstants;
-import com.odk.pairpong.comm.CommOption;
-import com.odk.pairpong.comm.backend.QPairCommFunction;
-import com.odk.pairpong.comm.general.MessageCallback;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -23,6 +18,11 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.odk.pairpong.comm.CommConstants;
+import com.odk.pairpong.comm.CommOption;
+import com.odk.pairpong.comm.backend.QPairCommFunction;
+import com.odk.pairpong.comm.general.MessageCallback;
+
 public class MainActivity extends Activity {
 	public static int[] options = new int[9];
 	private int[] scores = new int[5];
@@ -33,14 +33,16 @@ public class MainActivity extends Activity {
 	
 	
     private MyView odkView;
-	
+    
 	private QPairCommFunction commFun = new QPairCommFunction("com.odk.pairpong");
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        
         commFun.registerReceivers(getApplicationContext());
         commFun.setContext(getApplicationContext());
+        
 
 		SharedPreferences pref = getPreferences(Context.MODE_PRIVATE);
     	for(int n = 0; n < 5; n++) {
@@ -237,5 +239,6 @@ public class MainActivity extends Activity {
             return false;
 		}
     }
+    
     
 }

@@ -17,5 +17,4 @@ public class CommRacketMoveCmd {
         this.posY = posY;
         this.theta = theta;
     }
-    
 }
