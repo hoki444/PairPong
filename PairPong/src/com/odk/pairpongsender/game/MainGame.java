@@ -172,6 +172,8 @@ public class MainGame extends ApplicationAdapter {
     
     private float posX = 0.45f;
     private float posY = 0.12f;
+    private float nowY = 0.12f;
+    private String status = "bottom";
     @Override
     public void render() {
         Gdx.gl.glViewport(0, 0, width, height);
@@ -183,18 +185,32 @@ public class MainGame extends ApplicationAdapter {
 
         // Input Polling
         if (Gdx.input.isTouched()) {
-            posY = 1 - Gdx.input.getY() / (float)height;
-        	if(posY<0.35f)
-        		posX = Gdx.input.getX() / (float)width;
-            if(posX<0.17f)
-                posX = 0.17f;
-            if(posX>0.83f)
-                posX=0.83f;
-            if(posY>0.8f)
-                posY=0.8f;
+        	if(status.equals("bottom")){
+        		posY += 1 - Gdx.input.getY() / (float)height - nowY;
+        		nowY = 1 - Gdx.input.getY() / (float)height;
+        		if(posY>0.35f || nowY>0.75f){
+        			status="moveup";
+        			posY=0.35f;
+        		}
+        		if(status.equals("bottom")){
+        			posX = Gdx.input.getX() / (float)width;
+        			if(posX<0.17f)
+        				posX = 0.17f;
+        			if(posX>0.83f)
+        				posX=0.83f;
+        		}
+        	}
         }
-        if(posY>0.12f)
-            posY-=0.025f;
+        if(status.equals("moveup")){
+        	posY+=0.04f;
+        	if(posY>0.8f)
+        		status="movedown";
+        }
+        if(status.equals("movedown")){
+        	posY-=0.05f;
+        	if(posY<0.12f)
+        		status="bottom";
+        }
         if(posY<0.12f)
             posY=0.12f;
         senderRunnable.pend(new CommRacketMoveCmd(posX, posY, theta));
