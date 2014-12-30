@@ -62,7 +62,7 @@ public class MainScene extends Scene {
 		batch.begin();
         bfont.setColor(Color.WHITE); 
         if (isConnected) {
-            bfont.draw(batch, "Start Game through the Smartphone App", 100, 400);
+            bfont.draw(batch, "Start Game on the Smartphone App", 100, 400);
         } else {
             bfont.draw(batch, "Please enable QPair and connect with phone...", 100, 400);
         }
