@@ -249,7 +249,7 @@ class RacketCollision extends CollisionComp {
         collInfo.isSmashing = isSmashing;
 
         commFun.sendMessage(CommConstants.TYPE_RACKET_COLLISION, collInfo, null);
-        if (other.getName().equals("ball")) {
+        if (other.getName().equals("ball") && !other.as(BallStateComp.class).isRollingOnGround) {
             if(!score.isStuck()) {
                 score.addCombo();
                 combo = score.getCombo();
@@ -293,11 +293,18 @@ class BallCollision extends CollisionComp {
             if (wallSound != null) {
                 wallSound.play();
             }
+            
+            if ("ground".equals(other.getName())) {
+                item().as(BallStateComp.class).isRollingOnGround = true;
+            }
         }
     }
 
     @Override
     public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
+        if ("ground".equals(other.getName())) {
+            item().as(BallStateComp.class).isRollingOnGround = false;
+        }
     }
     
     
@@ -363,6 +370,7 @@ public class GameScene extends Scene {
 
         GameItem boardItemt = boardItembo.duplicate(new Vector3(1f, 4.0f, 0));
         boardItembo.add(new ModelComp(boxModelbo));
+        boardItembo.setName("ground");
         boardItemba.add(new ModelComp(boxModelba));
         boardItemba.add(new BackCollision(score));
         boardItemt.add(new ModelComp(boxModelt));
@@ -404,6 +412,7 @@ public class GameScene extends Scene {
         wallItem2.add(new ModelComp(boxModels2));
         ballItem = new GameItem(new Transform(0, 0.2f, 0));
         ballItem.add(new BallCollision(wallSound, racketSound));
+        ballItem.add(new BallStateComp(false));
         ballItem.add(BtRigidBodyComp.dynamicBody(new btSphereShape(.15f), 1, 
                                                  new CollisionFilter(GROUP_BALL, 
                                                                      (short)(GROUP_DETECTOR | GROUP_WALL | GROUP_RACKET)))
@@ -413,6 +422,7 @@ public class GameScene extends Scene {
                      .setLinearDamping(0f));
         ballItem.add(new ModelComp(ballModel));
         ballItem.setName("ball");
+        
 
         // Tunneling-proof 
         btRigidBody ballBody = ballItem.as(BtRigidBodyComp.class).getRigidBody();
@@ -589,7 +599,7 @@ public class GameScene extends Scene {
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     float rawTheta = 0;
     static final int RACKET_SPEED = 3;
-    static final int RACKET_SMASH_SPEED = 5;
+    static final int RACKET_SMASH_SPEED = 4;
     
     boolean isSmashing = false;
     
