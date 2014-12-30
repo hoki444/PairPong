@@ -124,7 +124,7 @@ class Score{
 	private int life;
 	private CommOption option;
 	public Score(CommOption o){
-		life = 1950;
+		life = 2250;
 		option = o;
 		score =0;
 		vscore = 0;
@@ -331,7 +331,7 @@ public class GameScene extends Scene {
 	public void reserveItem(Scene scene, ItemReservable coreProxy) {
     	float Frictions=0.05f;
     	float Restitutions=0.98f;
-
+    
     	GameItem boardItembo = new GameItem(),
     			 debugdrawItem = new GameItem(new BtDebugDrawerComp()),
 				 wallItem = new GameItem(),
@@ -490,6 +490,14 @@ public class GameScene extends Scene {
 
                 if(option.gameMode == 0)
                     score.timePass();
+                else{
+                	musictime++;
+                	if(musictime>2100&&option.gameMode!=0){
+                		musictime=0;
+                		bgroundSound.stop();
+                		bgroundSound.play();
+                	}
+                }
             }
             
             @Override
@@ -572,7 +580,7 @@ public class GameScene extends Scene {
 	BitmapFont bfont;
 	SpriteBatch batch;
 	float nowY = 0;
-
+	int musictime=0;
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     float rawTheta = 0;
