@@ -31,12 +31,21 @@ public class MainScene extends Scene {
         }
     };
     
+    private EndAppListener endAppLisnr;
     private GameStartListener lsnr;
 	public MainScene(CommFunction commFun) {
 		super();
 	    this.commFun = commFun;
+
 	    this.lsnr = new GameStartListener(commFun);
+	    this.endAppLisnr = new EndAppListener(new Runnable() {
+            @Override
+            public void run() {
+                Gdx.app.exit();
+            }
+        });
 	    commFun.registerListener(new PingListener(commFun));
+	    commFun.registerListener(endAppLisnr);
 	}
 
 	@Override
@@ -77,7 +86,7 @@ public class MainScene extends Scene {
     	batch.dispose();
         bfont.dispose();
     	commFun.unregisterListener(lsnr);
-
+    	commFun.unregisterListener(endAppLisnr);
         Done();
 	}
 

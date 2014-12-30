@@ -5,6 +5,7 @@ import java.util.UUID;
 public class CommRacketCollision {
     public String uuid;
     public int duration;
+    public boolean isSmashing;
     public CommRacketCollision () {
     }
     public CommRacketCollision (int duration) {

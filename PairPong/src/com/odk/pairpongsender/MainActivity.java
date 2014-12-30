@@ -8,12 +8,13 @@ import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -35,14 +36,34 @@ public class MainActivity extends Activity {
 	private String[] soptions = new String[5];
 	private ScoreList slist;
 	
-	
     private MyView odkView;
+    
+    public boolean isConnected = false;
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            if (!isConnected && commFun.isConnected()) {
+                commFun.startActivity("com.odk.pairpong.PairPongBoardActivity", new MessageCallback() {
+                    @Override
+                    public void onSuccess() {
+                    }
+                    
+                    @Override
+                    public void onError(String reason) {
+                        System.out.println("PEER ACTIVITY NOT STARTED due to " + reason);
+                    }
+                });
+            } 
+
+            isConnected = commFun.isConnected();
+            mHandler.sendEmptyMessageDelayed(0, 400);
+        }
+    };
     
 	private QPairCommFunction commFun = new QPairCommFunction("com.odk.pairpong");
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
         
         commFun.registerReceivers(getApplicationContext());
         commFun.setContext(getApplicationContext());
@@ -64,21 +85,15 @@ public class MainActivity extends Activity {
     	slist = new ScoreList(scores, names, dates, soptions);
         odkView = new MyView(this);
         
-        commFun.startActivity("com.odk.pairpong.PairPongBoardActivity", new MessageCallback() {
-            @Override
-            public void onSuccess() {
-            }
-            
-            @Override
-            public void onError(String reason) {
-                System.out.println("PEER ACTIVITY NOT STARTED due to " + reason);
-            }
-        });
+        mHandler.sendEmptyMessage(0);
 		setContentView(odkView);
     }
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mHandler.removeMessages(0);
+        if (isConnected) 
+            commFun.sendMessage(CommConstants.TYPE_END_APP, null, null);
         commFun.unregisterReceivers(getApplicationContext());
     }
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -140,7 +155,8 @@ public class MainActivity extends Activity {
     public static enum ModeType {
         Main, Option, Highscore, Score, DestinedToPlay, Play, Exit
     }
-    class MyView extends View{
+
+    class MyView extends View {
     	public ModeType mode;
     	Point dsize;
     	Display display;
@@ -150,13 +166,14 @@ public class MainActivity extends Activity {
     	OptionScreen option;
     	Recoder recoder;
     	HighScore highscore;
+        TouchableObject btntitle;
 		public MyView(Context context) {
 			super(context);
 			mode= ModeType.Main; 
 			dsize = new Point(0,0);
 			display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
 			display.getSize(dsize);
-			TouchableObject btntitle = new TouchableObject(dsize.x/2, (int)(dsize.y*4/20), dsize.y*5/20, 
+			btntitle = new TouchableObject(dsize.x/2, (int)(dsize.y*4/20), dsize.y*5/20, 
 					((BitmapDrawable)res.getDrawable(R.drawable.title)).getBitmap());
 			TouchableObject btnexit = new TouchableObject(dsize.x/2, dsize.y*18/20, dsize.y*2/20, 
 					((BitmapDrawable)res.getDrawable(R.drawable.btnexit)).getBitmap());
@@ -165,7 +182,33 @@ public class MainActivity extends Activity {
 			TouchableObject btnoption = new TouchableObject(dsize.x/2, dsize.y*12/20, dsize.y*2/20, 
 					((BitmapDrawable)res.getDrawable(R.drawable.btnoption)).getBitmap());
 			TouchableObject btnstart = new TouchableObject(dsize.x/2, dsize.y*9/20, dsize.y*2/20, 
-					((BitmapDrawable)res.getDrawable(R.drawable.btngamestart)).getBitmap());
+					((BitmapDrawable)res.getDrawable(R.drawable.btngamestart)).getBitmap()) {
+
+                int oldAlpha;
+			    @Override
+			    protected void predraw(Canvas canvas, Paint paint) {
+			        oldAlpha = paint.getAlpha();
+			        if (isConnected) {
+			            paint.setAlpha(255);
+			        } else {
+			            paint.setAlpha(128);
+			        }
+			    }
+			    @Override
+			    protected void postdraw(Canvas canvas, Paint paint) {
+			        paint.setAlpha(oldAlpha);
+			    }
+
+			    @Override
+                protected Boolean pretest() {
+			        if (isConnected)
+			            return null;
+			        else {
+			            Toast.makeText(getApplicationContext(), "Please connect to tablet with QPair first!", Toast.LENGTH_LONG).show();
+			            return false;
+			        }
+                }
+			};
 			mscreen = new MainScreen(btntitle,btnstart,btnoption,btnhscore,btnexit);
 			recoder = new Recoder(slist,btnexit);
 			option = new OptionScreen(btnexit);
@@ -249,11 +292,9 @@ public class MainActivity extends Activity {
                         break;
                     }
                 }
-                return true;
+                return false;
             }
             return false;
 		}
     }
-    
-    
 }
