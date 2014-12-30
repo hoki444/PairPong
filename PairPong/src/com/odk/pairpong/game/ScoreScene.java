@@ -2,6 +2,7 @@ package com.odk.pairpong.game;
 
 import com.algy.schedcore.frontend.Scene;
 import com.algy.schedcore.frontend.SceneMgr;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -43,9 +44,9 @@ public class ScoreScene extends Scene {
 
 	@Override
 	public void prepare() {
-    	bfont= new BitmapFont();
+    	bfont= new BitmapFont(Gdx.files.internal("yuppy_tc_45.fnt"));
     	batch = new SpriteBatch();
-        bfont.setColor(Color.WHITE); bfont.scale(3f);
+        bfont.setColor(Color.WHITE); 
         sendScore();
 	}
 
