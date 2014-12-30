@@ -1,19 +1,13 @@
 package com.odk.pairpongsender;
 
+import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.view.MotionEvent;
 
 import com.odk.pairpongsender.MainActivity.ModeType;
 
 public class MainScreen {
-    MainActivity parent;
-    public MainScreen (MainActivity parent) {
-        this.parent = parent;
-    }
 	int textsize;
 
 	TouchableObject[] tobject= new TouchableObject[5];

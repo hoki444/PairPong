@@ -1,15 +1,11 @@
 package com.odk.pairpongsender;
 
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.view.MotionEvent;
 
-import com.odk.pairpong.R;
 import com.odk.pairpongsender.MainActivity.ModeType;
 
 public class HighScore {

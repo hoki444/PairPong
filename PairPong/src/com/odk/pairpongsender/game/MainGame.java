@@ -172,8 +172,9 @@ public class MainGame extends ApplicationAdapter {
     
     private float posX = 0.45f;
     private float posY = 0.12f;
-    private float nowY = 0.12f;
-    private String status = "bottom";
+    
+    
+    
     @Override
     public void render() {
         Gdx.gl.glViewport(0, 0, width, height);
@@ -184,35 +185,24 @@ public class MainGame extends ApplicationAdapter {
         float theta = gThetaProvider.obtainTheta();
 
         // Input Polling
-        if (Gdx.input.isTouched()) {
-        	if(status.equals("bottom")){
-        		posY += 1 - Gdx.input.getY() / (float)height - nowY;
-        		nowY = 1 - Gdx.input.getY() / (float)height;
-        		if(posY>0.35f || nowY>0.75f){
-        			status="moveup";
-        			posY=0.35f;
-        		}
-        		if(status.equals("bottom")){
-        			posX = Gdx.input.getX() / (float)width;
-        			if(posX<0.17f)
-        				posX = 0.17f;
-        			if(posX>0.83f)
-        				posX=0.83f;
-        		}
-        	}
+        boolean slidingDown = false;
+        if (Gdx.input.isTouched()) { //  && status == TouchStatus.Bottom) {
+            posX = Gdx.input.getX() / (float)width;
+            posY = 1 - Gdx.input.getY() / (float)height;
+
+        } else if(posY > 0.12f) {
+            slidingDown = true;
+            posY -= 0.05f;
+        } 
+
+        if (posY <= 0.12f) {
+            posY = 0.12f;
         }
-        if(status.equals("moveup")){
-        	posY+=0.04f;
-        	if(posY>0.8f)
-        		status="movedown";
-        }
-        if(status.equals("movedown")){
-        	posY-=0.05f;
-        	if(posY<0.12f)
-        		status="bottom";
-        }
-        if(posY<0.12f)
-            posY=0.12f;
+        if(posX <= 0.17f)
+            posX = 0.17f;
+        else if (posX >= 0.83f)
+            posX = 0.83f;
+
         senderRunnable.pend(new CommRacketMoveCmd(posX, posY, theta));
 
         // render by sprite batch

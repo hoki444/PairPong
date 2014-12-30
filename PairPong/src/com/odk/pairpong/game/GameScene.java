@@ -224,12 +224,14 @@ class Score{
 }
 
 class RacketCollision extends CollisionComp {
+    private GameScene parent;
     private CommFunction commFun;
     private Score score;
     private EffectController effectController;
     int combo=0;
 
-    public RacketCollision (CommFunction commFun, Score score, EffectController effectController) {
+    public RacketCollision (GameScene parent, CommFunction commFun, Score score, EffectController effectController) {
+        this.parent = parent;
         this.commFun = commFun;
         this.score = score;
         this.effectController = effectController;
@@ -237,12 +239,16 @@ class RacketCollision extends CollisionComp {
 
     @Override
     public IComp duplicate() {
-        return new RacketCollision(commFun, score, effectController);
+        return new RacketCollision(parent, commFun, score, effectController);
     }
 
     @Override
     public void beginCollision(GameItem other) {
-        commFun.sendMessage(CommConstants.TYPE_RACKET_COLLISION, new CommRacketCollision(80), null);
+        boolean isSmashing = parent.isSmashing;
+        CommRacketCollision collInfo = new CommRacketCollision(isSmashing?200:80);
+        collInfo.isSmashing = isSmashing;
+
+        commFun.sendMessage(CommConstants.TYPE_RACKET_COLLISION, collInfo, null);
         if (other.getName().equals("ball")) {
             if(!score.isStuck()) {
                 score.addCombo();
@@ -336,8 +342,6 @@ public class GameScene extends Scene {
     			 debugdrawItem = new GameItem(new BtDebugDrawerComp()),
 				 wallItem = new GameItem(),
                  lightItem = new GameItem(),
-                 pointlightItem = new GameItem(new Transform(new Vector3(0, 1, 0)),
-                		 						new PointLightComp(10).setColor(1, 1, 1, 1)),
                  removerItem = new GameItem();
 
         boardItembo.as(Transform.class).modify().setTranslation(1f, 0, 0);
@@ -416,7 +420,7 @@ public class GameScene extends Scene {
         ballBody.setCcdSweptSphereRadius(4f);
        
         racketItem.add(new AssetModelComp("racket.obj"));
-        racketItem.add(new RacketCollision(commFun, score,
+        racketItem.add(new RacketCollision(this, commFun, score,
                 new EffectController() {
                     @Override
                     public void invokeHit(Vector3 position) {
@@ -444,7 +448,7 @@ public class GameScene extends Scene {
         coreProxy.reserveItem(wallItem2);
         coreProxy.reserveItem(lightItem);
         coreProxy.reserveItem(racketItem);
-        coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 1, 0)),
+        coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0.9f, 1, 0)),
                 		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
         coreProxy.reserveItem(new GameItem(new Transform(new Vector3(0, 2, 0)),
                 		 					new PointLightComp(50).setColor(1, 1, 1, 1)));
@@ -520,7 +524,7 @@ public class GameScene extends Scene {
                     	nowY=4;
                     posYIntp.setDestState(nowY);
                     posYIntp.setState(racketTr.y);
-                    destTheta = (90 + (90 - rawTheta) * 0.8f);
+                    destTheta = (90 + rawTheta);
                 }
                 
                 float scale;
@@ -539,9 +543,9 @@ public class GameScene extends Scene {
                 if (theta <= 10 && theta >= -10) {
                     scale = 0;
                 } else if (theta > 0) {
-                    scale = RACKET_SPEED;
+                    scale = !isSmashing? RACKET_SPEED:RACKET_SMASH_SPEED;
                 } else
-                    scale = -RACKET_SPEED;
+                    scale = !isSmashing?-RACKET_SPEED:-RACKET_SMASH_SPEED;
 
                 bodyComp.activate();
                 synchronized (lockRacketIntpt) {
@@ -576,8 +580,10 @@ public class GameScene extends Scene {
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     float rawTheta = 0;
-    static final int RACKET_SPEED = 6;
+    static final int RACKET_SPEED = 3;
+    static final int RACKET_SMASH_SPEED = 5;
     
+    boolean isSmashing = false;
     
     private Object lockRacketIntpt = new Object();
     private MessageListener<CommRacketMoveCmd> racketMoveLisnr = new MessageListener<CommRacketMoveCmd>() {
@@ -585,13 +591,15 @@ public class GameScene extends Scene {
         public void onReceive(CommRacketMoveCmd obj) {
             synchronized (lockRacketIntpt) {
             	posXIntp.setDestState((obj.posX - 0.5f) * 8f);
-            	if(obj.posY>0.35)
-            		rawTheta = 0;
-            	else
-            		rawTheta = 90;
-            	//posXIntp.setDestState((obj.posX - 0.5f) * 6.3f);
-                //posYIntp.setDestState(obj.posY * 4.2f);
-                //rawTheta = obj.theta;
+            	
+            	if(obj.posY > 0.35f) {
+            	    // smash state
+                    isSmashing = true;
+            	    rawTheta = 70;
+            	} else {
+                    isSmashing = false;
+            		rawTheta = 90 * obj.posY / 0.35f - 30;
+            	}
             }
         }
         
