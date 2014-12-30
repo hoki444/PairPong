@@ -14,12 +14,17 @@ import android.view.MotionEvent;
 
 public class OptionScreen {
 	int textsize;
+	TouchableObject texit;
+	
+	OptionScreen(TouchableObject exit){
+		texit=exit;
+	}
 	public void Draw(Canvas canvas, Paint pnt, int x, int y,Resources res) {
 		Bitmap check = ((BitmapDrawable)res.getDrawable(R.drawable.check)).getBitmap();
 		textsize=Math.min(x/8,y/6);
 		textsize=textsize/2;
 		pnt.setTextSize(textsize);
-		pnt.setColor(Color.BLACK);
+		pnt.setColor(Color.WHITE);
 		canvas.drawText("Option", x/2-textsize*1.47f, y/6, pnt);
 		textsize=textsize/2;
 		pnt.setTextSize(textsize);
@@ -42,10 +47,7 @@ public class OptionScreen {
 			canvas.drawBitmap(check, null, new Rect(x*(9+8*MainActivity.options[n])/40, y*(17+10*n)/60,
 					x*(11+8*MainActivity.options[n])/40, y*(2+n)/6), pnt);
 		}
-		canvas.drawRect(x/3, y*5/6, x*2/3, y*19/20, pnt);
-		pnt.setTextSize(textsize);
-		pnt.setColor(Color.WHITE);
-		canvas.drawText("Exit", x/2-textsize*1f, y*109/120, pnt);
+		texit.Draw(canvas, pnt);
 	}
 	public ModeType TouchEvent(MotionEvent event, int x, int y) {
 		for(int l=0;l<3;l++){
@@ -57,12 +59,8 @@ public class OptionScreen {
 				}
 			}
 		}
-		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN){
-			if(event.getY()>y*5/6&&event.getY()<y*19/20){
-				return ModeType.Main;
-			}
-			return ModeType.Option;
-		}
+		if(texit.isTouched((int)event.getX(), (int)event.getY())&&event.getAction()==MotionEvent.ACTION_DOWN)
+			return ModeType.Main;
 		return ModeType.Option;
 	}
 }

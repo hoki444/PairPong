@@ -3,11 +3,16 @@ package com.odk.pairpongsender;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.odk.pairpong.R;
 import com.odk.pairpongsender.MainActivity.ModeType;
 
+import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.view.MotionEvent;
 public class Recoder {
 	int textsize;
@@ -18,7 +23,9 @@ public class Recoder {
 	int nowpointer=0;
 	boolean showscore;
 	ScoreList scorelist;
-	public Recoder(ScoreList slist) {
+	TouchableObject texit;
+	public Recoder(ScoreList slist, TouchableObject exit) {
+		texit=exit;
 		showscore=false;
 		for(int n=0;n<8;n++)
 			names[n]=' ';
@@ -26,12 +33,12 @@ public class Recoder {
 		name="";
 	}
 
-	public void Draw(Canvas canvas, Paint pnt, int x, int y, int score) {
+	public void Draw(Canvas canvas, Paint pnt, int x, int y, int score, Resources res) {
 		myscore=score;
 		textsize=Math.min(x/8,y/6);
 		textsize=textsize/2;
 		pnt.setTextSize(textsize);
-		pnt.setColor(Color.BLACK);
+		pnt.setColor(Color.WHITE);
 		canvas.drawText("High Score", x/2-textsize*2.48f, y/10, pnt);
         textsize=textsize/2;
         pnt.setTextSize(textsize);
@@ -55,10 +62,7 @@ public class Recoder {
             if(rank<6)
                 canvas.drawText("You did rank "+ String.valueOf(rank)+"!", x/2, y*9/12, pnt);
             canvas.drawRect(x/3, y*5/6, x*2/3, y*19/20, pnt);
-            
-            pnt.setTextSize(textsize);
-            pnt.setColor(Color.WHITE);
-            canvas.drawText("Exit", x/2-textsize*1f, y*109/120, pnt);
+    		texit.Draw(canvas, pnt);
         } else{
             canvas.drawText("You did rank "+ String.valueOf(rank)+"!", x/6, y/4, pnt);
             for(int n=0;n<8;n++){
@@ -78,9 +82,7 @@ public class Recoder {
             canvas.drawText("_", x*(12+nowpointer)/24, y/3+5, pnt);
             canvas.drawText("Press Your Name :", x/6, y/3, pnt);
             canvas.drawRect(x/3, y*5/6, x*2/3, y*19/20, pnt);
-            pnt.setTextSize(textsize);
-            pnt.setColor(Color.WHITE);
-            canvas.drawText("OK", x/2-textsize*1f, y*109/120, pnt);
+    		texit.Draw(canvas, pnt);
         } 
 	}
 	void pressData(int n,int m){
@@ -106,25 +108,22 @@ public class Recoder {
 				pressData((int)(event.getX()*11/x)-1,(int)(event.getY()*12/y)-6);
 			}
 		}
-		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN) {
-			if(event.getY()>y*5/6&&event.getY()<y*19/20){
-				if(showscore){
-					showscore=false;
-					names = new char[8];
-					for(int n=0;n<8;n++)
-						names[n]=' ';
-					nowpointer=0;
-					return ModeType.Main;
-				} else {
-					name=String.valueOf(names);
-					showscore=true;
-					scorelist.update(rank,myscore,name,
-							new SimpleDateFormat("MM/dd HH:mm").format(new Date(System.currentTimeMillis())),
-							String.valueOf(MainActivity.options[0])+String.valueOf(MainActivity.options[1])
-									+String.valueOf(MainActivity.options[2]));
-				}
+		if(texit.isTouched((int)event.getX(), (int)event.getY())&&event.getAction()==MotionEvent.ACTION_DOWN){
+			if(showscore){
+				showscore=false;
+				names = new char[8];
+				for(int n=0;n<8;n++)
+				names[n]=' ';
+				nowpointer=0;
+				return ModeType.Main;
+			} else {
+				name=String.valueOf(names);
+				showscore=true;
+				scorelist.update(rank,myscore,name,
+						new SimpleDateFormat("MM/dd HH:mm").format(new Date(System.currentTimeMillis())),
+						String.valueOf(MainActivity.options[0])+String.valueOf(MainActivity.options[1])
+								+String.valueOf(MainActivity.options[2]));
 			}
-			return ModeType.Score;
 		}
 		return ModeType.Score;
 	}
