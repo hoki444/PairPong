@@ -3,6 +3,7 @@ package com.odk.pairpong.game;
 import com.algy.schedcore.SchedTask;
 import com.algy.schedcore.SchedTime;
 import com.algy.schedcore.frontend.Scene;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -40,11 +41,10 @@ public class MainScene extends Scene {
 
 	@Override
 	public void prepare() {
-    	bfont = new BitmapFont();
+    	bfont = new BitmapFont(Gdx.files.internal("yuppy_tc_45.fnt"));
     	batch = new SpriteBatch();
     	
     	commFun.registerListener(lsnr);
-        bfont.scale(3f);
         schedule(0, 300, statePoller);
 	}
 	

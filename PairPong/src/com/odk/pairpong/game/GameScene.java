@@ -428,7 +428,7 @@ public class GameScene extends Scene {
         racketItem.setName("racket");
 
         lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
-        lightItem.add(new DirectionalLightComp(new Vector3(0, -1f, 0.5f)).setColor(1.f, 1.f, 1.f, 1.0f));
+        lightItem.add(new DirectionalLightComp(new Vector3(0, -20f, 10f)).setColor(1.f, 1.f, 1.f, 1.0f));
         GameItem newBallItem = ballItem.duplicate(new Vector3(0, 2.8f, 0));
         newBallItem.setName("ball");
         coreProxy.reserveItem(newBallItem);
@@ -454,7 +454,7 @@ public class GameScene extends Scene {
 
 	@Override
 	public void endResourceInitialization(Scene scene) {
-        core.server(EnvServer.class).ambientLightColor.set(.4f, .4f, .4f, 1); 
+        core.server(EnvServer.class).ambientLightColor.set(.7f, .7f, .7f, 1); 
         core.server(BtPhysicsWorld.class).world.setGravity(new Vector3(0, -9.8f, 0));
         
         core.server(CameraServer.class).setPosition(new Vector3(-4, 3f, 0))
@@ -661,9 +661,9 @@ public class GameScene extends Scene {
         commFun.registerListener(racketMoveLisnr);
 
         
-    	bfont= new BitmapFont();
     	batch = new SpriteBatch();
-        bfont.setColor(Color.WHITE); bfont.scale(3f);
+    	bfont = new BitmapFont(Gdx.files.internal("yuppy_tc_45.fnt"));
+        bfont.setColor(Color.WHITE); 
         bottom = new Texture("bottom.png");
         back = new Texture("back.png");
         top = new Texture("top.png");
@@ -686,32 +686,37 @@ public class GameScene extends Scene {
         boxModelbo = new ModelBuilder().createBox(6, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
+                             ColorAttribute.createAmbient(0.5f, 0.5f, 0.5f, 1.f),
                              TextureAttribute.createDiffuse(new TextureRegion(bottom))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         boxModelba = new ModelBuilder().createBox(4, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
+                             ColorAttribute.createAmbient(0.5f, 0.5f, 0.5f, 1.f),
                              TextureAttribute.createDiffuse(new TextureRegion(back))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         boxModelt = new ModelBuilder().createBox(6, .2f, 6, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
+                             ColorAttribute.createAmbient(0.5f, 0.5f, 0.5f, 1.f),
                              TextureAttribute.createDiffuse(new TextureRegion(top))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         boxModels = new ModelBuilder().createBox(6, 4, .2f, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
+                             ColorAttribute.createAmbient(0.5f, 0.5f, 0.5f, 1.f),
                              TextureAttribute.createDiffuse(new TextureRegion(side))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         boxModels2 = new ModelBuilder().createBox(6, 4, .2f, 
                 new Material(ColorAttribute.createDiffuse(0.1f, 0.1f, 0.1f, 0.1f),
                              ColorAttribute.createSpecular(.7f, .7f, .7f, 1f),
+                             ColorAttribute.createAmbient(0.5f, 0.5f, 0.5f, 1.f),
                              TextureAttribute.createDiffuse(new TextureRegion(side2))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates);
         ballModel = new ModelBuilder().createSphere(.3f, .3f, .3f, 10, 10, 
                 new Material(ColorAttribute.createDiffuse(0.5f, 0.5f, 0.5f, 1f),
                              ColorAttribute.createSpecular(.25f, .25f, .25f, 1f),
-                             ColorAttribute.createAmbient(.1f, .2f, .1f, 1f),
+                             ColorAttribute.createAmbient(0.5f, 0.5f, 0.5f, 1.f),
                              TextureAttribute.createDiffuse(new TextureRegion(ballTex))),
                 Usage.Position | Usage.Normal | Usage.TextureCoordinates); 
     }
