@@ -11,6 +11,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -31,14 +33,33 @@ public class MainActivity extends Activity {
 	private String[] soptions = new String[5];
 	private ScoreList slist;
 	
-	
     private MyView odkView;
+    
+    public boolean isConnected = false;
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            if (!isConnected && commFun.isConnected()) {
+                commFun.startActivity("com.odk.pairpong.PairPongBoardActivity", new MessageCallback() {
+                    @Override
+                    public void onSuccess() {
+                    }
+                    
+                    @Override
+                    public void onError(String reason) {
+                        System.out.println("PEER ACTIVITY NOT STARTED due to " + reason);
+                    }
+                });
+            }
+            isConnected = commFun.isConnected();
+            mHandler.sendEmptyMessageDelayed(0, 400);
+        }
+    };
     
 	private QPairCommFunction commFun = new QPairCommFunction("com.odk.pairpong");
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
         
         commFun.registerReceivers(getApplicationContext());
         commFun.setContext(getApplicationContext());
@@ -60,21 +81,13 @@ public class MainActivity extends Activity {
     	slist = new ScoreList(scores, names, dates, soptions);
         odkView = new MyView(this);
         
-        commFun.startActivity("com.odk.pairpong.PairPongBoardActivity", new MessageCallback() {
-            @Override
-            public void onSuccess() {
-            }
-            
-            @Override
-            public void onError(String reason) {
-                System.out.println("PEER ACTIVITY NOT STARTED due to " + reason);
-            }
-        });
+        mHandler.sendEmptyMessage(0);
 		setContentView(odkView);
     }
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mHandler.removeMessages(0);
         commFun.unregisterReceivers(getApplicationContext());
     }
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -136,7 +149,8 @@ public class MainActivity extends Activity {
     public static enum ModeType {
         Main, Option, Highscore, Score, DestinedToPlay, Play, Exit
     }
-    class MyView extends View{
+
+    class MyView extends View {
     	public ModeType mode;
     	Point dsize;
     	Display display;
@@ -150,7 +164,7 @@ public class MainActivity extends Activity {
 			super(context);
 			mode= ModeType.Main; 
 			dsize = new Point(0,0);
-			mscreen = new MainScreen();
+			mscreen = new MainScreen(MainActivity.this);
 			recoder = new Recoder(slist);
 			option = new OptionScreen();
 			highscore = new HighScore(slist);
@@ -239,6 +253,4 @@ public class MainActivity extends Activity {
             return false;
 		}
     }
-    
-    
 }
