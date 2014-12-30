@@ -2,6 +2,7 @@ package com.odk.pairpong;
 
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 
 import com.algy.schedcore.frontend.SceneMgr;
@@ -20,6 +21,7 @@ public class PairPongBoardActivity extends AndroidApplication {
 		commFun = new QPairCommFunction("com.odk.pairpong");// new QPairCommFunction("com.odk.pairpongsender");
 		commFun.setContext(getApplicationContext());
 		if (commFun.isTablet()) {
+		    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             commFunRegistered = true;
             commFun.registerReceivers(this);
             initialize(new SceneMgr(new MainScene(commFun)));

@@ -657,7 +657,7 @@ public class GameScene extends Scene {
         				String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option.racketSize)*(1+0.1*option.gameMode))), 0, 640);
         	if(!score.isStuck()&&option.scoreMode!=1){
         		bfont.setColor(Color.GREEN);
-        		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 560);
+        		bfont.draw(batch, " Speed bonus : "+String.valueOf(score.getVscore()), 0, 560);
         	}
         }
         if(score.showAScore()){
