@@ -6,10 +6,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.KeyEvent;
@@ -18,6 +21,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.odk.pairpong.R;
 import com.odk.pairpong.comm.backend.QPairCommFunction;
 import com.odk.pairpong.comm.game.CommConstants;
 import com.odk.pairpong.comm.game.CommOption;
@@ -150,27 +154,38 @@ public class MainActivity extends Activity {
 			super(context);
 			mode= ModeType.Main; 
 			dsize = new Point(0,0);
-			mscreen = new MainScreen();
-			recoder = new Recoder(slist);
-			option = new OptionScreen();
-			highscore = new HighScore(slist);
 			display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
 			display.getSize(dsize);
+			TouchableObject btntitle = new TouchableObject(dsize.x/2, (int)(dsize.y*4/20), dsize.y*5/20, 
+					((BitmapDrawable)res.getDrawable(R.drawable.title)).getBitmap());
+			TouchableObject btnexit = new TouchableObject(dsize.x/2, dsize.y*18/20, dsize.y*2/20, 
+					((BitmapDrawable)res.getDrawable(R.drawable.btnexit)).getBitmap());
+			TouchableObject btnhscore = new TouchableObject(dsize.x/2, dsize.y*15/20, dsize.y*2/20, 
+					((BitmapDrawable)res.getDrawable(R.drawable.btnhighscore)).getBitmap());
+			TouchableObject btnoption = new TouchableObject(dsize.x/2, dsize.y*12/20, dsize.y*2/20, 
+					((BitmapDrawable)res.getDrawable(R.drawable.btnoption)).getBitmap());
+			TouchableObject btnstart = new TouchableObject(dsize.x/2, dsize.y*9/20, dsize.y*2/20, 
+					((BitmapDrawable)res.getDrawable(R.drawable.btngamestart)).getBitmap());
+			mscreen = new MainScreen(btntitle,btnstart,btnoption,btnhscore,btnexit);
+			recoder = new Recoder(slist,btnexit);
+			option = new OptionScreen(btnexit);
+			highscore = new HighScore(slist,btnexit);
 		}
 		public void onDraw(Canvas canvas) {
-			canvas.drawColor(Color.LTGRAY);
+			Bitmap bground = ((BitmapDrawable)res.getDrawable(R.drawable.background)).getBitmap();
+			canvas.drawBitmap(bground, null, new Rect(0, 0, dsize.x, dsize.y), Pnt);
 			switch (mode) {
 			case Main:
-				mscreen.Draw(canvas, Pnt, dsize.x, dsize.y);
+				mscreen.Draw(canvas, Pnt, dsize.x, dsize.y, res);
 				break;
 			case Option:
 				option.Draw(canvas, Pnt, dsize.x, dsize.y, res);
 			    break;
 			case Highscore:
-				highscore.Draw(canvas, Pnt, dsize.x, dsize.y);
+				highscore.Draw(canvas, Pnt, dsize.x, dsize.y, res);
 			    break;
 			case Score:
-				recoder.Draw(canvas, Pnt, dsize.x, dsize.y, receivedScore);
+				recoder.Draw(canvas, Pnt, dsize.x, dsize.y, receivedScore, res);
 			    break;
             default:
                 break;
@@ -187,7 +202,7 @@ public class MainActivity extends Activity {
                 
                 switch (mode) {
                 case Main:
-                    mode = mscreen.TouchEvent(event, dsize.x, dsize.y);
+                    mode = mscreen.TouchEvent(event);
                     break;
                 case Option:
                     mode = option.TouchEvent(event, dsize.x, dsize.y);

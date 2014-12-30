@@ -1,23 +1,30 @@
 package com.odk.pairpongsender;
 
+import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.view.MotionEvent;
 
+import com.odk.pairpong.R;
 import com.odk.pairpongsender.MainActivity.ModeType;
 
 public class HighScore {
 	int textsize;
 	ScoreList scorelist;
-	public HighScore(ScoreList slist){
+	TouchableObject texit;
+	public HighScore(ScoreList slist, TouchableObject exit){
 		scorelist = slist;
+		texit = exit;
 	}
-	public void Draw(Canvas canvas, Paint pnt, int x, int y) {
+	public void Draw(Canvas canvas, Paint pnt, int x, int y, Resources res) {
 		textsize=Math.min(x/8,y/6);
 		textsize=textsize/2;
 		pnt.setTextSize(textsize);
-		pnt.setColor(Color.BLACK);
+		pnt.setColor(Color.WHITE);
 		canvas.drawText("High Score", x/2-textsize*2.48f, y/10, pnt);
 		textsize=textsize/2;
 		pnt.setTextSize(textsize);
@@ -33,18 +40,11 @@ public class HighScore {
 			canvas.drawText(scorelist.scores[n].name, x*7/12, y*(4+n)/12, pnt);
 			canvas.drawText(String.valueOf(scorelist.scores[n].date), x*9/12, y*(4+n)/12, pnt);
 		}
-		canvas.drawRect(x/3, y*5/6, x*2/3, y*19/20, pnt);		
-		pnt.setTextSize(textsize);
-		pnt.setColor(Color.WHITE);
-		canvas.drawText("Exit", x/2-textsize*1f, y*109/120, pnt);
+		texit.Draw(canvas, pnt);
 	}
 	public ModeType TouchEvent(MotionEvent event, int x, int y) {
-		if(event.getX()>x/3&&event.getX()<x*2/3&&event.getAction()==MotionEvent.ACTION_DOWN){
-			if(event.getY()>y*5/6&&event.getY()<y*19/20){
-				return ModeType.Main;
-			}
-			return ModeType.Highscore;
-		}
+		if(texit.isTouched((int)event.getX(), (int)event.getY())&&event.getAction()==MotionEvent.ACTION_DOWN)
+			return ModeType.Main;
 		return ModeType.Highscore;
 	}
 
