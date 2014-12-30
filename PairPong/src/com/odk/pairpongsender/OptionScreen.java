@@ -30,22 +30,22 @@ public class OptionScreen {
 		pnt.setTextSize(textsize);
 		canvas.drawText("Racket size", x/12, y/4, pnt);
 		canvas.drawText("Large", x*2/20, y/3, pnt);
-		canvas.drawText("Regular", x*6/20, y/3, pnt);
-		canvas.drawText("Small", x*10/20, y/3, pnt);
+		canvas.drawText("Regular", x*7/20, y/3, pnt);
+		canvas.drawText("Small", x*12/20, y/3, pnt);
 		canvas.drawText("Bonus Score", x/12, y*5/12, pnt);
 		canvas.drawText("Velocity", x*2/20, y/2, pnt);
-		canvas.drawText("Accuracy", x*6/20, y/2, pnt);
-		canvas.drawText("Both", x*10/20, y/2, pnt);
+		canvas.drawText("Accuracy", x*7/20, y/2, pnt);
+		canvas.drawText("Both", x*12/20, y/2, pnt);
 		canvas.drawText("Game mode", x/12, y*7/12, pnt);
 		canvas.drawText("Classic", x*2/20, y*2/3, pnt);
-		canvas.drawText("Servive", x*6/20, y*2/3, pnt);
-		canvas.drawText("InfCombo", x*10/20, y*2/3, pnt);
+		canvas.drawText("Servive", x*7/20, y*2/3, pnt);
+		canvas.drawText("InfCombo", x*12/20, y*2/3, pnt);
 		for(int n=0;n<3;n++){
-			canvas.drawRect(x*9/40, y*(17+10*n)/60, x*11/40, y*(2+n)/6, pnt);
-			canvas.drawRect(x*17/40, y*(17+10*n)/60, x*19/40, y*(2+n)/6, pnt);
-			canvas.drawRect(x*25/40, y*(17+10*n)/60, x*27/40, y*(2+n)/6, pnt);
-			canvas.drawBitmap(check, null, new Rect(x*(9+8*MainActivity.options[n])/40, y*(17+10*n)/60,
-					x*(11+8*MainActivity.options[n])/40, y*(2+n)/6), pnt);
+			canvas.drawRect(x*11/40, y*(17+10*n)/60, x*13/40, y*(2+n)/6, pnt);
+			canvas.drawRect(x*21/40, y*(17+10*n)/60, x*23/40, y*(2+n)/6, pnt);
+			canvas.drawRect(x*31/40, y*(17+10*n)/60, x*33/40, y*(2+n)/6, pnt);
+			canvas.drawBitmap(check, null, new Rect(x*(11+10*MainActivity.options[n])/40, y*(17+10*n)/60,
+					x*(13+10*MainActivity.options[n])/40, y*(2+n)/6), pnt);
 		}
 		texit.Draw(canvas, pnt);
 	}
@@ -53,7 +53,7 @@ public class OptionScreen {
 		for(int l=0;l<3;l++){
 			if(event.getY()>y*(16+10*l)/60&&event.getY()<y*(21+10*l)/60&&event.getAction()==MotionEvent.ACTION_DOWN){
 				for(int n=0;n<3;n++){
-					if(event.getX()>x*(8+8*n)/40&&event.getX()<x*(11+8*n)/40){
+					if(event.getX()>x*(11+10*n)/40&&event.getX()<x*(13+10*n)/40){
 						MainActivity.options[l]=n;
 					}
 				}

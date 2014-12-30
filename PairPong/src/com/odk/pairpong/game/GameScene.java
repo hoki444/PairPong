@@ -496,7 +496,7 @@ public class GameScene extends Scene {
                     score.timePass();
                 else{
                 	musictime++;
-                	if(musictime>2100&&option.gameMode!=0){
+                	if(musictime>2190&&option.gameMode!=0){
                 		musictime=0;
                 		bgroundSound.stop();
                 		bgroundSound.play();

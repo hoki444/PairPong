@@ -61,7 +61,6 @@ public class Recoder {
             canvas.drawText("Your Score : "+ String.valueOf(myscore), x/6, y*9/12, pnt);
             if(rank<6)
                 canvas.drawText("You did rank "+ String.valueOf(rank)+"!", x/2, y*9/12, pnt);
-            canvas.drawRect(x/3, y*5/6, x*2/3, y*19/20, pnt);
     		texit.Draw(canvas, pnt);
         } else{
             canvas.drawText("You did rank "+ String.valueOf(rank)+"!", x/6, y/4, pnt);
