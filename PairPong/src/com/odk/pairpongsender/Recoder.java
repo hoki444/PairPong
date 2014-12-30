@@ -81,7 +81,6 @@ public class Recoder {
             canvas.drawText("del", x*9/11, y*9/12, pnt);
             canvas.drawText("_", x*(12+nowpointer)/24, y/3+5, pnt);
             canvas.drawText("Press Your Name :", x/6, y/3, pnt);
-            canvas.drawRect(x/3, y*5/6, x*2/3, y*19/20, pnt);
     		texit.Draw(canvas, pnt);
         } 
 	}
@@ -90,7 +89,7 @@ public class Recoder {
 			names[nowpointer]=(char)(48+n);
 		if(10*m+n>=0 && 10*m+n<26)
 			names[nowpointer]=(char)(65+10*m+n);
-		if(10*m+n==28){
+		if(10*m+n==28||10*m+n==29){
 			names[nowpointer]=' ';
 			if(nowpointer>0)
 				nowpointer-=2;
