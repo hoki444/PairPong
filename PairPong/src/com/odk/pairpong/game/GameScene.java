@@ -364,19 +364,19 @@ public class GameScene extends Scene {
         boardItemt.add(new ModelComp(boxModelt));
        
         btCompoundShape racketCollShape = new btCompoundShape();
-        racketCollShape.addChildShape(new Matrix4().set(new Vector3(-.75f*(1.5f-0.5f*option.racketSize), 
-        		.03f*(1.5f-0.5f*option.racketSize), .03f*(1.5f-0.5f*option.racketSize)), new Quaternion()),
-        		new btBoxShape(new Vector3(.48f*(1.5f-0.5f*option.racketSize), .1f*(1.5f-0.5f*option.racketSize), 
-        				.42f*(1.5f-0.5f*option.racketSize))));
-        racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f*(1.5f-0.5f*option.racketSize),
-        		.03f*(1.5f-0.5f*option.racketSize), .03f*(1.5f-0.5f*option.racketSize)), new Quaternion()),
-        		new btBoxShape(new Vector3(.9f*(1.5f-0.5f*option.racketSize), .1f*(1.5f-0.5f*option.racketSize),
-        				.1f*(1.5f-0.5f*option.racketSize))));
+        racketCollShape.addChildShape(new Matrix4().set(new Vector3(-.75f*(1.5f-0.35f*option.racketSize), 
+        		.03f*(1.5f-0.35f*option.racketSize), .03f*(1.5f-0.35f*option.racketSize)), new Quaternion()),
+        		new btBoxShape(new Vector3(.48f*(1.5f-0.35f*option.racketSize), .1f*(1.5f-0.35f*option.racketSize), 
+        				.42f*(1.5f-0.35f*option.racketSize))));
+        racketCollShape.addChildShape(new Matrix4().set(new Vector3(.45f*(1.5f-0.35f*option.racketSize),
+        		.03f*(1.5f-0.35f*option.racketSize), .03f*(1.5f-0.35f*option.racketSize)), new Quaternion()),
+        		new btBoxShape(new Vector3(.9f*(1.5f-0.35f*option.racketSize), .1f*(1.5f-0.35f*option.racketSize),
+        				.1f*(1.5f-0.35f*option.racketSize))));
 
         racketItem = new GameItem(new Transform(new Vector3(-2, 2.2f, 0),
 			 new Quaternion(new Vector3(0, 0, -1), 90),
-			 new Vector3(0.03f*(1.5f-0.5f*option.racketSize), 0.03f*(1.5f-0.5f*option.racketSize),
-					 0.03f*(1.5f-0.5f*option.racketSize))));
+			 new Vector3(0.03f*(1.5f-0.35f*option.racketSize), 0.03f*(1.5f-0.35f*option.racketSize),
+					 0.03f*(1.5f-0.35f*option.racketSize))));
         racketItem.add(BtRigidBodyComp
                       .dynamicBody(racketCollShape, 1000, new CollisionFilter(GROUP_RACKET, GROUP_BALL))
                       .setFriction(Frictions)
@@ -513,7 +513,12 @@ public class GameScene extends Scene {
                 float destTheta;
                 synchronized (lockRacketIntpt) {
                     posXIntp.setState(racketTr.z);
-                    posYIntp.setDestState(core.getItemWithName("ball").getTransform().getTranslation(new Vector3()).y-0.75f*(1.5f-0.5f*option.racketSize));
+                    nowY=core.getItemWithName("ball").getTransform().getTranslation(new Vector3()).y-0.75f*(1.5f-0.35f*option.racketSize);
+                    if(nowY<0)
+                    	nowY=0;
+                    if(nowY>4)
+                    	nowY=4;
+                    posYIntp.setDestState(nowY);
                     posYIntp.setState(racketTr.y);
                     destTheta = (90 + (90 - rawTheta) * 0.8f);
                 }
@@ -566,11 +571,12 @@ public class GameScene extends Scene {
     Score score;
 	BitmapFont bfont;
 	SpriteBatch batch;
+	float nowY = 0;
 
     private StateInterpolater posXIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     private StateInterpolater posYIntp = new StateInterpolater(0.1f, 1.f, 0, 10);
     float rawTheta = 0;
-    static final int RACKET_SPEED = 5;
+    static final int RACKET_SPEED = 6;
     
     
     private Object lockRacketIntpt = new Object();
