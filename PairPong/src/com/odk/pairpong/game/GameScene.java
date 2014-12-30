@@ -17,7 +17,7 @@ import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.PointLightComp;
 import com.algy.schedcore.middleend.Transform;
-import com.algy.schedcore.middleend.bullet.BtDebugDrawerComp;
+//import com.algy.schedcore.middleend.bullet.BtDebugDrawerComp;
 import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
@@ -51,6 +51,7 @@ import com.odk.pairpong.comm.game.CommRacketCollision;
 import com.odk.pairpong.comm.game.CommRacketMoveCmd;
 import com.odk.pairpong.comm.general.CommFunction;
 import com.odk.pairpong.comm.general.MessageListener;
+import com.odk.pairpongsender.MainActivity;
 
 class MyCollision extends CollisionComp {
 	GameItem ballItem;
@@ -101,9 +102,7 @@ class BackCollision extends CollisionComp {
 	@Override
 	public void beginCollision(GameItem other) {
 		if(score.getCombo()!=0){
-			Vector3 tempv =new Vector3();
-			other.getTransform().getTranslation(tempv);
-			score.addAScore(tempv.y);
+			score.addAScore();
 		}
 	}
 
@@ -120,7 +119,6 @@ class Score{
 	private float startspeed;
 	private int scoretime;
 	private int vscore;
-	private int ascore;
 	private int life;
 	private CommOption option;
 	public Score(CommOption o){
@@ -200,26 +198,15 @@ class Score{
 	}
 	public void addVScore(float endspeed){
 		vscore=(int) ((startspeed+endspeed)*10*(0.5+0.5*option.racketSize)
-				*(1-0.2*option.scoreMode)*(1+0.1*option.gameMode));
+				*(1+0.1*option.gameMode))*combo;
 		score+=vscore;
 	}
-	public void addAScore(float hity){
-		if(option.scoreMode!=0){
-			ascore=(int) ((200-(1.33-hity)*(1.33-hity)*122)*(0.5+0.5*option.racketSize)
-					*(1.4-0.4*option.scoreMode)*(1+0.1*option.gameMode));
-			if(ascore>0){
-				score+=ascore;
-				ascoretime=30;
-			}
-		}
+	public void addAScore(){
 		if(isStuck())
 			stucktime=1;
 	}
 	public int getVscore(){
 		return vscore;
-	}
-	public int getAscore(){
-		return ascore;
 	}
 }
 
@@ -339,7 +326,7 @@ public class GameScene extends Scene {
     	float Restitutions=0.98f;
     
     	GameItem boardItembo = new GameItem(),
-    			 debugdrawItem = new GameItem(new BtDebugDrawerComp()),
+    			 //debugdrawItem = new GameItem(new BtDebugDrawerComp()),
 				 wallItem = new GameItem(),
                  lightItem = new GameItem(),
                  removerItem = new GameItem();
@@ -465,7 +452,8 @@ public class GameScene extends Scene {
                                        .lookAt(new Vector3(0, 2f, 0))
                                        .setUpVector(new Vector3(1, 0, 0))
                                        .setRange(1, 100);
-        bgroundSound.play();
+        if(option.soundMode%2==0)
+        	bgroundSound.play();
         /*
          * schedule periodic jobs
          */
@@ -484,7 +472,7 @@ public class GameScene extends Scene {
                     score.setLife(score.getLife()-1);
                 }
                 
-                if(score.reduceStuck()&&option.scoreMode!=1) {
+                if(score.reduceStuck()) {
                     score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
                 }
 
@@ -498,8 +486,10 @@ public class GameScene extends Scene {
                 	musictime++;
                 	if(musictime>2190&&option.gameMode!=0){
                 		musictime=0;
-                		bgroundSound.stop();
-                		bgroundSound.play();
+                		if(option.soundMode%2==0){
+                			bgroundSound.stop();
+                			bgroundSound.play();
+                		}
                 	}
                 }
             }
@@ -655,14 +645,10 @@ public class GameScene extends Scene {
         	if(score.getCombo()!=0)
         		bfont.draw(batch, String.valueOf(score.getCombo())+" Combo : "+
         				String.valueOf((int)((2*score.getCombo()-1)*100*(0.5+0.5*option.racketSize)*(1+0.1*option.gameMode))), 0, 640);
-        	if(!score.isStuck()&&option.scoreMode!=1){
+        	if(!score.isStuck()){
         		bfont.setColor(Color.GREEN);
         		bfont.draw(batch, " Velocity bonus : "+String.valueOf(score.getVscore()), 0, 560);
         	}
-        }
-        if(score.showAScore()){
-        	bfont.setColor(Color.BLUE);
-        	bfont.draw(batch, " Accuacy bonus : "+String.valueOf(score.getAscore()), 0, 480);
         }
 
         // HUD sprites
@@ -699,10 +685,14 @@ public class GameScene extends Scene {
                     .setScale(0.2f, 0.2f)
                     .setAlpha(1.f, 0f);
 
-
-        wallSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
-        racketSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
-        bgroundSound = Gdx.audio.newMusic(Gdx.files.internal("bgm.mp3"));
+        if(option.soundMode<2){
+        	wallSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
+        	racketSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
+        }
+        if(option.specialMode==2)
+        	bgroundSound = Gdx.audio.newMusic(Gdx.files.internal("bgm.mp3"));
+        else
+        	bgroundSound = Gdx.audio.newMusic(Gdx.files.internal("bgm.mp3"));
         bgroundSound.setLooping(true);
 
         boxModelbo = new ModelBuilder().createBox(6, .2f, 6, 

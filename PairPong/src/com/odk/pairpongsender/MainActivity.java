@@ -211,7 +211,7 @@ public class MainActivity extends Activity {
 			};
 			mscreen = new MainScreen(btntitle,btnstart,btnoption,btnhscore,btnexit);
 			recoder = new Recoder(slist,btnexit);
-			option = new OptionScreen(btnexit);
+			option = new OptionScreen(btnexit,res,dsize.x,dsize.y);
 			highscore = new HighScore(slist,btnexit);
 		}
 		public void onDraw(Canvas canvas) {

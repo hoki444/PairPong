@@ -116,6 +116,8 @@ public class Recoder {
 				return ModeType.Main;
 			} else {
 				name=String.valueOf(names);
+				if(name.equals("MIKU    ")||myscore==3939||(myscore>=39000&&myscore<40000))
+					MainActivity.options[3]=1;
 				showscore=true;
 				scorelist.update(rank,myscore,name,
 						new SimpleDateFormat("MM/dd HH:mm").format(new Date(System.currentTimeMillis())),
