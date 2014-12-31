@@ -1,6 +1,6 @@
 package com.algy.schedcore.frontend.idl.reflection.templates;
 
-import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.BaseCompMgr;
 import com.algy.schedcore.frontend.idl.IDLGameContext;
 import com.algy.schedcore.frontend.idl.reflection.IDLCompServerTemplate;
 import com.algy.schedcore.frontend.idl.reflection.SelectiveGroup;
@@ -27,7 +27,7 @@ public class CameraServerTemplate extends IDLCompServerTemplate {
     public Orthographic orthographic = null;
 
     @Override
-    protected BaseCompServer create(IDLGameContext context) {
+    protected BaseCompMgr create(IDLGameContext context) {
         if (position == null) {
             position = new Vector3(0, 0, 1);
         }
@@ -57,7 +57,7 @@ public class CameraServerTemplate extends IDLCompServerTemplate {
     }
 
     @Override
-    protected void modify(IDLGameContext context, BaseCompServer server) {
+    protected void modify(IDLGameContext context, BaseCompMgr server) {
         CameraServer cameraServer = (CameraServer)server;
         if (perspective != null || orthographic != null) {
             boolean isPersp = cameraServer.isPerspective();

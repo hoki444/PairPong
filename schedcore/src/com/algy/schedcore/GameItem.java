@@ -1,19 +1,19 @@
-package com.algy.schedcore.middleend;
+package com.algy.schedcore;
 
-import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.ICore;
-import com.algy.schedcore.Item;
+import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.asset.AssetList;
 import com.algy.schedcore.middleend.asset.AssetServer;
 import com.algy.schedcore.middleend.asset.AssetUsable;
+import com.algy.schedcore.util.Item;
+import com.algy.schedcore.util.LinkedListCell;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
-public class GameItem extends Item<BaseComp, ICore> {
-    GameItem prev = null, next = null;
-    private String name = null;
+public class GameItem extends Item<BaseComp, GameItemSpace> implements LinkedListCell {
+    private GameItem prev = null, next = null;
+    private BaseItemType itemType = DefaultItemType.instance;
+    
 
     public GameItem() {
         super(BaseComp.class);
@@ -41,17 +41,20 @@ public class GameItem extends Item<BaseComp, ICore> {
         this.add(transform);
     }
 
-    public String getName () {
-        return name;
+    public BaseItemType getItemType () {
+        return itemType;
     }
     
-    public void setName (String newName) {
-        GameCore core = core();
-        String oldName = name;
-        this.name = newName;
-        if (core != null) {
-            core.updateNameMap(this, oldName);
+    public void setItemType (BaseItemType newType) {
+        GameItemSpace itemSpace = getGameItemSpace();
+        BaseItemType oldType = this.getItemType();
+        oldType.attachTo(null);
+
+        this.itemType = newType;
+        if (itemSpace != null) {
+            itemSpace.updateTypeMap(this, oldType);
         }
+        newType.attachTo(this);
     }
     
     public void getUsedAsset (AssetList assetListOut) {
@@ -72,11 +75,13 @@ public class GameItem extends Item<BaseComp, ICore> {
         }
         for (BaseComp comp : this) {
             if (!(comp instanceof Transform)) {
-                BaseComp copiedComp = (BaseComp)comp.duplicate();
+                BaseComp copiedComp = comp.duplicate();
                 if (copiedComp != null)
                     newItem.add(copiedComp);
             }
         }
+        newItem.setItemType(newItem.getItemType().duplicate());
+
         return newItem;
     }
 
@@ -94,21 +99,49 @@ public class GameItem extends Item<BaseComp, ICore> {
     
     public GameItem duplicate () {
         return duplicate((Matrix4)null);
-
     }
+
     public Transform getTransform() {
         return this.as(Transform.class);
     }
     
-    protected GameCore core () {
-        return (GameCore)owner();
+    protected GameItemSpace getGameItemSpace () {
+        return owner();
     }
     
-    protected <T extends BaseCompServer> T server(Class<T> serverClass) {
-        return core().server(serverClass);
+    protected <T extends BaseCompMgr> T getCompManager(Class<T> serverClass) {
+        return owner().getCompMgrSpace().as(serverClass);
     }
+    
     
     protected AssetServer assetServer() {
-        return server(AssetServer.class);
+        return getCompManager(AssetServer.class);
     }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        removeAll();
+    }
+
+    @Override
+    public LinkedListCell getNext() {
+        return next;
+    }
+
+    @Override
+    public LinkedListCell getPrev() {
+        return prev;
+    }
+
+    @Override
+    public void setPrev(LinkedListCell cell) {
+        this.prev = (GameItem)cell;
+    }
+
+    @Override
+    public void setNext(LinkedListCell cell) {
+        this.next = (GameItem)cell;
+    }
+    
 }

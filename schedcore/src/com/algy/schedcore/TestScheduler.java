@@ -1,6 +1,5 @@
 package com.algy.schedcore;
 
-import com.algy.schedcore.Scheduler.Task;
 
 
 public class TestScheduler {
@@ -14,33 +13,36 @@ public class TestScheduler {
     public static void main (String [] args) throws InterruptedException {
         final Scheduler schd = Scheduler.MilliScheduler();
         
-        final Task t = schd.addPeriodic(new SchedTask() {
+        final TaskController t = schd.schedule(0, 2000, new SchedTask() {
             public void onScheduled(SchedTime time) {
                 Fib(40);
                 System.out.println("P0:" + System.currentTimeMillis());
             }
             
-            public void endSchedule() {
+            public void endSchedule(TaskController t) {
+                System.out.println("ETime: " + t.getAverageExecTime());
             }
             
-            public void beginSchedule() {
+            public void beginSchedule(TaskController t) {
             }
-        }, 2000, 0, "P90");
-        t.suspend();
+        });
         for (int idx = 0; idx < 1; idx++) {
-            schd.addPeriodic(
+            schd.schedule(0, 50,
                     new SchedTask() {
                         int num = 0;
                         public void onScheduled(SchedTime time) {
                             num++;
                             System.out.println("P50:" + System.currentTimeMillis());
+                            if (num >= 10) {
+                                schd.kill(0);
+                            }
                         }
-                        public void endSchedule() {
+                        public void endSchedule(TaskController t) {
                         }
                         
-                        public void beginSchedule() {
+                        public void beginSchedule(TaskController t) {
                         }
-            }, 50, 0, "P50");
+            });
         }
         while (true) {
             schd.runOnce();

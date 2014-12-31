@@ -1,7 +1,6 @@
 package com.odk.pairpong.game;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.IComp;
 
 public class BallStateComp extends BaseComp {
     public boolean isRollingOnGround;
@@ -11,7 +10,7 @@ public class BallStateComp extends BaseComp {
     }
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new BallStateComp(isRollingOnGround);
     }
 

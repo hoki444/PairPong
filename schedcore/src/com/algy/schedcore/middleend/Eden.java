@@ -3,7 +3,8 @@ package com.algy.schedcore.middleend;
 import java.util.Map.Entry;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.BaseCompMgr;
+import com.algy.schedcore.GameItem;
 import com.algy.schedcore.KeyError;
 import com.algy.schedcore.middleend.asset.AssetList;
 import com.algy.schedcore.util.Lister;
@@ -12,7 +13,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
-public class Eden extends BaseCompServer {
+public class Eden extends BaseCompMgr {
     private ObjectDirectory <GameItem> directory = new ObjectDirectory<GameItem>();
 
     public Eden () {

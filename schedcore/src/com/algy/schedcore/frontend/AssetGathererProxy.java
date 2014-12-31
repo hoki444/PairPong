@@ -1,6 +1,6 @@
 package com.algy.schedcore.frontend;
 
-import com.algy.schedcore.middleend.GameItem;
+import com.algy.schedcore.GameItem;
 import com.algy.schedcore.middleend.asset.AssetList;
 import com.algy.schedcore.middleend.asset.AssetSig;
 

@@ -1,6 +1,6 @@
 package com.algy.schedcore.middleend;
 
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.util.ResourceBox;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
@@ -34,7 +34,7 @@ public class ModelComp extends Renderable3DComp {
     }
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new ModelComp(modelBox, localTransform);
     }
 
@@ -44,7 +44,7 @@ public class ModelComp extends Renderable3DComp {
     }
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
     }
 
     @Override

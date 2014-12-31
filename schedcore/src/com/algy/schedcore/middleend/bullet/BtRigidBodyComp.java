@@ -1,6 +1,6 @@
 package com.algy.schedcore.middleend.bullet;
 
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.middleend.Transform;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
@@ -109,7 +109,7 @@ public class BtRigidBodyComp extends BtColliderComp {
 
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         BtRigidBodyComp result = new BtRigidBodyComp(shape, 
                                    getMass(), 
                                    new Vector3(getLocalInertia()), 
@@ -128,7 +128,7 @@ public class BtRigidBodyComp extends BtColliderComp {
 
     
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
         Transform tr = owner().as(Transform.class);
         forceMove(tr.get());
         tr.notifySynced();

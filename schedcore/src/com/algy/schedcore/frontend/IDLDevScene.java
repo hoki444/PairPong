@@ -3,14 +3,14 @@ package com.algy.schedcore.frontend;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.BaseSchedServer;
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
+import com.algy.schedcore.BaseCompMgr;
+import com.algy.schedcore.BaseSchedMgr;
+import com.algy.schedcore.GameItem;
+import com.algy.schedcore.GameItemSpace;
 import com.algy.schedcore.frontend.idl.IDLError;
 import com.algy.schedcore.frontend.idl.IDLLoader;
 import com.algy.schedcore.frontend.idl.IDLResult;
-import com.algy.schedcore.middleend.GameCore;
-import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.InputComp;
 import com.algy.schedcore.middleend.asset.AssetList;
 import com.algy.schedcore.middleend.asset.AssetLoadingController;
@@ -22,7 +22,6 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.BitmapFont.HAlignment;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 
 
 public class IDLDevScene extends Scene {
@@ -71,7 +70,7 @@ public class IDLDevScene extends Scene {
         GameItem stopTheWorldItem = new GameItem();
         stopTheWorldItem.add(new InputComp() {
             @Override
-            public IComp duplicate() {
+            public BaseComp duplicate() {
                 return null;
             }
             @Override
@@ -115,14 +114,14 @@ public class IDLDevScene extends Scene {
                 if (keycode == Input.Keys.R) {
                     reloadingRequired = true;
                 } else if (keycode == Input.Keys.SPACE) {
-                    GameCore core = (GameCore)core();
+                    GameItemSpace core = (GameItemSpace)core();
                     if (stop) {
                         for (GameItem gameItem : core) {
                             core.suspendItem(gameItem);
                         }
-                        for (BaseCompServer server : core.servers()) {
-                            if (server instanceof BaseSchedServer) {
-                                ((BaseSchedServer)server).getTask().suspend();
+                        for (BaseCompMgr server : core.getCompMgrSpace()) {
+                            if (server instanceof BaseSchedMgr) {
+                                ((BaseSchedMgr)server).getTask().suspend();
                             }
                         }
                         setInfo("[Core Suspended]");
@@ -131,9 +130,9 @@ public class IDLDevScene extends Scene {
                         for (GameItem gameItem : core) {
                             core.resumeItem(gameItem);
                         }
-                        for (BaseCompServer server : core.servers()) {
-                            if (server instanceof BaseSchedServer) {
-                                ((BaseSchedServer)server).getTask().resume();
+                        for (BaseCompMgr server : core.getCompMgrSpace()) {
+                            if (server instanceof BaseSchedMgr) {
+                                ((BaseSchedMgr)server).getTask().resume();
                             }
                         }
                         setInfo("[Core Resumed]");

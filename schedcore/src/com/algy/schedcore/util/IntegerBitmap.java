@@ -6,17 +6,19 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class IntegerBitmap <T> implements Iterable<T> {
-    static final int DEFAULT_WINDOW_THRESHOLD = 4096;
+    public static final int DEFAULT_WINDOW_THRESHOLD = 4096;
 
     private ArrayList<T> tbl;
     // Id queue of task whose id is less than idWindowSize but which is usable slot
-    Queue<Integer> availableIds; 
+    private Queue<Integer> availableIds; 
 
     private int realSize;
     private int idWindowSize;
     private int idWindowSizeLim;
     
-    public IntegerBitmap (int firstWindowThreshold) {
+    private T sentinel;
+    
+    public IntegerBitmap (int firstWindowThreshold, T sentinel) {
         // invariant: tbl.size() <= idWindowSize
         this.availableIds = new LinkedList<Integer>();
         this.tbl = new ArrayList<T>(firstWindowThreshold);
@@ -27,18 +29,19 @@ public class IntegerBitmap <T> implements Iterable<T> {
         this.realSize = 0;
         this.idWindowSize = 0;
         this.idWindowSizeLim = firstWindowThreshold;
+        this.sentinel = sentinel;
     }
     
-    public IntegerBitmap () {
-        this(DEFAULT_WINDOW_THRESHOLD);
+    public IntegerBitmap (T sentinel) {
+        this(DEFAULT_WINDOW_THRESHOLD, sentinel);
     }
     
-    public int size () {
+    public synchronized int size () {
         return realSize;
     }
     
-    public int add (T elem) {
-        // invariant: tblTask.size() <= idWindowSize
+    public synchronized int add (T elem) {
+        // invariant: tbl.size() <= idWindowSize
         int id;
         if (this.idWindowSize >= this.idWindowSizeLim) {
             if (this.availableIds.isEmpty()) {
@@ -59,28 +62,57 @@ public class IntegerBitmap <T> implements Iterable<T> {
         return id;
     }
     
-    public boolean has (int id) {
-        return id >= 0 && 
-               id < this.idWindowSize && 
-               tbl.get(id) != null;
+    private boolean _has (int id) {
+        if (id >= 0 && id < this.idWindowSize) {
+           T cell = tbl.get(id);
+           if (cell != null && cell != sentinel) {
+               return true;
+           }
+        }
+        return false;
     }
     
-    public T remove (int id) {
-        if (!has(id))
+    public synchronized boolean has (int id) {
+        return _has(id);
+    }
+    
+    public synchronized T remove (int id) {
+        if (!_has(id))
             return null;
         T res = tbl.get(id);
-        tbl.set(id, null);
-        availableIds.add(id);
+        tbl.set(id, sentinel);
+        if (sentinel == null) {
+            availableIds.add(id);
+        }
         this.realSize--;
         return res;
     }
     
-    public T get (int id) {
-        if (!has(id)) {
+    public synchronized T get (int id) {
+        if (!_has(id)) {
             return null;
         } else {
             return tbl.get(id);
         }
+    }
+    
+    private synchronized boolean isInsideTblBorder(int idx) {
+        return idx < tbl.size();
+    }
+    
+    public synchronized boolean releaseId (int id) {
+        if (sentinel == null) {
+            return true;
+        }
+
+        if (!_has(id))
+            return false;
+        T cell = tbl.get(id);
+        if (cell != sentinel)
+            return false;
+        tbl.set(id, null);
+        availableIds.add(id);
+        return true;
     }
 
     @Override
@@ -92,13 +124,13 @@ public class IntegerBitmap <T> implements Iterable<T> {
                 readyIdx();
             }
             private void readyIdx( ) {
-                while (idx < tbl.size() && !has(idx)) 
+                while (isInsideTblBorder(idx) && !has(idx))
                     idx++;
             }
 
             @Override
             public boolean hasNext() {
-                return idx < tbl.size();
+                return isInsideTblBorder(idx);
             }
 
             @Override

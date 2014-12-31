@@ -2,18 +2,18 @@ package com.algy.schedcore.frontend;
 
 import java.util.ArrayList;
 
-import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.Item;
+import com.algy.schedcore.BaseCompMgr;
+import com.algy.schedcore.GameItem;
+import com.algy.schedcore.GameItemSpace;
 import com.algy.schedcore.SchedTask;
+import com.algy.schedcore.SchedTaskConfig;
 import com.algy.schedcore.SchedTime;
 import com.algy.schedcore.Scheduler;
-import com.algy.schedcore.Scheduler.Task;
+import com.algy.schedcore.TaskController;
 import com.algy.schedcore.frontend.idl.IDLGameContext;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.Eden;
 import com.algy.schedcore.middleend.EnvServer;
-import com.algy.schedcore.middleend.GameCore;
-import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.InputPushServer;
 import com.algy.schedcore.middleend.Render3DServer;
 import com.algy.schedcore.middleend.asset.AssetList;
@@ -21,6 +21,7 @@ import com.algy.schedcore.middleend.asset.AssetLoadingController;
 import com.algy.schedcore.middleend.asset.AssetServer;
 import com.algy.schedcore.middleend.asset.LazyAssetManager;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
+import com.algy.schedcore.util.Item;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g3d.Environment;
@@ -28,11 +29,11 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.math.Vector3;
 
 class UpdatableItemRsrvTbl implements ItemReservable {
-    private Item<BaseCompServer, Object> serverItem = new Item<BaseCompServer, Object>(BaseCompServer.class);
+    private Item<BaseCompMgr, Object> serverItem = new Item<BaseCompMgr, Object>(BaseCompMgr.class);
     private ArrayList<GameItem> gameItemList = new ArrayList<GameItem>();
 
     @Override
-    public void reserveServer(BaseCompServer server) {
+    public void reserveServer(BaseCompMgr server) {
         if (serverItem.has(server.getClass())) {
             serverItem.remove(server.getClass());
         }
@@ -50,13 +51,13 @@ class UpdatableItemRsrvTbl implements ItemReservable {
     }
 
     @Override
-    public Iterable<BaseCompServer> reservedServers() {
+    public Iterable<BaseCompMgr> reservedServers() {
         return serverItem;
     }
 
     @Override
-    public void reserveServer(Iterable<BaseCompServer> servers) {
-        for (BaseCompServer server : servers)
+    public void reserveServer(Iterable<BaseCompMgr> servers) {
+        for (BaseCompMgr server : servers)
             reserveServer(server);
     }
 
@@ -129,7 +130,7 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     private final Scheduler scheduler = Scheduler.MilliScheduler();
     private SchedulerUpdater schedUpdater = new SchedulerUpdater(scheduler);
 
-    protected final GameCore core = new GameCore(scheduler);
+    protected final GameItemSpace core = new GameItemSpace(scheduler);
 
     protected SceneMgr manager;
     protected SceneConfig config;
@@ -151,7 +152,7 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         return manager.eden;
     }
     
-    public final GameCore core () {
+    public final GameItemSpace core () {
         return core;
     }
 
@@ -226,22 +227,22 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         }
 
         @Override
-        public void beginSchedule() {
+        public void beginSchedule(TaskController t) {
         }
 
         @Override
-        public void endSchedule() {
+        public void endSchedule(TaskController t) {
         }
     }
     
     private RenderControl renderControl;
-    private Task renderTask = null;
+    private TaskController renderTask = null;
     private void internalPreparation () {
         this.modelBatch = new ModelBatch();
         this.first = true;
         
         long period = config.itemRenderingPeriod;
-        renderTask = scheduler.addPeriodic(new RenderTask(), period, 0, null);
+        renderTask = schedule(0, period, new RenderTask());
         suspendRendering();
     }
     private void internalPreRender () {
@@ -329,11 +330,20 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
 
     final void render () {
         Environment env;
-
-        if (core.getServerItem().has(CameraServer.class)) {
-            modelBatch.begin(core.server(CameraServer.class).getCamera());
-            env = core.server(EnvServer.class).makeEnvironment();
-            core.server(Render3DServer.class).render(modelBatch, env);
+        // core -> ItemSpace
+        // server -> item
+        // Where is eden supposed to be located?
+        //
+        // Draw Using ShaderedBatch
+        // Draw Using DecalBatch
+        // Draw Using SpriteBatch 
+        //
+        //
+        
+        if (core.getCompMgrSpace().has(CameraServer.class)) {
+            modelBatch.begin(core.getCompMgr(CameraServer.class).getCamera());
+            env = core.getCompMgr(EnvServer.class).makeEnvironment();
+            core.getCompMgr(Render3DServer.class).render(modelBatch, env);
             modelBatch.end();
         }
     }
@@ -395,10 +405,10 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
             break;
         case AssetLoading:
             initState = InitState.End;
-            for (BaseCompServer server : itemReservable.reservedServers()) {
-                core.addServer(server);
+            for (BaseCompMgr server : itemReservable.reservedServers()) {
+                core.addCompMgr(server);
             }
-            core.addGameItemAll(itemReservable.reservedItems());
+            core.addItems(itemReservable.reservedItems());
             itemReservable = null;
             assetGatherer = null;
             loadingController = null;
@@ -452,13 +462,23 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     public Scheduler scheduler () {
         return scheduler;
     }
-    
-    public Task scheduleOnce (int delay, int relDeadline, SchedTask task) {
-        return scheduler.addAperiodic(task, relDeadline, delay, null);
-    }
-    
-    public Task schedule (int delay, int period, SchedTask task) {
-        return scheduler.addPeriodic(task, period, delay, null);
+
+    public TaskController schedule(long delay, long period, SchedTask task) {
+        return this.scheduler.schedule(delay, period, task);
     }
 
+    public TaskController scheduleOnce(long delay, long relativeDeadline,
+            SchedTask task) {
+        return this.scheduler.scheduleOnce(delay, relativeDeadline, task);
+    }
+
+    public TaskController schedule(long delay, long period, SchedTask task,
+            SchedTaskConfig config) {
+        return this.scheduler.schedule(delay, period, task, config);
+    }
+
+    public TaskController scheduleOnce(long delay, long relDeadline,
+            SchedTask task, SchedTaskConfig config) {
+        return this.scheduler.scheduleOnce(delay, relDeadline, task, config);
+    }
 }

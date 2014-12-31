@@ -1,6 +1,6 @@
 package com.algy.schedcore.middleend.bullet;
 
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.ModelBatch3DComp;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -24,12 +24,12 @@ public class BtDebugDrawerComp extends ModelBatch3DComp {
     }
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new BtDebugDrawerComp(drawMode);
     }
     
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
         debugDrawer = new DebugDrawer();
         debugDrawer.setDebugMode(drawMode);
         bitmapFont = new BitmapFont();
@@ -44,8 +44,8 @@ public class BtDebugDrawerComp extends ModelBatch3DComp {
 
     @Override
     public void render(ModelBatch modelBatch, Environment defaultEnv) {
-        btCollisionWorld world = server(BtPhysicsWorld.class).world;
-        debugDrawer.begin(server(CameraServer.class).getCamera());
+        btCollisionWorld world = getCompManager(BtPhysicsWorld.class).world;
+        debugDrawer.begin(getCompManager(CameraServer.class).getCamera());
         world.setDebugDrawer(debugDrawer);
         world.debugDrawWorld();
         debugDrawer.end();

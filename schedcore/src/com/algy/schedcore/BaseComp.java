@@ -1,17 +1,21 @@
 package com.algy.schedcore;
 
-public abstract class BaseComp implements IComp {
-    private Item<BaseComp, ICore> owner;
+public abstract class BaseComp implements Attachable<GameItem> {
+    private GameItem owner;
 
-    public Item<BaseComp, ICore> owner() {
+    
+    public GameItem owner() {
+
         return this.owner;
     }
-    public Item<BaseComp, ICore> item () {
+
+    public GameItem item () {
         // just an alias of "owner()"
         return this.owner;
     }
+    public abstract BaseComp duplicate();
     
-    public ICore core() {
+    public GameItemSpace core() {
         return owner.owner();
     }
     
@@ -19,14 +23,15 @@ public abstract class BaseComp implements IComp {
         return owner().as(clazz);
     }
     
-    public <T extends BaseCompServer> T server(Class<T> cls) {
-        return this.owner().owner().server(cls);
+    public <T extends BaseCompMgr> T getCompManager(Class<T> cls) {
+        return this.owner().owner().getCompMgrSpace().as(cls);
     }
 
-    public final void adhereTo(Item<BaseComp, ICore> c) {
+    @Override
+    public final void attachTo(GameItem c) {
         this.owner = c;
         if (c != null) {
-            onAdhered();
+            onAttached();
         } else {
             onDetached();
         }
@@ -34,6 +39,7 @@ public abstract class BaseComp implements IComp {
     
     public void onItemAdded () { }
     public void onItemRemoved () { }
-    protected void onAdhered() { }
-    protected void onDetached() { }
+    protected void onAttached() {}
+    protected void onDetached() {}
+
 }

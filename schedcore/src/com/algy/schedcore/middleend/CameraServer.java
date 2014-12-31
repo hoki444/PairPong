@@ -1,14 +1,14 @@
 package com.algy.schedcore.middleend;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.BaseCompMgr;
 import com.algy.schedcore.util.Lister;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.math.Vector3;
 
-public class CameraServer extends BaseCompServer {
+public class CameraServer extends BaseCompMgr {
     private boolean isDirty = false;
     private boolean isPersp;
     private OrthographicCamera ortho;
@@ -123,7 +123,7 @@ public class CameraServer extends BaseCompServer {
     public void hookRemoveComp(BaseComp comp) { }
 
     @Override
-    protected void onAdhered() { }
+    protected void onAttached() { }
 
     @Override
     protected void onDetached() { }

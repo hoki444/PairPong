@@ -1,9 +1,9 @@
-package com.algy.schedcore;
+package com.algy.schedcore.util;
 
 import java.util.HashMap;
 import java.util.Iterator;
 
-import com.algy.schedcore.util.IterableUtil;
+import com.algy.schedcore.TypeConflictError;
 
 class ItemInfoContainer <K> implements Iterable<K> {
     /**

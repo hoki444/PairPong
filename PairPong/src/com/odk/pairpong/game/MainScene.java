@@ -2,6 +2,7 @@ package com.odk.pairpong.game;
 
 import com.algy.schedcore.SchedTask;
 import com.algy.schedcore.SchedTime;
+import com.algy.schedcore.TaskController;
 import com.algy.schedcore.frontend.Scene;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -23,11 +24,11 @@ public class MainScene extends Scene {
         }
         
         @Override
-        public void endSchedule() {
+        public void endSchedule(TaskController t) {
         }
         
         @Override
-        public void beginSchedule() {
+        public void beginSchedule(TaskController t) {
         }
     };
     
