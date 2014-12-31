@@ -700,7 +700,7 @@ public class GameScene extends Scene {
         	racketSound = Gdx.audio.newSound(Gdx.files.internal("ball.wav"));
         }
         if(option.specialMode==2)
-        	bgroundSound = Gdx.audio.newMusic(Gdx.files.internal("bgm.mp3"));
+        	bgroundSound = Gdx.audio.newMusic(Gdx.files.internal("mbgm.mp3"));
         else
         	bgroundSound = Gdx.audio.newMusic(Gdx.files.internal("bgm.mp3"));
         bgroundSound.setLooping(true);
