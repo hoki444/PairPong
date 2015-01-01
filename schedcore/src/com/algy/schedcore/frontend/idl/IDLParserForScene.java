@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.middleend.GameItem;
+import com.algy.schedcore.BaseCompMgr;
+import com.algy.schedcore.GameItem;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.asset.AssetList;
 
@@ -15,8 +15,8 @@ class IDLParserForScene extends IDLParser {
     private IDLGameContext context;
     private ArrayList<GameItem> sceneItems = new ArrayList<GameItem>();
     private TreeSet<String> addedItemName = new TreeSet<String>();
-    private ArrayList<BaseCompServer> sceneServers = new ArrayList<BaseCompServer>();
-    private HashSet<BaseCompServer> modifiedServers = new HashSet<BaseCompServer>();
+    private ArrayList<BaseCompMgr> sceneServers = new ArrayList<BaseCompMgr>();
+    private HashSet<BaseCompMgr> modifiedServers = new HashSet<BaseCompMgr>();
 
     public IDLParserForScene(String source, IDLGameContext context) {
         super(source);
@@ -46,11 +46,11 @@ class IDLParserForScene extends IDLParser {
             Map<String, IDLValue> creationDict,
             Map<String, IDLValue> modificationDict) {
         IDLCompServerLoader loader = IDLLoader.assertGetCompServerLoader(slashName);
-        BaseCompServer server = null;
+        BaseCompMgr server = null;
         if (creationDict != null) {
             server = loader.make(context, creationDict);
         } else {
-            server = context.core().server(loader.getModifiedCompServerType());
+            server = context.core().getCompMgr(loader.getModifiedCompServerType());
         }
 
         if (modificationDict != null) {
@@ -82,7 +82,8 @@ class IDLParserForScene extends IDLParser {
             IDLCompLoader loader = IDLLoader.assetGetCompLoader(desc.compName);
             loader.modify(context, gameItem.as(loader.getModifiedCompType()), desc.dict);
         }
-        gameItem.setName(itemName);
+        // FIXME
+        // gameItem.setName(itemName);
         sceneItems.add(gameItem);
     }
 
@@ -95,7 +96,8 @@ class IDLParserForScene extends IDLParser {
             }
             addedItemName.add(itemName);
         }
-        gameItem.setName(itemName);
+        // FIXME
+        // gameItem.setName(itemName);
         sceneItems.add(gameItem);
     }
     
@@ -103,7 +105,7 @@ class IDLParserForScene extends IDLParser {
         IDLResult result = new IDLResult();
         result.createdItems = sceneItems;
         result.createdServers = sceneServers;
-        result.modifiedServers = new ArrayList<BaseCompServer>(modifiedServers);
+        result.modifiedServers = new ArrayList<BaseCompMgr>(modifiedServers);
         AssetList assetList = new AssetList();
         for (GameItem item : sceneItems) {
             item.getUsedAsset(assetList);

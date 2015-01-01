@@ -3,9 +3,11 @@ package com.odk.pairpong.game;
 
 import java.util.Random;
 
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
+import com.algy.schedcore.GameItem;
 import com.algy.schedcore.SchedTask;
 import com.algy.schedcore.SchedTime;
+import com.algy.schedcore.TaskController;
 import com.algy.schedcore.frontend.ItemReservable;
 import com.algy.schedcore.frontend.Scene;
 import com.algy.schedcore.frontend.SceneMgr;
@@ -13,11 +15,9 @@ import com.algy.schedcore.middleend.AssetModelComp;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.DirectionalLightComp;
 import com.algy.schedcore.middleend.EnvServer;
-import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.middleend.ModelComp;
 import com.algy.schedcore.middleend.PointLightComp;
 import com.algy.schedcore.middleend.Transform;
-//import com.algy.schedcore.middleend.bullet.BtDebugDrawerComp;
 import com.algy.schedcore.middleend.bullet.BtDetectorComp;
 import com.algy.schedcore.middleend.bullet.BtPhysicsWorld;
 import com.algy.schedcore.middleend.bullet.BtRigidBodyComp;
@@ -51,7 +51,7 @@ import com.odk.pairpong.comm.game.CommRacketCollision;
 import com.odk.pairpong.comm.game.CommRacketMoveCmd;
 import com.odk.pairpong.comm.general.CommFunction;
 import com.odk.pairpong.comm.general.MessageListener;
-import com.odk.pairpongsender.MainActivity;
+//import com.algy.schedcore.middleend.bullet.BtDebugDrawerComp;
 
 class MyCollision extends CollisionComp {
 	GameItem ballItem;
@@ -64,18 +64,17 @@ class MyCollision extends CollisionComp {
 	}
     
 	@Override
-	public IComp duplicate() {
+	public BaseComp duplicate() {
 		return new MyCollision(ballItem, score);
 	}
 
 	@Override 
 	public void beginCollision(GameItem other) {
-	    if ("ball".equals(other.getName())) {
+	    if (other.getItemType().isTypeOf(BallType.class)) {
             core().removeItem(other);
             GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
             newBall.as(BtRigidBodyComp.class).setLinearVelocity(
                     new Vector3(6, 2, random.nextFloat()*3-1.5f));
-            newBall.setName("ball");
             core().addItem(newBall);
             score.resetCombo();
             score.setLife(score.getLife()-1);
@@ -95,7 +94,7 @@ class BackCollision extends CollisionComp {
 	}
     
 	@Override
-	public IComp duplicate() {
+	public BaseComp duplicate() {
 		return new BackCollision(score);
 	}
 
@@ -225,7 +224,7 @@ class RacketCollision extends CollisionComp {
     }
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new RacketCollision(parent, commFun, score, effectController);
     }
 
@@ -236,7 +235,7 @@ class RacketCollision extends CollisionComp {
         collInfo.isSmashing = isSmashing;
 
         commFun.sendMessage(CommConstants.TYPE_RACKET_COLLISION, collInfo, null);
-        if (other.getName().equals("ball") && !other.as(BallStateComp.class).isRollingOnGround) {
+        if (other.getItemType().isTypeOf(BallType.class) && !other.as(BallStateComp.class).isRollingOnGround) {
             if(!score.isStuck()) {
                 score.addCombo();
                 combo = score.getCombo();
@@ -265,13 +264,13 @@ class BallCollision extends CollisionComp {
     }
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new BallCollision(wallSound, racketSound);
     }
 
     @Override
     public void beginCollision(GameItem other) {
-        if ("racket".equals(other.getName())) {
+        if (other.getItemType().isTypeOf(RacketType.class)) {
             if (racketSound != null) {
                 racketSound.play();
             }
@@ -281,7 +280,7 @@ class BallCollision extends CollisionComp {
                 wallSound.play();
             }
             
-            if ("ground".equals(other.getName())) {
+            if (other.getItemType().isTypeOf(GroundType.class)) {
                 item().as(BallStateComp.class).isRollingOnGround = true;
             }
         }
@@ -289,7 +288,7 @@ class BallCollision extends CollisionComp {
 
     @Override
     public void endCollision(GameItem other, Iterable<CollisionInfo> info) {
-        if ("ground".equals(other.getName())) {
+        if (other.getItemType().isTypeOf(GroundType.class)) {
             item().as(BallStateComp.class).isRollingOnGround = false;
         }
     }
@@ -357,7 +356,7 @@ public class GameScene extends Scene {
 
         GameItem boardItemt = boardItembo.duplicate(new Vector3(1f, 4.0f, 0));
         boardItembo.add(new ModelComp(boxModelbo));
-        boardItembo.setName("ground");
+        boardItembo.setItemType(new GroundType());
         boardItemba.add(new ModelComp(boxModelba));
         boardItemba.add(new BackCollision(score));
         boardItemt.add(new ModelComp(boxModelt));
@@ -382,7 +381,7 @@ public class GameScene extends Scene {
                       .activate()
                       .setRestitution(Restitutions)
                       .forceGravity(new Vector3()));
-        racketItem.setName("racket");
+        racketItem.setItemType(new RacketType());
         // Tunneling-proof 
         btRigidBody racketBody = racketItem.as(BtRigidBodyComp.class).getRigidBody();
         racketBody.setCcdMotionThreshold(1e-6f);
@@ -408,7 +407,7 @@ public class GameScene extends Scene {
                      .setRestitution(0.9f)
                      .setLinearDamping(0f));
         ballItem.add(new ModelComp(ballModel));
-        ballItem.setName("ball");
+        ballItem.setItemType(new BallType());
         
 
         // Tunneling-proof 
@@ -421,17 +420,16 @@ public class GameScene extends Scene {
                 new EffectController() {
                     @Override
                     public void invokeHit(Vector3 position) {
-                        Vector3 screen = core().server(CameraServer.class).getCamera().project(position);
+                        Vector3 screen = core().getCompMgr(CameraServer.class).getCamera().project(position);
                         hitEffect.setPosition(new Vector2(screen.x, screen.y), new Vector2(screen.x, screen.y + 30));
                         hitEffect.rewind();
                     }
         }));
-        racketItem.setName("racket");
+        racketItem.setItemType(new RacketType());
 
         lightItem.as(Transform.class).get().setTranslation(0, 2, 0);
         lightItem.add(new DirectionalLightComp(new Vector3(0, -20f, 10f)).setColor(1.f, 1.f, 1.f, 1.0f));
         GameItem newBallItem = ballItem.duplicate(new Vector3(0, 2.8f, 0));
-        newBallItem.setName("ball");
         coreProxy.reserveItem(newBallItem);
        
         removerItem.as(Transform.class).modify().setTranslation(0, -10f, 0);
@@ -455,13 +453,14 @@ public class GameScene extends Scene {
 
 	@Override
 	public void endResourceInitialization(Scene scene) {
-        core.server(EnvServer.class).ambientLightColor.set(.7f, .7f, .7f, 1); 
-        core.server(BtPhysicsWorld.class).world.setGravity(new Vector3(0, -9.8f, 0));
+        core.getCompMgr(EnvServer.class).ambientLightColor.set(.7f, .7f, .7f, 1); 
+        core.getCompMgr(BtPhysicsWorld.class).world.setGravity(new Vector3(0, -9.8f, 0));
         
-        core.server(CameraServer.class).setPosition(new Vector3(-4, 3f, 0))
+        core.getCompMgr(CameraServer.class).setPosition(new Vector3(-4, 3f, 0))
                                        .lookAt(new Vector3(0, 2f, 0))
                                        .setUpVector(new Vector3(1, 0, 0))
                                        .setRange(1, 100);
+
         if(option.soundMode%2==0)
         	bgroundSound.play();
         /*
@@ -472,18 +471,17 @@ public class GameScene extends Scene {
             @Override
             public void onScheduled(SchedTime time) {
                 if (score.needRegen()) {
-                    core.removeItem(core.getItemWithName("ball"));
+                    core.removeItem(core.firstItemWithType(BallType.class));
                     GameItem newBall = ballItem.duplicate(new Vector3(0, 2.8f, 0));
                     newBall.as(BtRigidBodyComp.class).setLinearVelocity(
                             new Vector3(6, 2, random.nextFloat()*3-1.5f));
-                    newBall.setName("ball");
                     core().addItem(newBall);
                     score.resetCombo();
                     score.setLife(score.getLife()-1);
                 }
                 
                 if(score.reduceStuck()) {
-                    score.addVScore(core.getItemWithName("ball").as(BtRigidBodyComp.class).getLinearVelocity().len());
+                    score.addVScore(core.firstItemWithType(BallType.class).as(BtRigidBodyComp.class).getLinearVelocity().len());
                 }
 
                 if(score.getLife() == 0) {
@@ -505,11 +503,11 @@ public class GameScene extends Scene {
             }
             
             @Override
-            public void endSchedule() {
+            public void endSchedule(TaskController t) {
             }
             
             @Override
-            public void beginSchedule() {
+            public void beginSchedule(TaskController t) {
             }
         });
         
@@ -525,7 +523,7 @@ public class GameScene extends Scene {
                 float destTheta;
                 synchronized (lockRacketIntpt) {
                     posXIntp.setState(racketTr.z);
-                    nowY=core.getItemWithName("ball").getTransform().getTranslation(new Vector3()).y-0.75f*(1.5f-0.35f*option.racketSize);
+                    nowY=core.firstItemWithType(BallType.class).getTransform().getTranslation(new Vector3()).y-0.75f*(1.5f-0.35f*option.racketSize);
                     if(nowY<0)
                     	nowY=0;
                     if(nowY>4)
@@ -563,11 +561,11 @@ public class GameScene extends Scene {
             }
             
             @Override
-            public void endSchedule() {
+            public void endSchedule(TaskController t) {
             }
             
             @Override
-            public void beginSchedule() {
+            public void beginSchedule(TaskController t) {
             }
         });
 

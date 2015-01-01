@@ -1,15 +1,15 @@
 package com.algy.schedcore.middleend;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.BaseCompMgr;
 import com.algy.schedcore.util.IntegerBitmap;
 import com.algy.schedcore.util.Lister;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 
-public class EnvServer extends BaseCompServer {
-    private IntegerBitmap<LightComp> lightBitmap = new IntegerBitmap<LightComp>(8);
+public class EnvServer extends BaseCompMgr {
+    private IntegerBitmap<LightComp> lightBitmap = new IntegerBitmap<LightComp>(8, null);
     public Color ambientLightColor = new Color(0, 0, 0, 0);
     
     @Override
@@ -41,7 +41,7 @@ public class EnvServer extends BaseCompServer {
     }
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
     }
 
     @Override

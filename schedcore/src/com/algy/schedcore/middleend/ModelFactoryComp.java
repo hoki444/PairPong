@@ -1,6 +1,6 @@
 package com.algy.schedcore.middleend;
 
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.middleend.asset.AssetList;
 import com.algy.schedcore.middleend.asset.AssetServer;
 import com.algy.schedcore.middleend.asset.AssetUsable;
@@ -25,7 +25,7 @@ public class ModelFactoryComp extends Renderable3DComp implements AssetUsable {
     }
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new ModelFactoryComp(mf, localTransform);
     }
 
@@ -42,7 +42,7 @@ public class ModelFactoryComp extends Renderable3DComp implements AssetUsable {
 
     @Override
     public void onItemAdded() {
-        model = mf.make(server(AssetServer.class));
+        model = mf.make(getCompManager(AssetServer.class));
     }
 
     @Override

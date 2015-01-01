@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.BaseSchedServer;
+import com.algy.schedcore.BaseSchedMgr;
+import com.algy.schedcore.GameItem;
 import com.algy.schedcore.SchedTime;
 import com.algy.schedcore.SchedcoreRuntimeError;
-import com.algy.schedcore.middleend.GameItem;
+import com.algy.schedcore.TaskController;
 import com.algy.schedcore.middleend.Transform;
 import com.algy.schedcore.middleend.bullet.CollisionComp.CollisionInfo;
 import com.algy.schedcore.util.IntegerBitmap;
@@ -30,7 +31,7 @@ import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
 
 
-public class BtPhysicsWorld extends BaseSchedServer {
+public class BtPhysicsWorld extends BaseSchedMgr {
     private static class CollisionIterable implements Iterable<CollisionInfo> {
         private btPersistentManifold manifold;
         private boolean isFirst;
@@ -99,7 +100,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
             };
         }
     }
-    private IntegerBitmap<GameItem> collBitmap = new IntegerBitmap<GameItem>();
+    private IntegerBitmap<GameItem> collBitmap = new IntegerBitmap<GameItem>(null);
     
     private btCollisionConfiguration collConfig;
     public btDynamicsWorld world;
@@ -186,7 +187,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
     }
 
     @Override
-    public long schedOffset() {
+    public long schedDelay() {
         return 0;
     }
 
@@ -216,11 +217,11 @@ public class BtPhysicsWorld extends BaseSchedServer {
     
 
     @Override
-    public void beginSchedule() {
+    public void beginSchedule(TaskController t) {
     }
 
     @Override
-    public void endSchedule() {
+    public void endSchedule(TaskController t) {
     }
 
     @Override
@@ -393,7 +394,7 @@ public class BtPhysicsWorld extends BaseSchedServer {
     
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
         collConfig = new btDefaultCollisionConfiguration();
         dispatcher = new btCollisionDispatcher(this.collConfig);
         broadphase = new btDbvtBroadphase();
@@ -429,5 +430,10 @@ public class BtPhysicsWorld extends BaseSchedServer {
 
     public void setGravity(Vector3 gravity) {
         this.world.setGravity(gravity);
+    }
+
+    @Override
+    public boolean isPeriodic() {
+        return true;
     }
 }

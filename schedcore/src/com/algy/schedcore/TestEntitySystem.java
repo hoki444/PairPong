@@ -2,7 +2,7 @@ package com.algy.schedcore;
 
 import com.algy.schedcore.util.Lister;
 
-class DogServer extends BaseCompServer {
+class DogServer extends BaseCompMgr {
     @Override
     public void hookAddComp(BaseComp comp) {
         System.out.println("HOOK " + comp);
@@ -15,7 +15,7 @@ class DogServer extends BaseCompServer {
     }
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
         System.out.println("DogServer adhered");
     }
 
@@ -38,12 +38,12 @@ abstract class Dog extends BaseComp {
 class GoldenRetriever extends Dog {
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new GoldenRetriever();
     }
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
         System.out.println("Hi Golden!");
     }
 
@@ -65,7 +65,7 @@ class Harrier extends Biggle {
     }
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
         System.out.println("Hi Harrier!");
     }
 
@@ -78,12 +78,12 @@ class Harrier extends Biggle {
 class Biggle extends Dog {
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new Biggle();
     }
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
         System.out.println("Hi Biggle!");
     }
 
@@ -100,14 +100,14 @@ class Biggle extends Dog {
 
 public class TestEntitySystem {
     public static void main(String ... args) {
-        ICore core = new Core(Scheduler.MilliScheduler());
-        Item<BaseComp, ICore> item = Item.MakeCompItem();
+        GameItemSpace core = new GameItemSpace(Scheduler.MilliScheduler());
+        GameItem  item = new GameItem();
         item.add(new GoldenRetriever());
         item.add(new Harrier());
         
-        core.addServer(new DogServer());
+        core.addCompMgr(new DogServer());
         core.addItem(item);
         core.removeItem(item);
-        core.removeServer(BaseCompServer.class);
+        core.removeCompMgr(BaseCompMgr.class);
     }
 }

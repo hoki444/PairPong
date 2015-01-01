@@ -1,8 +1,12 @@
-package com.algy.schedcore;
+package com.algy.schedcore.util;
 
 import java.util.Iterator;
 
-public class Item <K extends IAdherable<?>, OWNER> implements Iterable<K>, IAdherable<OWNER> {
+import com.algy.schedcore.Attachable;
+import com.algy.schedcore.KeyError;
+import com.algy.schedcore.TypeConflictError;
+
+public class Item <K extends Attachable<?>, OWNER> implements Iterable<K>, Attachable<OWNER> {
     private ItemInfoContainer<K> container;
     private OWNER owner;
     private Class<K> kClass;
@@ -10,7 +14,7 @@ public class Item <K extends IAdherable<?>, OWNER> implements Iterable<K>, IAdhe
     public Item (Class<K> kClass, OWNER owner) {
         this.kClass = kClass;
         this.container = new ItemInfoContainer<K>(kClass);
-        adhereTo(owner);
+        attachTo(owner);
     }
     
     public Item (Class<K> kClass) {
@@ -52,14 +56,14 @@ public class Item <K extends IAdherable<?>, OWNER> implements Iterable<K>, IAdhe
     @SuppressWarnings("unchecked")
     public boolean add(K elem) {
         this.container.add(elem);
-        ((IAdherable<Object>)elem).adhereTo(this);
+        ((Attachable<Object>)elem).attachTo(this);
         return true;
     }
     
     public Iterable<K> remove (Class<? extends K> key) {
         Iterable<K> rem = this.container.remove(key);
         for (K comp : rem) {
-            comp.adhereTo(null);
+            comp.attachTo(null);
         }
         return rem;
     }
@@ -71,15 +75,6 @@ public class Item <K extends IAdherable<?>, OWNER> implements Iterable<K>, IAdhe
     public Iterator<K> iterator() {
         return this.container.iterator();
     }
-    
-    public static Item<BaseComp, ICore> MakeCompItem() {
-        return new Item<BaseComp, ICore>(BaseComp.class);
-    }
-    
-    public static Item<BaseCompServer, ICore> MakeServerItem() {
-        return new Item<BaseCompServer, ICore>(BaseCompServer.class);
-    }
-
 
     @Override
     public OWNER owner() {
@@ -87,7 +82,7 @@ public class Item <K extends IAdherable<?>, OWNER> implements Iterable<K>, IAdhe
     }
 
     @Override
-    public void adhereTo(OWNER c) {
+    public void attachTo(OWNER c) {
         this.owner = c; 
     }
 }

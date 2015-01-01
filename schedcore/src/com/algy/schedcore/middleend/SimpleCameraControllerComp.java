@@ -1,19 +1,19 @@
 package com.algy.schedcore.middleend;
 
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 
 public class SimpleCameraControllerComp extends InputComp {
     private CameraInputController controller;
     
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new SimpleCameraControllerComp();
     }
 
     @Override
     public void onItemAdded () {
-        controller = new CameraInputController(server(CameraServer.class).getCamera());
+        controller = new CameraInputController(getCompManager(CameraServer.class).getCamera());
     }
 
     public void cancel() {

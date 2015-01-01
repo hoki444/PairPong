@@ -1,6 +1,6 @@
 package com.algy.schedcore.middleend.bullet;
 
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
 import com.algy.schedcore.middleend.Transform;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
@@ -25,13 +25,13 @@ public class BtDetectorComp extends BtColliderComp {
     }
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new BtDetectorComp(shape, collFilter);
     }
     
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
         this.collObj.setWorldTransform(owner().as(Transform.class).get());
     }
 

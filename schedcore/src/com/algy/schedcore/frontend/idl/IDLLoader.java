@@ -3,7 +3,7 @@ package com.algy.schedcore.frontend.idl;
 import java.util.Map;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.BaseCompMgr;
 import com.algy.schedcore.frontend.idl.reflection.IDLCompServerTemplate;
 import com.algy.schedcore.frontend.idl.reflection.IDLCompTemplate;
 import com.algy.schedcore.frontend.idl.reflection.templates.AssetModelTemplate;
@@ -115,7 +115,7 @@ public class IDLLoader {
     public synchronized static void 
     registerCompServerTemplate (String name, 
                                 Class<? extends IDLCompServerTemplate> templateClass,
-                                Class<? extends BaseCompServer> associatedType) {
+                                Class<? extends BaseCompMgr> associatedType) {
         IDLCompServerCreatorModifier cm = 
                 IDLCompServerTemplate.makeCreatorModifier(templateClass, associatedType);
         registerCompServerLoader(new IDLCompServerLoader(name, cm, cm));

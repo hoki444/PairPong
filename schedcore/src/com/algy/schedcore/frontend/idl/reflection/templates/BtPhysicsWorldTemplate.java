@@ -1,6 +1,6 @@
 package com.algy.schedcore.frontend.idl.reflection.templates;
 
-import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.BaseCompMgr;
 import com.algy.schedcore.frontend.idl.IDLGameContext;
 import com.algy.schedcore.frontend.idl.reflection.IDLCompServerTemplate;
 import com.algy.schedcore.frontend.idl.reflection.NotModifiable;
@@ -14,7 +14,7 @@ public class BtPhysicsWorldTemplate extends IDLCompServerTemplate {
     public Integer maxSubStep = null;
     public Vector3 gravity = null;
     @Override
-    protected BaseCompServer create(IDLGameContext context) {
+    protected BaseCompMgr create(IDLGameContext context) {
         if (gravity == null)
             gravity = new Vector3 (0, -9.8f, 0);
 
@@ -32,7 +32,7 @@ public class BtPhysicsWorldTemplate extends IDLCompServerTemplate {
     }
 
     @Override
-    protected void modify(IDLGameContext context, BaseCompServer server) {
+    protected void modify(IDLGameContext context, BaseCompMgr server) {
         if (gravity != null)
             ((BtPhysicsWorld)server).setGravity(gravity);
     }

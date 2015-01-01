@@ -2,7 +2,7 @@ package com.algy.schedcore.frontend.idl;
 
 import java.util.Map;
 
-import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.BaseCompMgr;
 
 public class IDLCompServerLoader {
     public final String compServerName;
@@ -18,15 +18,15 @@ public class IDLCompServerLoader {
         this.modifier = modifier;
     }
 
-    public BaseCompServer make (IDLGameContext context, Map<String, IDLValue> dict) {
+    public BaseCompMgr make (IDLGameContext context, Map<String, IDLValue> dict) {
         return creator.create(context, dict);
     }
     
-    public BaseCompServer modify (IDLGameContext context, BaseCompServer compServer, Map<String, IDLValue> dict) {
+    public BaseCompMgr modify (IDLGameContext context, BaseCompMgr compServer, Map<String, IDLValue> dict) {
         modifier.modify(context, compServer, dict);
         return compServer;
     }
-    public Class<? extends BaseCompServer> getModifiedCompServerType ( ) {
+    public Class<? extends BaseCompMgr> getModifiedCompServerType ( ) {
         return modifier.getType();
     }
 }

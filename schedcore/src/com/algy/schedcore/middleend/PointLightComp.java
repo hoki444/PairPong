@@ -1,6 +1,6 @@
 package com.algy.schedcore.middleend;
 
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.environment.BaseLight;
 import com.badlogic.gdx.graphics.g3d.environment.PointLight;
@@ -21,7 +21,7 @@ public class PointLightComp extends LightComp {
     }
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new PointLightComp(new PointLight().set(pointLight));
     }
 
@@ -45,7 +45,7 @@ public class PointLightComp extends LightComp {
     }
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
     }
 
     @Override

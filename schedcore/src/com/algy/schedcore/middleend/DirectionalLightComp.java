@@ -1,6 +1,6 @@
 package com.algy.schedcore.middleend;
 
-import com.algy.schedcore.IComp;
+import com.algy.schedcore.BaseComp;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.environment.BaseLight;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
@@ -27,7 +27,7 @@ public class DirectionalLightComp extends LightComp {
     }
 
     @Override
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new DirectionalLightComp(new DirectionalLight().set(light));
     }
 
@@ -37,7 +37,7 @@ public class DirectionalLightComp extends LightComp {
     }
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
     }
 
     @Override

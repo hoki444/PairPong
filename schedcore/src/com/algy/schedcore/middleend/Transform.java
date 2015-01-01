@@ -1,7 +1,6 @@
 package com.algy.schedcore.middleend;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.IComp;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
@@ -63,12 +62,12 @@ public class Transform extends BaseComp {
     }
 
 
-    public IComp duplicate() {
+    public BaseComp duplicate() {
         return new Transform(new Matrix4(mat));
     }
     
     @Override
-    protected void onAdhered() { }
+    protected void onAttached() { }
 
     @Override
     protected void onDetached() { }

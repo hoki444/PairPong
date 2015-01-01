@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 
-import com.algy.schedcore.BaseCompServer;
-import com.algy.schedcore.middleend.GameItem;
+import com.algy.schedcore.BaseCompMgr;
+import com.algy.schedcore.GameItem;
 import com.algy.schedcore.middleend.asset.AssetList;
 
 class IDLParserForMod extends IDLParser {
     private IDLGameContext context;
     private HashSet<GameItem> modifiedItems = new HashSet<GameItem>();
-    private HashSet<BaseCompServer> modifiedServers = new HashSet<BaseCompServer>();
+    private HashSet<BaseCompMgr> modifiedServers = new HashSet<BaseCompMgr>();
     public IDLParserForMod(String source, IDLGameContext context) {
         super(source);
         this.context = context;
@@ -20,7 +20,8 @@ class IDLParserForMod extends IDLParser {
     @Override
     protected void actionModifyItem(String itemName,
             ArrayList<CompDescriptor> modificationList) {
-        GameItem gameItem = context.core().getItemWithName(itemName);
+        // FIXME
+        GameItem gameItem = null;// context.core().getItemWithName(itemName);
         if (gameItem == null) {
             throw new IDLLoadError("gameItem with the name of '" + itemName + "' is not found");
         }
@@ -37,7 +38,7 @@ class IDLParserForMod extends IDLParser {
     protected void actionModifyServer(String slashName,
             Map<String, IDLValue> modificationDict) {
         IDLCompServerLoader loader = IDLLoader.assertGetCompServerLoader(slashName);
-        BaseCompServer destServer = context.core().server(loader.getModifiedCompServerType());
+        BaseCompMgr destServer = context.core().getCompMgr(loader.getModifiedCompServerType());
         loader.modify(context, destServer, modificationDict);
         modifiedServers.add(destServer);
     }
@@ -45,7 +46,7 @@ class IDLParserForMod extends IDLParser {
         IDLResult result = new IDLResult();
         AssetList assetList = new AssetList();
         result.modifiedItems = new ArrayList<GameItem>(modifiedItems);
-        result.modifiedServers = new ArrayList<BaseCompServer>(modifiedServers);
+        result.modifiedServers = new ArrayList<BaseCompMgr>(modifiedServers);
         for (GameItem item : modifiedItems) {
             item.getUsedAsset(assetList);
         }

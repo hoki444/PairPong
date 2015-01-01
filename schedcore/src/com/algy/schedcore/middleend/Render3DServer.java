@@ -3,12 +3,12 @@ package com.algy.schedcore.middleend;
 import java.util.HashSet;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.BaseCompMgr;
 import com.algy.schedcore.util.Lister;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 
-public class Render3DServer extends BaseCompServer {
+public class Render3DServer extends BaseCompMgr {
     private HashSet<Renderable3DComp> renderableComps = new HashSet<Renderable3DComp>();
     private HashSet<ModelBatch3DComp> mbComps = new HashSet<ModelBatch3DComp>();
 
@@ -47,7 +47,7 @@ public class Render3DServer extends BaseCompServer {
     }
 
     @Override
-    protected void onAdhered() {
+    protected void onAttached() {
     }
 
     @Override

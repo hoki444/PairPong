@@ -1,10 +1,10 @@
 package com.algy.schedcore.middleend.asset;
 
 import com.algy.schedcore.BaseComp;
-import com.algy.schedcore.BaseCompServer;
+import com.algy.schedcore.BaseCompMgr;
 import com.algy.schedcore.util.Lister;
 
-public class AssetServer extends BaseCompServer implements AssetProvider {
+public class AssetServer extends BaseCompMgr implements AssetProvider {
     public LazyAssetManager assetManager = null;
     
     public AssetServer (LazyAssetManager assetManager) {

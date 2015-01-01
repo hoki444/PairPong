@@ -1,9 +1,9 @@
 package com.algy.schedcore.frontend.idl;
 
+import com.algy.schedcore.GameItem;
 import com.algy.schedcore.frontend.ItemReservable;
 import com.algy.schedcore.frontend.Scene;
 import com.algy.schedcore.middleend.EnvServer;
-import com.algy.schedcore.middleend.GameItem;
 import com.algy.schedcore.util.ObjectDirectory;
 import com.badlogic.gdx.Gdx;
 
@@ -42,7 +42,7 @@ public class IDLTestScene extends Scene {
 
     @Override
     public void endResourceInitialization(Scene scene) {
-        core.server(EnvServer.class).ambientLightColor.set(.2f, .2f, .2f, 1); 
+        core.getCompMgr(EnvServer.class).ambientLightColor.set(.2f, .2f, .2f, 1); 
         Done ();
     }
 }

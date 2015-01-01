@@ -2,7 +2,7 @@ package com.algy.schedcore.frontend.idl;
 
 import java.util.ArrayList;
 
-import com.algy.schedcore.middleend.GameItem;
+import com.algy.schedcore.GameItem;
 import com.algy.schedcore.util.ObjectDirectory;
 
 class IDLParserForDef extends IDLParser {
