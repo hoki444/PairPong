@@ -18,7 +18,8 @@ public class GameItemSpace implements Iterable<GameItem> {
     private HashSet<Class<? extends BaseCompMgr>> addedServerSig;
     private HashMap<Class<? extends BaseComp>, HashSet<Class<? extends BaseCompMgr>>> hookMap;
 
-    private HashMap<Class<? extends BaseItemType>, LinkedListCell> itemTypeMap = new HashMap<Class<? extends BaseItemType>, LinkedListCell>();
+    private HashMap<Class<? extends BaseItemType>, LinkedListCell> itemTypeMap = 
+        new HashMap<Class<? extends BaseItemType>, LinkedListCell>();
 
 
     public GameItemSpace (Scheduler scheduler) { 
@@ -333,8 +334,9 @@ public class GameItemSpace implements Iterable<GameItem> {
             unhookItem(gameItem);
         }
         BaseItemType curType = gameItem.getItemType();
-        LinkedListCell header = itemTypeMap.get(gameItem.getClass());
+        LinkedListCell header = itemTypeMap.get(curType.getClass());
         if (header == null) {
+            System.out.println(curType);
             header = LinkedListCellHelper.simpleCell();
             itemTypeMap.put(curType.getClass(), header);
         }

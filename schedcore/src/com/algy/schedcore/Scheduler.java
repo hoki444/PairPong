@@ -424,7 +424,7 @@ public final class Scheduler {
             try {
                 execJob.ti.task.onScheduled(schedTimeLocal);
             } catch (RuntimeException e) {
-                error2 = e;
+                error = e;
             }
 //            med = System.nanoTime();
 
@@ -458,7 +458,7 @@ public final class Scheduler {
                     try {
                         evictJobAfterExec(execJob, execJob.curReltime + period, finishTime);
                     } catch (RuntimeException e) {
-                        error = e;
+                        error2 = e;
                     }
                     currentJob = null;
                 } else {

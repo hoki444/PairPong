@@ -1,5 +1,5 @@
 package com.algy.schedcore.event;
 
-public interface EventCallback {
+public interface GameEventCallback {
     public void callback (boolean received);
 }

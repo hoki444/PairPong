@@ -1,8 +1,9 @@
 package com.algy.schedcore;
 
+import com.algy.schedcore.event.GameEventMgr;
+
 public interface Context {
     public Scheduler getScheduler();
-    public void invokeEvent();
-    public void observe();
-    public void observeOnce( );
+    public GameEventMgr getGameEventMgr();
+    public GameItemSpace getItemSpace();
 }

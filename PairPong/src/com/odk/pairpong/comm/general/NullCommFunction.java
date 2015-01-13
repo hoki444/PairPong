@@ -26,5 +26,4 @@ public class NullCommFunction implements CommFunction {
     public boolean isConnected() {
         return true;
     }
-
 }

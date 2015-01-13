@@ -11,8 +11,8 @@ import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
 public class GameItem extends Item<BaseComp, GameItemSpace> implements LinkedListCell {
-    private GameItem prev = null, next = null;
-    private BaseItemType itemType = DefaultItemType.instance;
+    private LinkedListCell prev = null, next = null;
+    private BaseItemType itemType = new DefaultItemType();
     
 
     public GameItem() {
@@ -80,7 +80,7 @@ public class GameItem extends Item<BaseComp, GameItemSpace> implements LinkedLis
                     newItem.add(copiedComp);
             }
         }
-        newItem.setItemType(newItem.getItemType().duplicate());
+        newItem.setItemType(getItemType().duplicate());
 
         return newItem;
     }
@@ -136,12 +136,12 @@ public class GameItem extends Item<BaseComp, GameItemSpace> implements LinkedLis
 
     @Override
     public void setPrev(LinkedListCell cell) {
-        this.prev = (GameItem)cell;
+        this.prev = cell;
     }
 
     @Override
     public void setNext(LinkedListCell cell) {
-        this.next = (GameItem)cell;
+        this.next = cell;
     }
     
 }

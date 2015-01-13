@@ -274,18 +274,23 @@ public class QPairCommFunction implements CommFunction, ContextSettable {
         return result;
     }
     
+    public static enum DeviceType {
+        Phone, Tablet, Unavailable
+    }
     
-    public boolean isTablet () {
+    public DeviceType getDeviceType () {
         Uri devUri = Uri.parse(QPairConstants.PROPERTY_SCHEME_AUTHORITY + "/local/qpair/device_type");
         Cursor cursor = context.getContentResolver().query(devUri, null, null, null, null);
         
-        if (cursor != null) {
-            cursor.moveToFirst();
-            boolean result = "tablet".equals(cursor.getString(0));
+        if (cursor != null && cursor.moveToFirst()) {
+            boolean isTablet = "tablet".equals(cursor.getString(0));
             cursor.close();
-            return result;
+            if (isTablet)
+                return DeviceType.Tablet;
+            else
+                return DeviceType.Phone;
         } else 
-            return false;
+            return DeviceType.Unavailable;
     }
 
     public QPairState queryQPairState () {
