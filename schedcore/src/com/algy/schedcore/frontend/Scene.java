@@ -3,6 +3,7 @@ package com.algy.schedcore.frontend;
 import java.util.ArrayList;
 
 import com.algy.schedcore.BaseCompMgr;
+import com.algy.schedcore.CompMgrSpace;
 import com.algy.schedcore.GameItem;
 import com.algy.schedcore.GameItemSpace;
 import com.algy.schedcore.SchedTask;
@@ -10,6 +11,7 @@ import com.algy.schedcore.SchedTaskConfig;
 import com.algy.schedcore.SchedTime;
 import com.algy.schedcore.Scheduler;
 import com.algy.schedcore.TaskController;
+import com.algy.schedcore.event.GameEventMgr;
 import com.algy.schedcore.frontend.idl.IDLGameContext;
 import com.algy.schedcore.middleend.CameraServer;
 import com.algy.schedcore.middleend.Eden;
@@ -29,7 +31,7 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.math.Vector3;
 
 class UpdatableItemRsrvTbl implements ItemReservable {
-    private Item<BaseCompMgr, Object> serverItem = new Item<BaseCompMgr, Object>(BaseCompMgr.class);
+    private CompMgrSpace serverItem = new CompMgrSpace(null);
     private ArrayList<GameItem> gameItemList = new ArrayList<GameItem>();
 
     @Override
@@ -128,6 +130,8 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
     private ModelBatch modelBatch;
 
     private final Scheduler scheduler = Scheduler.MilliScheduler();
+    private final GameEventMgr gameEventMgr = new GameEventMgr(scheduler);
+
     private SchedulerUpdater schedUpdater = new SchedulerUpdater(scheduler);
 
     protected final GameItemSpace core = new GameItemSpace(scheduler);
@@ -459,10 +463,19 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
         Done ();
     }
     
-    public Scheduler scheduler () {
+    public Scheduler getScheduler () {
         return scheduler;
     }
+    
+    public GameEventMgr getGameEventMgr () {
+        return gameEventMgr;
+    }
+    
+    public SceneMgr getSceneMgr () {
+        return manager;
+    }
 
+    
     public TaskController schedule(long delay, long period, SchedTask task) {
         return this.scheduler.schedule(delay, period, task);
     }

@@ -87,8 +87,8 @@ public class GameEventMgr {
             new HashMap<Class<? extends GameBroadcast>, ArrayList<GameBroadcastReceiver>>();
     private HashMap<Class<? extends GameItemEvent>, TypeRecord<GameItemEventReceiver>> itemEventReceivers = 
             new HashMap<Class<? extends GameItemEvent>, TypeRecord<GameItemEventReceiver>>();
-    private HashMap<Class<? extends GameItemEvent>, DoubleTypeRecord<GameInteractionReceiver>> interactionReceivers =
-            new HashMap<Class<? extends GameItemEvent>, DoubleTypeRecord<GameInteractionReceiver>>();
+    private HashMap<Class<? extends GameInteraction>, DoubleTypeRecord<GameInteractionReceiver>> interactionReceivers =
+            new HashMap<Class<? extends GameInteraction>, DoubleTypeRecord<GameInteractionReceiver>>();
     
     public GameEventMgr (Scheduler scheduler) {
         this.scheduler = scheduler;
@@ -99,9 +99,9 @@ public class GameEventMgr {
             implements SchedTask, SuperItemEventReceiver<I> {
         private final Event event;
         private final I itemType;
-        private final EventCallback callback;
+        private final GameEventCallback callback;
         public boolean received = false;
-        public ItemEventSchedTask(Event event, I itemType, EventCallback callback) {
+        public ItemEventSchedTask(Event event, I itemType, GameEventCallback callback) {
             this.event = event;
             this.itemType = itemType;
             this.callback = callback;
@@ -150,10 +150,10 @@ public class GameEventMgr {
         private final Interaction event;
         private final I1 itemTypeLHS;
         private final I2 itemTypeRHS;
-        private final EventCallback callback;
+        private final GameEventCallback callback;
         public boolean received = false;
         public InteractionSchedTask(Interaction event, I1 itemTypeLHS,
-                I2 itemTypeRHS, EventCallback callback) {
+                I2 itemTypeRHS, GameEventCallback callback) {
             this.event = event;
             this.itemTypeLHS = itemTypeLHS;
             this.itemTypeRHS = itemTypeRHS;
@@ -206,7 +206,7 @@ public class GameEventMgr {
     <Interaction extends GameInteraction, I1 extends BaseItemType, I2 extends BaseItemType>
     TaskController invokeEvent(long delay, long relativeDeadline, 
                                Interaction event, I1 itemTypeLHS, I2 itemTypeRHS,
-                               EventCallback callback) {
+                               GameEventCallback callback) {
         return scheduler.scheduleOnce(delay, 
                                       relativeDeadline, 
                                       new InteractionSchedTask<Interaction, I1, I2>(event, itemTypeLHS, itemTypeRHS, callback));
@@ -216,7 +216,7 @@ public class GameEventMgr {
     <Event extends GameItemEvent, I extends BaseItemType>
     TaskController invokeEvent(long delay, long relativeDeadline, 
                                Event event, I itemType,
-                               EventCallback callback) {
+                               GameEventCallback callback) {
         return scheduler.scheduleOnce(delay, 
                                       relativeDeadline, 
                                       new ItemEventSchedTask<Event, I>(event, itemType, callback));
@@ -224,7 +224,7 @@ public class GameEventMgr {
     
     public <Event extends GameBroadcast>
     TaskController invokeEvent(long delay, long relativeDeadline,
-                               final Event event, final EventCallback callback) {
+                               final Event event, final GameEventCallback callback) {
         return scheduler.scheduleOnce(delay, relativeDeadline, 
             new SchedTask() {
                 private boolean received = false;
@@ -257,7 +257,7 @@ public class GameEventMgr {
     
 
     public <T extends GameBroadcast> 
-    void receive(Class<T> eventClass, GameBroadcastReceiver<T> receiver) {
+    void receiveBroadcast(Class<T> eventClass, GameBroadcastReceiver<T> receiver) {
         ArrayList<GameBroadcastReceiver> recvList;
         if ((recvList = broadcastReceivers.get(eventClass)) == null) {
             recvList = new ArrayList<GameBroadcastReceiver>();
@@ -269,7 +269,7 @@ public class GameEventMgr {
     @SuppressWarnings("unchecked")
     public <T extends GameItemEvent, I extends BaseItemType>
     GameItemEventReceiver<T, I>
-    receive(Class<T> eventClass, Class<I> itemTypeClass, GameItemEventReceiver<T, I> receiver) {
+    receiveItemEvent(Class<T> eventClass, Class<I> itemTypeClass, GameItemEventReceiver<T, I> receiver) {
         TypeRecord<GameItemEventReceiver> record;
         if ((record = itemEventReceivers.get(eventClass)) == null) {
             record = new TypeRecord<GameItemEventReceiver>(Object.class);
@@ -279,9 +279,9 @@ public class GameEventMgr {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends GameItemEvent, I1 extends BaseItemType, I2 extends BaseItemType>
+    public <T extends GameInteraction, I1 extends BaseItemType, I2 extends BaseItemType>
     GameInteractionReceiver<T, I1, I2>
-    receive(Class<T> eventClass, Class<I1> itemTypeClassLHS, Class<I2> itemTypeClassRHS,
+    receiveInteraction(Class<T> eventClass, Class<I1> itemTypeClassLHS, Class<I2> itemTypeClassRHS,
                  GameInteractionReceiver<T, I1, I2> receiver) {
         DoubleTypeRecord<GameInteractionReceiver> record;
         if ((record = interactionReceivers.get(eventClass)) == null) {
