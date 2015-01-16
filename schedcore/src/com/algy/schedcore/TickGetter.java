@@ -3,7 +3,7 @@ package com.algy.schedcore;
 public interface TickGetter {
     public static TickGetter systemTickGetter = new TickGetter() {
         public long getTime() {
-            return System.currentTimeMillis();
+            return System.nanoTime() / 1000000L; // System.currentTimeMillis();
         }
     };
     public static TickGetter systemNanoTickGetter = new TickGetter() {
