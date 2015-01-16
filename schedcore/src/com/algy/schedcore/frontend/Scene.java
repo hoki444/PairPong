@@ -194,7 +194,7 @@ public abstract class Scene implements SceneResourceInitializer, IDLGameContext 
                     BtPhysicsWorld.initBullet();
                 }
             }
-            worldServer = new BtPhysicsWorld(new Vector3(0, -9.8f, 0), 17);
+            worldServer = new BtPhysicsWorld(new Vector3(0, -9.8f, 0), 30, 19);
         } else
             worldServer = null;
 
