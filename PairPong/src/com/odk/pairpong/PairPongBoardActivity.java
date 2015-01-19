@@ -3,6 +3,7 @@ package com.odk.pairpong;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
@@ -10,6 +11,7 @@ import android.widget.Toast;
 
 import com.algy.schedcore.frontend.SceneMgr;
 import com.badlogic.gdx.backends.android.AndroidApplication;
+import com.lge.qpair.api.r2.QPairConstants;
 import com.odk.pairpong.comm.backend.QPairCommFunction;
 import com.odk.pairpong.comm.backend.QPairCommFunction.DeviceType;
 import com.odk.pairpong.game.MainScene;
@@ -18,10 +20,21 @@ import com.odk.pairpongsender.MainActivity;
 public class PairPongBoardActivity extends AndroidApplication {
 	private QPairCommFunction commFun;
 	private boolean commFunRegistered;
+	
+	private boolean checkQPairPermission() {
+        int res = checkCallingOrSelfPermission(QPairConstants.PERMISSION_USE_QPAIR_SERVICE);
+        return PackageManager.PERMISSION_GRANTED == res;
+	}
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        
+		if (!checkQPairPermission()) {
+		    Toast.makeText(this, "Please install LG QPair first and then reinstall this app", Toast.LENGTH_LONG).show();
+		    finish();
+		    return;
+		}
 
 		commFun = new QPairCommFunction("com.odk.pairpong");// new QPairCommFunction("com.odk.pairpongsender");
 		commFun.setContext(getApplicationContext());
