@@ -3,7 +3,9 @@ package com.odk.pairpong;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.algy.schedcore.frontend.SceneMgr;
@@ -19,12 +21,17 @@ public class PairPongBoardActivity extends AndroidApplication {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 		commFun = new QPairCommFunction("com.odk.pairpong");// new QPairCommFunction("com.odk.pairpongsender");
 		commFun.setContext(getApplicationContext());
 		
+		String deviceModel = Build.MODEL;
+		
 		DeviceType deviceType = commFun.getDeviceType();
-		if (deviceType == DeviceType.Tablet) {
+		if ("LG-V400".equals(deviceModel) || 
+		    "LG-V700n".equals(deviceModel) || 
+		    deviceType == DeviceType.Tablet) {
 		    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             commFunRegistered = true;
             commFun.registerReceivers(this);

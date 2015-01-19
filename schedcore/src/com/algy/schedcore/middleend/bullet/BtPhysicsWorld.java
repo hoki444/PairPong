@@ -113,7 +113,7 @@ public class BtPhysicsWorld extends BaseSchedMgr {
     private long schedPeriod;
     private float worldTps;
     
-    public int maxSubStep = 7;
+    public int maxSubStep = 3;
     
     public static void initBullet () {
         // use reference counting & enable logging
