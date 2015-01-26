@@ -466,6 +466,22 @@ public class GameScene extends Scene {
         /*
          * schedule periodic jobs
          */
+        schedule(100, 400, new SchedTask() {
+            @Override
+            public void onScheduled(SchedTime time) {
+                if (!commFun.isConnected()) {
+                    SceneMgr.switchScene(new MainScene(commFun));
+                }
+            }
+            
+            @Override
+            public void endSchedule(TaskController t) {
+            }
+            
+            @Override
+            public void beginSchedule(TaskController t) {
+            }
+        });
         schedule(0, 32, new SchedTask() {
             Random random = new Random();
             @Override

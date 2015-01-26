@@ -21,6 +21,10 @@ public class ControllerActivity extends AndroidApplication {
 
         initialize(new MainGame(commFun, this));
     }
+	@Override
+	protected void onNewIntent(Intent intent) {
+	    super.onNewIntent(intent);
+	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -31,7 +35,15 @@ public class ControllerActivity extends AndroidApplication {
 	}
 	
 	public void quit () {
-	    setResult(RESULT_CANCELED);
+	    quit (null);
+	}
+	public void quit (String err) {
+	    Intent intent = new Intent();
+	    intent.putExtra("hasErrorMessage", err != null);
+	    if (err != null) {
+            intent.putExtra("errorMessage", err);
+	    }
+	    setResult(RESULT_CANCELED, intent);
 	    finish();
 	}
 

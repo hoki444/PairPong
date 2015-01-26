@@ -42,7 +42,8 @@ public class MainActivity extends Activity {
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            if (!isConnected && commFun.isConnected()) {
+            boolean curConn = commFun.isConnected();
+            if (!isConnected && curConn) {
                 commFun.startActivity("com.odk.pairpong.PairPongBoardActivity", new MessageCallback() {
                     @Override
                     public void onSuccess() {
@@ -54,8 +55,11 @@ public class MainActivity extends Activity {
                     }
                 });
             } 
+            if (isConnected != curConn) {
+                odkView.invalidate();
+            }
 
-            isConnected = commFun.isConnected();
+            isConnected = curConn;
             mHandler.sendEmptyMessageDelayed(0, 400);
         }
     };
@@ -96,6 +100,7 @@ public class MainActivity extends Activity {
             commFun.sendMessage(CommConstants.TYPE_END_APP, null, null);
         commFun.unregisterReceivers(getApplicationContext());
     }
+
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 	    if(keyCode==KeyEvent.KEYCODE_BACK) {
 	    	quitNow();
@@ -104,7 +109,8 @@ public class MainActivity extends Activity {
 	}
 
     private void startGame() {
-    	Intent intent = new Intent(this, ControllerActivity.class);
+    	Intent intent = new Intent(getApplicationContext(), ControllerActivity.class);
+    	intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
     	startActivityForResult(intent, 0);
     }
 
@@ -141,14 +147,21 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (data == null)
+            return;
         if (resultCode == RESULT_OK) {
             System.out.println("OK!! TO SCORE");
             receivedScore = data.getIntExtra("score", 0);
             odkView.mode = ModeType.Score;
         } else {
             System.out.println("BACK TO MAIN..");
+            if (data.getBooleanExtra("hasErrorMessage", false)) {
+                String errorMessage = data.getStringExtra("errorMessage");
+                Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
+            }
             commFun.sendMessage(CommConstants.TYPE_CEASE_GAME, null, null);
             odkView.mode = ModeType.Main;
+            odkView.invalidate();
         } 
     }
     
@@ -297,4 +310,9 @@ public class MainActivity extends Activity {
             return false;
 		}
     }
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+	    super.onNewIntent(intent);
+	}
 }

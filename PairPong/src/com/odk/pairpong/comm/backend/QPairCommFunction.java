@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
@@ -33,7 +34,6 @@ public class QPairCommFunction implements CommFunction, ContextSettable {
 	public QPairCommFunction (String peerPackage) {
 	    this.peerPackage = peerPackage;
 	}
-	
 	
 	
     private String getSuccessActionName () {
@@ -110,6 +110,8 @@ public class QPairCommFunction implements CommFunction, ContextSettable {
                     componentName = connArg.peerPackage + "/" + connArg.peerActivity;
                     peerIntent.setComponent(componentName);
                     peerIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    peerIntent.setAction(Intent.ACTION_MAIN);
+                    peerIntent.addCategory(Intent.CATEGORY_LAUNCHER);
                     peerContext.startActivityOnPeer(peerIntent, callbackOnSuccess, callbackOnError);
                     break;
                 case Broadcast:
@@ -324,4 +326,13 @@ public class QPairCommFunction implements CommFunction, ContextSettable {
     public boolean isConnected() {
         return queryQPairState() == QPairState.Connected;
     }
+    
+    public String getQPairVersion() {
+        try {
+            return context.getPackageManager().getPackageInfo(QPairConstants.PACKAGE_NAME, 0).versionName;
+        } catch (NameNotFoundException e) {
+            return null;
+        }
+    }
+    
 }
