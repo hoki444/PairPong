@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.odk.pairpong"
-    android:versionCode="3"
-    android:versionName="1.2" >
+    android:versionCode="4"
+    android:versionName="1.3" >
 	<uses-permission android:name="com.lge.qpair.permission.USE_QPAIR_SERVICE" />
 	<uses-permission android:name="android.permission.VIBRATE"/>
     <uses-sdk
