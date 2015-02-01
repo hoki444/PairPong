@@ -150,7 +150,7 @@ public class BtPhysicsWorld extends BaseSchedMgr {
                     if (item1.has(CollisionComp.class))
                         item1.as(CollisionComp.class).beginCollision(item0);
                 }
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 e.printStackTrace();
                 throw new SchedcoreRuntimeError(e);
             }
@@ -174,7 +174,7 @@ public class BtPhysicsWorld extends BaseSchedMgr {
                         item1.as(CollisionComp.class).endCollision(item0, new CollisionIterable(manifold, false));
                     }
                 }
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 e.printStackTrace();
                 throw new SchedcoreRuntimeError(e);
             }
@@ -406,22 +406,16 @@ public class BtPhysicsWorld extends BaseSchedMgr {
         world.setGravity(gravity);
         contactListener = new PhysicsContactListner();
 
-        collConfig.obtain();
-        dispatcher.obtain();
-        broadphase.obtain();
-        ctrtSolver.obtain();
-        world.obtain();
-        contactListener.obtain();
     }
 
     @Override
     protected void onDetached() {
-        collConfig.release();
-        dispatcher.release();
-        broadphase.release();
-        ctrtSolver.release();
-        world.release();
-        contactListener.release();
+        collConfig.dispose();
+        dispatcher.dispose();
+        broadphase.dispose();
+        ctrtSolver.dispose();
+        world.dispose();
+        contactListener.dispose();
     }
 
     public Vector3 getGravity() {

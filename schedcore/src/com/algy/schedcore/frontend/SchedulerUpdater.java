@@ -2,6 +2,9 @@ package com.algy.schedcore.frontend;
 
 import com.algy.schedcore.Scheduler;
 
+class UpdaterLongjump extends RuntimeException {
+}
+
 class SchedulerUpdater {
     /**
      * 
@@ -18,8 +21,11 @@ class SchedulerUpdater {
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            while (!stop)
-                scheduler.runOnce();
+            try {
+                while (!stop) {
+                    scheduler.runOnce();
+                }
+            } catch (UpdaterLongjump e) {}
         }
     };
     private Thread thread;
@@ -32,15 +38,14 @@ class SchedulerUpdater {
     public synchronized void stop () {
     	if (!stop) {
             stop = true;
-            thread.interrupt();
-            /*
-            // this stub cause deadlock :(
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            */
+    	    if (Thread.currentThread().getId() != thread.getId()) {
+    	        thread.interrupt();
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+    	    } 
             thread = null;
     	}
     }
